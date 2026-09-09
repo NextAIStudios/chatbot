@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insurance Chatbot Customizer Studio | 100% White-Label</title>
+  <meta name="description" content="Visually customize and brand your insurance chatbot. Generate 1-line embed code for any insurance website.">
+  <link rel="stylesheet" href="../dist/insurance-chatbot.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body style="overflow: hidden;">
+
+  <!-- Header -->
+  <header>
+    <nav class="navbar" style="padding: 14px 28px;">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🎨</div>
+        <div class="brand-text">
+          <h1>White-Label Customizer Studio</h1>
+          <span>Tailor For Any Insurance Carrier in Minutes</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">← Back to Showcase</a>
+        <a href="embed-example.html" class="nav-link">Quick Embed Guide</a>
+        <button class="btn-nav-cta" onclick="copyEmbedSnippet()">📋 Copy Embed Code</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Studio Main -->
+  <div class="customizer-container">
+
+    <!-- Controls Sidebar -->
+    <div class="customizer-sidebar">
+      <h2 class="panel-title">Brand & Bot Configurator</h2>
+      <p class="panel-sub">Change settings below to see the chatbot adapt in real time.</p>
+
+      <!-- Preset Selector -->
+      <div class="form-section">
+        <h4>⚡ 1-Click Brand Presets</h4>
+        <select id="preset-selector" class="input-field" style="font-weight: 600;">
+          <option value="aegisguard">🛡️ AegisGuard (Default Modern Blue)</option>
+          <option value="medicare">🏥 VitalHealth (Health & Life Emerald)</option>
+          <option value="autoshield">🏎️ TurboDrive (Auto & Motor Racing Red)</option>
+          <option value="luxuryestate">🏰 HavenStone (High-End Property Royal Purple)</option>
+          <option value="africashield">🌍 Kilima Bima (East Africa Safari / M-Pesa KSh)</option>
+        </select>
+      </div>
+
+      <!-- Company Identity -->
+      <div class="form-section">
+        <h4>🏢 Company Information</h4>
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="cfg-company-name" class="input-field" value="AegisGuard Insurance">
+        </div>
+        <div class="form-group">
+          <label>Tagline / Motto</label>
+          <input type="text" id="cfg-company-tagline" class="input-field" value="Smart, Instant & Compassionate Protection">
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Support Phone</label>
+            <input type="text" id="cfg-company-phone" class="input-field" value="+1 (800) 555-0199">
+          </div>
+          <div class="form-group half">
+            <label>Support Email</label>
+            <input type="text" id="cfg-company-email" class="input-field" value="care@aegisguard.example.com">
+          </div>
+        </div>
+      </div>
+
+      <!-- Bot Identity -->
+      <div class="form-section">
+        <h4>🤖 Bot Persona & Copy</h4>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Assistant Name</label>
+            <input type="text" id="cfg-bot-name" class="input-field" value="Aegis AI">
+          </div>
+          <div class="form-group half">
+            <label>Role / Subtitle</label>
+            <input type="text" id="cfg-bot-title" class="input-field" value="Certified Insurance Advisor">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Greeting Message</label>
+          <textarea id="cfg-bot-greeting" class="input-field" rows="3" style="resize: vertical;">Hello! 👋 I'm Aegis, your 24/7 licensed digital insurance assistant. How can I protect you today?</textarea>
+        </div>
+      </div>
+
+      <!-- Visual Theme -->
+      <div class="form-section">
+        <h4>🎨 Color Palette</h4>
+        <div class="color-picker-row">
+          <input type="color" id="cfg-primary-color" class="color-input" value="#2563eb">
+          <div>
+            <label style="font-size: 12px; font-weight: 700;">Primary Brand Color</label>
+            <div style="font-size: 11px; color: #64748b;">Buttons, User bubbles, Launcher</div>
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <input type="color" id="cfg-accent-color" class="color-input" value="#10b981">
+          <div>
+            <label style="font-size: 12px; font-weight: 700;">Accent Color</label>
+            <div style="font-size: 11px; color: #64748b;">Success badges, Pay button, Verified status</div>
+          </div>
+        </div>
+        <div class="color-picker-row">
+          <input type="color" id="cfg-header-bg" class="color-input" value="#0f172a">
+          <div>
+            <label style="font-size: 12px; font-weight: 700;">Header Background</label>
+            <div style="font-size: 11px; color: #64748b;">Dark mode top bar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Currency & Payment -->
+      <div class="form-section">
+        <h4>💰 Currency & Checkout</h4>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Currency Code</label>
+            <input type="text" id="cfg-currency-code" class="input-field" value="USD">
+          </div>
+          <div class="form-group half">
+            <label>Currency Symbol</label>
+            <input type="text" id="cfg-currency-symbol" class="input-field" value="$">
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Actions -->
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary-hero" style="flex: 1; padding: 12px; font-size: 13px; justify-content: center;" onclick="applyLiveChanges()">
+          ✨ Update Preview
+        </button>
+        <button class="btn-secondary-hero" style="flex: 1; padding: 12px; font-size: 13px;" onclick="downloadConfigJson()">
+          💾 Export JSON
+        </button>
+      </div>
+
+      <!-- Embed Code Snippet -->
+      <div style="margin-top: 24px;">
+        <h4 style="font-size: 13px; font-weight: 700; color: #1e293b;">Generated Website Embed Code:</h4>
+        <div class="code-export-box">
+          <button class="btn-copy-code" onclick="copyEmbedSnippet()">Copy</button>
+          <code id="embed-code-display">&lt;!-- Insurance Chatbot Embed --&gt;</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Preview Canvas -->
+    <div class="customizer-preview-area">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 800;">Interactive Live Preview</h3>
+          <span style="font-size: 12px; color: #64748b;">Test quotes, in-chat checkout, and Q&A with your live custom branding:</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="prompt-chip" onclick="InsuranceChatbot.triggerAction('intent_quote_auto')">🚗 Test Auto Quote</button>
+          <button class="prompt-chip" onclick="InsuranceChatbot.triggerAction('intent_pay')">💳 Test In-Chat Payment</button>
+          <button class="prompt-chip" onclick="InsuranceChatbot.reset()">🔄 Reset Bot</button>
+        </div>
+      </div>
+
+      <!-- Live Inline Chatbot Container -->
+      <div id="preview-chatbot-mount" style="flex: 1; max-width: 480px; margin: 0 auto; width: 100%;"></div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../dist/insurance-chatbot.js"></script>
+  <script>
+    // Presets catalog
+    const PRESETS = {
+      aegisguard: {
+        company: { name: 'AegisGuard Insurance', tagline: 'Smart, Instant & Compassionate Protection', phone: '+1 (800) 555-0199', email: 'care@aegisguard.example.com' },
+        bot: { name: 'Aegis AI', title: 'Certified Insurance Advisor', greeting: "Hello! 👋 I'm **Aegis**, your 24/7 licensed digital insurance assistant. How can I protect you today?" },
+        theme: { primaryColor: '#2563eb', accentColor: '#10b981', headerBg: '#0f172a' },
+        currency: { code: 'USD', symbol: '$' }
+      },
+      medicare: {
+        company: { name: 'VitalHealth Assurance', tagline: 'Your Health & Well-being, Guarded Every Second', phone: '+1 (888) 432-8482', email: 'care@vitalhealth.example.com' },
+        bot: { name: 'Dr. Vital AI', title: 'Health Coverage Concierge', greeting: "Welcome to VitalHealth! 🏥 I can help you compare health tiers, check pre-existing conditions, or activate medical coverage." },
+        theme: { primaryColor: '#059669', accentColor: '#3b82f6', headerBg: '#064e3b' },
+        currency: { code: 'USD', symbol: '$' }
+      },
+      autoshield: {
+        company: { name: 'TurboDrive Motor Assurance', tagline: 'Instant Quotes, Fast Track Claims & Zero Hassle', phone: '+1 (800) 722-3748', email: 'dispatch@turbodrive.example.com' },
+        bot: { name: 'TurboBot', title: 'Auto Claims & Underwriter', greeting: "Hey driver! 🚗 Need roadside dispatch, a 30-second collision quote, or want to file a quick claim?" },
+        theme: { primaryColor: '#dc2626', accentColor: '#f59e0b', headerBg: '#18181b' },
+        currency: { code: 'USD', symbol: '$' }
+      },
+      luxuryestate: {
+        company: { name: 'HavenStone Wealth & Home Protection', tagline: 'Bespoke Underwriting for Distinguished Properties', phone: '+1 (877) 928-3600', email: 'concierge@havenstone.example.com' },
+        bot: { name: 'Haven Concierge', title: 'Private Estate Risk Advisor', greeting: "Good day. 🏰 I am your HavenStone risk advisor, ready to assist with high-value dwelling and contents underwriting." },
+        theme: { primaryColor: '#7c3aed', accentColor: '#fbbf24', headerBg: '#0f172a' },
+        currency: { code: 'USD', symbol: '$' }
+      },
+      africashield: {
+        company: { name: 'Kilima Bima Insurance', tagline: 'Bima Rahisi, Pap Hapo kwa Simu Yako', phone: '+254 700 000 000', email: 'huduma@kilimabima.example.co.ke' },
+        bot: { name: 'Bima Rafiki AI', title: 'Mshauri wa Bima 24/7', greeting: "Karibu Kilima Bima! 🌿 Pata bima ya gari au afya pap hapo, na ulipe kwa urahisi kupitia M-Pesa." },
+        theme: { primaryColor: '#16a34a', accentColor: '#ea580c', headerBg: '#14532d' },
+        currency: { code: 'KES', symbol: 'KSh ' }
+      }
+    };
+
+    let activeConfig = {};
+
+    function getFormConfig() {
+      return {
+        company: {
+          name: document.getElementById('cfg-company-name').value,
+          tagline: document.getElementById('cfg-company-tagline').value,
+          supportPhone: document.getElementById('cfg-company-phone').value,
+          supportEmail: document.getElementById('cfg-company-email').value
+        },
+        bot: {
+          name: document.getElementById('cfg-bot-name').value,
+          title: document.getElementById('cfg-bot-title').value,
+          greeting: document.getElementById('cfg-bot-greeting').value
+        },
+        theme: {
+          primaryColor: document.getElementById('cfg-primary-color').value,
+          primaryGradient: `linear-gradient(135deg, ${document.getElementById('cfg-primary-color').value} 0%, ${adjustColor(document.getElementById('cfg-primary-color').value, -25)} 100%)`,
+          accentColor: document.getElementById('cfg-accent-color').value,
+          headerBg: document.getElementById('cfg-header-bg').value,
+          userBubbleBg: document.getElementById('cfg-primary-color').value
+        },
+        currency: {
+          code: document.getElementById('cfg-currency-code').value,
+          symbol: document.getElementById('cfg-currency-symbol').value
+        }
+      };
+    }
+
+    function initBotWithConfig(cfg) {
+      activeConfig = cfg;
+      const mount = document.getElementById('preview-chatbot-mount');
+      mount.innerHTML = '';
+      InsuranceChatbot.init(cfg, '#preview-chatbot-mount');
+      updateEmbedDisplay(cfg);
+    }
+
+    function applyLiveChanges() {
+      const cfg = getFormConfig();
+      initBotWithConfig(cfg);
+    }
+
+    function loadPreset(key) {
+      const p = PRESETS[key] || PRESETS.aegisguard;
+      document.getElementById('cfg-company-name').value = p.company.name;
+      document.getElementById('cfg-company-tagline').value = p.company.tagline;
+      document.getElementById('cfg-company-phone').value = p.company.phone;
+      document.getElementById('cfg-company-email').value = p.company.email;
+
+      document.getElementById('cfg-bot-name').value = p.bot.name;
+      document.getElementById('cfg-bot-title').value = p.bot.title;
+      document.getElementById('cfg-bot-greeting').value = p.bot.greeting;
+
+      document.getElementById('cfg-primary-color').value = p.theme.primaryColor;
+      document.getElementById('cfg-accent-color').value = p.theme.accentColor;
+      document.getElementById('cfg-header-bg').value = p.theme.headerBg;
+
+      document.getElementById('cfg-currency-code').value = p.currency.code;
+      document.getElementById('cfg-currency-symbol').value = p.currency.symbol;
+
+      applyLiveChanges();
+    }
+
+    document.getElementById('preset-selector').addEventListener('change', (e) => {
+      loadPreset(e.target.value);
+    });
+
+    function updateEmbedDisplay(cfg) {
+      const snippet = `<!-- 1. Include Insurance Chatbot Stylesheet & Script -->\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n<!-- 2. Initialize with your company configuration -->\n<script>\n  InsuranceChatbot.init({\n    company: {\n      name: "${cfg.company.name}",\n      supportPhone: "${cfg.company.supportPhone}",\n      supportEmail: "${cfg.company.supportEmail}"\n    },\n    bot: {\n      name: "${cfg.bot.name}",\n      title: "${cfg.bot.title}"\n    },\n    theme: {\n      primaryColor: "${cfg.theme.primaryColor}",\n      accentColor: "${cfg.theme.accentColor}"\n    },\n    currency: {\n      code: "${cfg.currency.code}",\n      symbol: "${cfg.currency.symbol}"\n    }\n  });\n<\/script>`;
+      document.getElementById('embed-code-display').textContent = snippet;
+    }
+
+    function copyEmbedSnippet() {
+      const text = document.getElementById('embed-code-display').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Embed code copied to clipboard!');
+      });
+    }
+
+    function downloadConfigJson() {
+      const cfg = getFormConfig();
+      const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cfg.company.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-chatbot-config.json`;
+      a.click();
+    }
+
+    function adjustColor(hex, percent) {
+      let num = parseInt(hex.replace('#', ''), 16);
+      let r = (num >> 16) + percent;
+      let g = ((num >> 8) & 0x00FF) + percent;
+      let b = (num & 0x0000FF) + percent;
+      return '#' + (0x1000000 + (r<255?r<1?0:r:255)*0x10000 + (g<255?g<1?0:g:255)*0x100 + (b<255?b<1?0:b:255)).toString(16).slice(1);
+    }
+
+    // Initialize on page load
+    loadPreset('aegisguard');
+  </script>
+</body>
+</html>

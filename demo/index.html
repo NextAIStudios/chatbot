@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGuard Insurance | Smart Instant Protection & Real-time AI</title>
+  <meta name="description" content="Next-generation insurance powered by real-time conversational AI. Instant quotes, 1-click in-chat payments, and 2-hour claims settlement.">
+  <link rel="stylesheet" href="../dist/insurance-chatbot.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>AegisGuard</h1>
+          <span>Smart & Compassionate Insurance</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="#products" class="nav-link">Products</a>
+        <a href="#claims" class="nav-link" onclick="openChatWithPrompt('How do I file a claim?')">Claims</a>
+        <a href="#about" class="nav-link" onclick="openChatWithPrompt('What is the difference between comprehensive and third party?')">Coverage FAQ</a>
+        <a href="customizer.html" class="nav-link" style="color: #2563eb; font-weight: 700;">🎨 Brand Customizer Studio</a>
+        <button class="btn-nav-cta" onclick="openChatWithPrompt('intent_quote_auto')">Get Instant Quote</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero">
+      <div class="hero-pill">
+        ✨ 24/7 AI Concierge Active • Instant In-Chat Checkout Ready
+      </div>
+      <h2>
+        Insurance That Protects You <br>
+        <span class="hero-gradient-text">In Seconds, Not Days</span>
+      </h2>
+      <p class="hero-desc">
+        Calculate transparent quotes, settle claims in under 2 hours, and pay your premiums securely without leaving your conversation.
+      </p>
+
+      <div class="hero-ctas">
+        <button class="btn-primary-hero" onclick="openChatWithPrompt('intent_quote_auto')">
+          <span>💬 Chat with Aegis AI Advisor</span>
+        </button>
+        <a href="customizer.html" class="btn-secondary-hero">
+          🛠️ Customize for Your Company
+        </a>
+      </div>
+
+      <!-- Quick AI Interactive Prompt Chips -->
+      <div class="prompt-banner">
+        <div class="prompt-banner-title">Try Asking the AI Assistant directly:</div>
+        <div class="prompt-chips">
+          <button class="prompt-chip" onclick="openChatWithPrompt('Get an auto insurance quote')">🚗 Auto Quote</button>
+          <button class="prompt-chip" onclick="openChatWithPrompt('What is the difference between comprehensive and third party?')">🔍 Comprehensive vs Third-Party</button>
+          <button class="prompt-chip" onclick="openChatWithPrompt('How do I file a claim?')">📑 How to File a Claim</button>
+          <button class="prompt-chip" onclick="openChatWithPrompt('I want to pay my insurance premium')">💳 In-Chat Payment</button>
+          <button class="prompt-chip" onclick="openChatWithPrompt('Do you cover pre-existing health conditions?')">🩺 Pre-existing Illnesses</button>
+          <button class="prompt-chip" onclick="openChatWithPrompt('What payment methods do you accept?')">💰 Payment Methods</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Showcase -->
+    <section class="products-section" id="products">
+      <div class="section-title-wrap">
+        <h3>Tailored Coverage For Every Chapter of Life</h3>
+        <p>Pre-approved rates, zero paper forms, and immediate policy certificate issuance.</p>
+      </div>
+
+      <div class="product-cards-grid">
+        <div class="product-card">
+          <div class="prod-icon">🚗</div>
+          <h4 class="prod-name">Comprehensive Auto</h4>
+          <p class="prod-desc">Accident, collision, rollover, natural disaster, and 24/7 roadside rescue.</p>
+          <div class="prod-price">From <strong>$60/mo</strong> ($720/yr)</div>
+          <button class="btn-card-quote" onclick="openChatWithPrompt('intent_quote_auto')">Calculate Auto Quote →</button>
+        </div>
+
+        <div class="product-card">
+          <div class="prod-icon">🏥</div>
+          <h4 class="prod-name">CareVital Health</h4>
+          <p class="prod-desc">Inpatient, outpatient, prescription drug coverage, and virtual consultations.</p>
+          <div class="prod-price">From <strong>$120/mo</strong> ($1,440/yr)</div>
+          <button class="btn-card-quote" onclick="openChatWithPrompt('intent_quote_health')">Explore Health Plans →</button>
+        </div>
+
+        <div class="product-card">
+          <div class="prod-icon">🏡</div>
+          <h4 class="prod-name">Home & Property</h4>
+          <p class="prod-desc">Dwelling, personal property, fire, burglary, storm, and personal liability.</p>
+          <div class="prod-price">From <strong>$53/mo</strong> ($640/yr)</div>
+          <button class="btn-card-quote" onclick="openChatWithPrompt('intent_quote_home')">Protect Your Home →</button>
+        </div>
+
+        <div class="product-card">
+          <div class="prod-icon">🕊️</div>
+          <h4 class="prod-name">EverSure Term Life</h4>
+          <p class="prod-desc">Guaranteed financial security for your loved ones up to $1,000,000.</p>
+          <div class="prod-price">From <strong>$30/mo</strong> ($360/yr)</div>
+          <button class="btn-card-quote" onclick="openChatWithPrompt('intent_quote_life')">Review Life Plans →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="features-grid">
+      <div class="feat-box">
+        <div class="feat-icon">⚡</div>
+        <h4>Instant In-Chat Checkout</h4>
+        <p>No redirects to clunky external portals. Pay via Card, Apple Pay, or Mobile Money with automatic Certificate generation.</p>
+      </div>
+      <div class="feat-box">
+        <div class="feat-icon">🧠</div>
+        <h4>Deep Insurance Domain Brain</h4>
+        <p>Preloaded with answers on deductibles, exclusions, waiting periods, claims, and regulatory disclosures.</p>
+      </div>
+      <div class="feat-box">
+        <div class="feat-icon">🎨</div>
+        <h4>100% White-Label Ready</h4>
+        <p>Easily brandable for Auto, Health, Home, Life, or Travel insurance firms with custom colors and pricing models.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h4>AegisGuard Insurance Technologies</h4>
+        <p>Licensed under Statutory Insurance Regulation • Lic #INS-LIC-2026-882190</p>
+      </div>
+      <div>
+        <a href="customizer.html" style="color: #60a5fa; text-decoration: none; font-weight: 600;">Launch Customizer Studio →</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 AegisGuard Inc. Plug-and-Play AI Chatbot for Insurance.</span>
+      <span>256-Bit SSL Encrypted • PCI-DSS Compliant</span>
+    </div>
+  </footer>
+
+  <!-- Chatbot Widget Inclusion -->
+  <script src="../dist/insurance-chatbot.js"></script>
+  <script>
+    // Initialize the Insurance Chatbot Widget
+    const bot = InsuranceChatbot.init({
+      company: {
+        name: 'AegisGuard Insurance',
+        supportPhone: '+1 (800) 555-0199',
+        supportEmail: 'care@aegisguard.example.com'
+      },
+      theme: {
+        primaryColor: '#2563eb',
+        primaryGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+      }
+    });
+
+    // Helper to open chat with specific trigger
+    function openChatWithPrompt(promptText) {
+      InsuranceChatbot.open();
+      setTimeout(() => {
+        InsuranceChatbot.triggerAction(promptText);
+      }, 350);
+    }
+  </script>
+</body>
+</html>

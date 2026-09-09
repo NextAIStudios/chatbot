@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Plug & Play Embed Example | Insurance Chatbot</title>
+  <!-- 1. CSS Stylesheet -->
+  <link rel="stylesheet" href="../dist/insurance-chatbot.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+    h1 { font-size: 24px; margin-bottom: 12px; }
+    p { color: #64748b; font-size: 15px; margin-bottom: 24px; }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Your Existing Insurance Website</h1>
+    <p>This minimal example shows how effortlessly the chatbot widget mounts onto ANY existing webpage with zero build tools or configuration hurdles.</p>
+    <button class="btn" onclick="InsuranceChatbot.open()">💬 Open Insurance Assistant</button>
+  </div>
+
+  <!-- 2. Chatbot JavaScript Bundle -->
+  <script src="../dist/insurance-chatbot.js"></script>
+
+  <!-- 3. One-line Initialization -->
+  <script>
+    InsuranceChatbot.init({
+      company: {
+        name: 'Apex Shield Insurance'
+      }
+    });
+  </script>
+
+</body>
+</html>

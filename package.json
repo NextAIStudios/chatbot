@@ -1,0 +1,34 @@
+{
+  "name": "@nextaistudios/insurance-chatbot",
+  "version": "1.0.0",
+  "description": "Plug & Play Insurance Chatbot with built-in domain knowledge, in-chat payment checkout, and visual white-label customizer.",
+  "main": "dist/insurance-chatbot.js",
+  "style": "dist/insurance-chatbot.css",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/widget.test.js",
+    "dev": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NextAIStudios/chatbot.git"
+  },
+  "keywords": [
+    "insurance",
+    "chatbot",
+    "ai-agent",
+    "in-chat-payment",
+    "stripe",
+    "white-label",
+    "insurtech",
+    "claims",
+    "underwriting"
+  ],
+  "author": "NextAI Studios",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NextAIStudios/chatbot/issues"
+  },
+  "homepage": "https://github.com/NextAIStudios/chatbot#readme"
+}
