@@ -8,12 +8,32 @@ import { INSURANCE_KNOWLEDGE_BASE } from './knowledge-base.js';
 export class IntentEngine {
   constructor(config = {}) {
     this.config = config;
-    this.knowledgeBase = [...INSURANCE_KNOWLEDGE_BASE, ...(config.customFaqs || [])];
+    this.customKnowledge = [...(config.customKnowledge || []), ...(config.customFaqs || [])];
+    this.rebuildKnowledgeBase();
+  }
+
+  rebuildKnowledgeBase() {
+    this.knowledgeBase = [...this.customKnowledge, ...INSURANCE_KNOWLEDGE_BASE];
+  }
+
+  addCustomKnowledge(items) {
+    if (!Array.isArray(items)) items = [items];
+    const newItems = items.map(item => ({ ...item, isCustomTrained: true }));
+    this.customKnowledge = [...newItems, ...this.customKnowledge];
+    this.rebuildKnowledgeBase();
+  }
+
+  clearCustomKnowledge() {
+    this.customKnowledge = [];
+    this.rebuildKnowledgeBase();
   }
 
   updateConfig(newConfig) {
     this.config = { ...this.config, ...newConfig };
-    this.knowledgeBase = [...INSURANCE_KNOWLEDGE_BASE, ...(this.config.customFaqs || [])];
+    if (newConfig.customKnowledge || newConfig.customFaqs) {
+      this.customKnowledge = [...(newConfig.customKnowledge || []), ...(newConfig.customFaqs || [])];
+    }
+    this.rebuildKnowledgeBase();
   }
 
   /**
@@ -191,7 +211,11 @@ export class IntentEngine {
     for (const item of this.knowledgeBase) {
       if (categoryFilter && item.category !== categoryFilter) continue;
 
-      const score = this.computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords || []);
+      let score = this.computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords || []);
+      // Custom user-trained knowledge receives priority boost so company-specific answers win
+      if (item.isCustomTrained) {
+        score *= 1.35;
+      }
       if (score > highestScore) {
         highestScore = score;
         best = item;

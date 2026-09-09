@@ -177,6 +177,25 @@ export const DEFAULT_CONFIG = {
     onClaimSubmitted: null
   },
 
+  // 📚 User Uploaded Training Data & Knowledge
+  customKnowledge: [],
+
+  // 🔌 Backend API Integration (REST, Webhook, or RAG API)
+  api: {
+    enabled: false,
+    mode: 'hybrid', // 'hybrid' (API first, fallback to trained KB) | 'api_only' | 'local_only'
+    endpoint: '',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    authBearer: '',
+    payloadTemplate: '{"message": "{{message}}", "sessionId": "{{sessionId}}", "company": "{{companyName}}"}',
+    responsePath: 'reply', // dot notation (e.g. 'reply', 'answer', 'choices.0.message.content')
+    timeoutMs: 8000,
+    mockServer: false
+  },
+
   // 📑 Custom FAQs (Allows companies to inject proprietary FAQs)
   customFaqs: []
 };

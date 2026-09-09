@@ -7,6 +7,18 @@
   <meta name="description" content="Visually customize and brand your insurance chatbot. Generate 1-line embed code for any insurance website.">
   <link rel="stylesheet" href="../dist/insurance-chatbot.css">
   <link rel="stylesheet" href="demo.css">
+  <style>
+    /* Toggle switch */
+    .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    .switch input:checked + .slider { background-color: #2563eb; }
+    .switch input:checked + .slider:before { transform: translateX(18px); }
+    .btn-sample-tmpl:hover { filter: brightness(0.95); }
+    .kb-item-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; transition: border-color 0.2s; }
+    .kb-item-card:hover { border-color: #94a3b8; }
+  </style>
 </head>
 <body style="overflow: hidden;">
 
@@ -159,6 +171,127 @@
         </div>
       </div>
 
+      <!-- 📚 Train Your Bot (Custom Data Upload) -->
+      <div class="form-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4>📚 Train Your Bot (Upload Data)</h4>
+          <span id="trained-badge" style="font-size: 11px; font-weight: 700; background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 999px; border: 1px solid #a7f3d0;">
+            🟢 0 Custom Items
+          </span>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+          Upload your company's policy documents, CSV/JSON FAQs, or paste knowledge rules. The AI bot trains immediately.
+        </p>
+
+        <!-- File Upload Area -->
+        <div style="border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; background: #f8fafc; text-align: center; margin-bottom: 10px;">
+          <input type="file" id="cfg-kb-file" accept=".csv,.json,.txt,.md" style="display: none;">
+          <label for="cfg-kb-file" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size: 12px; font-weight: 700; color: #0f172a;">Click to Upload CSV, JSON, TXT, or MD</span>
+            <span style="font-size: 10px; color: #64748b;">Supports Question & Answer tables, policy summaries, markdown</span>
+          </label>
+        </div>
+
+        <!-- Quick Sample Data Buttons -->
+        <div style="margin-bottom: 8px;">
+          <div style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Quick Test Templates:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn-sample-tmpl" onclick="loadSampleTemplate('auto')" style="font-size: 10px; padding: 4px 8px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 6px; font-weight: 600; cursor: pointer;">🚗 Auto Policy Rules</button>
+            <button type="button" class="btn-sample-tmpl" onclick="loadSampleTemplate('health')" style="font-size: 10px; padding: 4px 8px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 6px; font-weight: 600; cursor: pointer;">🏥 Health & Hospitals</button>
+            <button type="button" class="btn-sample-tmpl" onclick="loadSampleTemplate('maternity')" style="font-size: 10px; padding: 4px 8px; background: #fdf4ff; color: #c026d3; border: 1px solid #f5d0fe; border-radius: 6px; font-weight: 600; cursor: pointer;">👶 Maternity & Dental</button>
+          </div>
+        </div>
+
+        <!-- Paste Textarea -->
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label style="font-size: 11px; display: flex; justify-content: space-between;">
+            <span>Or Paste Knowledge / FAQ Text:</span>
+            <span id="training-format-hint" style="color: #64748b; font-weight: normal;">Format: Auto-detect</span>
+          </label>
+          <textarea id="cfg-training-text" class="input-field" rows="4" style="font-size: 11px; font-family: monospace; resize: vertical;" placeholder="Q: What is your grace period for late premium payment?&#10;A: We offer a 30-day grace period during which all coverage remains 100% active.&#10;&#10;Q: Can I repair at my preferred mechanic?&#10;A: Yes, our comprehensive plans allow repairs at any certified auto garage nationwide."></textarea>
+        </div>
+
+        <!-- Ingest / Inspect Buttons -->
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="btn-train-now" class="btn-primary-hero" style="flex: 1; padding: 8px 12px; font-size: 12px; justify-content: center;" onclick="trainBotFromInput()">
+            🚀 Ingest & Train Bot
+          </button>
+          <button type="button" id="btn-view-kb" class="btn-secondary-hero" style="padding: 8px 10px; font-size: 11px; justify-content: center;" onclick="openTrainedKnowledgeModal()">
+            👁️ Inspect (<span id="btn-kb-count">0</span>)
+          </button>
+          <button type="button" class="btn-secondary-hero" style="padding: 8px 10px; font-size: 11px; justify-content: center; color: #dc2626;" onclick="clearAllTrainedData()" title="Clear Trained Knowledge">
+            🗑️
+          </button>
+        </div>
+        <div id="training-status-msg" style="display: none; margin-top: 8px; font-size: 11px; padding: 8px 10px; border-radius: 6px;"></div>
+      </div>
+
+      <!-- 🔌 Backend API Integration -->
+      <div class="form-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4>🔌 Backend API Integration</h4>
+          <label class="switch">
+            <input type="checkbox" id="cfg-api-enabled" onchange="toggleApiSection(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+          Forward user questions in real-time to your custom REST API, underwriting server, or RAG webhook.
+        </p>
+
+        <div id="api-config-fields" style="opacity: 0.5; pointer-events: none; transition: opacity 0.2s;">
+          <div class="form-group">
+            <label style="font-size: 11px;">Routing Mode</label>
+            <select id="cfg-api-mode" class="input-field" style="font-size: 12px;">
+              <option value="hybrid">⚡ Hybrid (Try API first, fallback to trained KB on timeout/offline)</option>
+              <option value="api_only">🔒 API Only (Strict external answers only)</option>
+              <option value="local_only">💾 Local & Trained Knowledge Only</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size: 11px;">Endpoint URL</label>
+            <input type="text" id="cfg-api-endpoint" class="input-field" style="font-size: 12px;" value="https://api.yourcarrier.com/v1/insurance-bot" placeholder="https://your-api.com/chat">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label style="font-size: 11px;">HTTP Method</label>
+              <select id="cfg-api-method" class="input-field" style="font-size: 12px;">
+                <option value="POST">POST (JSON Body)</option>
+                <option value="GET">GET (Query Param)</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label style="font-size: 11px;">Response Field</label>
+              <input type="text" id="cfg-api-response-path" class="input-field" style="font-size: 12px;" value="reply" placeholder="reply or choices.0.text">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size: 11px;">Authorization Bearer Token (Optional)</label>
+            <input type="password" id="cfg-api-auth" class="input-field" style="font-size: 12px;" placeholder="Bearer sk-your-key...">
+          </div>
+
+          <!-- Mock Simulator Checkbox -->
+          <div style="display: flex; align-items: center; gap: 8px; margin: 10px 0; background: #eff6ff; padding: 8px 10px; border-radius: 8px; border: 1px solid #dbeafe;">
+            <input type="checkbox" id="cfg-api-mock" onchange="toggleMockApi(this.checked)" checked>
+            <label for="cfg-api-mock" style="font-size: 11px; font-weight: 700; color: #1e40af; cursor: pointer;">
+              🧪 Enable Mock Server Simulator (Instant test without backend server)
+            </label>
+          </div>
+
+          <!-- Test Connection Button -->
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="btn-secondary-hero" style="flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 700; justify-content: center;" onclick="testApiConnectionLive()">
+              ⚡ Test API Connection
+            </button>
+          </div>
+          <div id="api-test-result" style="display: none; margin-top: 8px; font-size: 11px; padding: 10px; border-radius: 8px;"></div>
+        </div>
+      </div>
+
       <!-- Export Actions -->
       <div style="display: flex; gap: 8px;">
         <button class="btn-primary-hero" style="flex: 1; padding: 12px; font-size: 13px; justify-content: center;" onclick="applyLiveChanges()">
@@ -239,7 +372,238 @@
     let activeConfig = {};
     let uploadedLogoDataUrl = null;
 
+    let currentTrainedKnowledge = [];
+
+    const SAMPLE_TEMPLATES = {
+      auto: `Q: What is your policy on windshield repair vs replacement?
+A: Minor windshield chips under 2 inches are repaired 100% free with $0 deductible. Full windshield replacements have a flat $50 co-pay under Comprehensive Shield.
+
+Q: Can I take my damaged car to my own preferred mechanic?
+A: Absolutely! We honor repair estimates from any certified garage nationwide, or you can use our Aegis Direct Network for lifetime repair warranties and priority rental car drop-off.
+
+Q: How quickly is roadside assistance dispatched?
+A: Average dispatch response time is 22 minutes. You can track the towing truck in real-time via GPS right after requesting assistance in chat.`,
+
+      health: `Q: Which hospitals and medical centers are in your preferred network?
+A: Our network covers over 4,500 accredited hospitals and specialists nationwide, including Nairobi Hospital, Aga Khan University Hospital, MP Shah, and all major tier-1 facilities.
+
+Q: Are prescription maintenance medications delivered to my home?
+A: Yes! Under Gold and Platinum health tiers, your monthly chronic maintenance medications are delivered directly to your doorstep with 0 delivery fee.
+
+Q: How do I get pre-authorization for a planned surgical procedure?
+A: Simply ask me here in chat to "Submit pre-authorization" with your doctor's recommendation letter. Approvals are processed within 4 hours.`,
+
+      maternity: `Q: What is the maternity waiting period and coverage limit?
+A: Maternity coverage is subject to a 10-month waiting period from policy inception. The coverage limit is up to KSh 350,000 for normal deliveries and KSh 500,000 for C-section deliveries.
+
+Q: Are dental checkups and teeth cleaning covered?
+A: Yes, our comprehensive dental rider provides 2 free routine scaling & polishing cleanings per year, plus 80% coverage for fillings, root canals, and emergency tooth extraction.
+
+Q: Does maternity cover the newborn baby automatically?
+A: Yes! Your newborn is automatically covered under the mother's inpatient policy for the first 30 days after birth, after which they can be added as a dependent.`
+    };
+
+    function loadSampleTemplate(type) {
+      const tmpl = SAMPLE_TEMPLATES[type] || SAMPLE_TEMPLATES.auto;
+      document.getElementById('cfg-training-text').value = tmpl;
+      const hint = document.getElementById('training-format-hint');
+      hint.textContent = 'Loaded ' + type.toUpperCase() + ' template';
+      hint.style.color = '#2563eb';
+    }
+
+    function toggleApiSection(enabled) {
+      const fields = document.getElementById('api-config-fields');
+      if (enabled) {
+        fields.style.opacity = '1';
+        fields.style.pointerEvents = 'auto';
+      } else {
+        fields.style.opacity = '0.5';
+        fields.style.pointerEvents = 'none';
+      }
+      applyLiveChanges();
+    }
+
+    function toggleMockApi(isMock) {
+      const endpointInput = document.getElementById('cfg-api-endpoint');
+      if (isMock) {
+        endpointInput.dataset.savedVal = endpointInput.value;
+        endpointInput.value = 'mock://insurance-ai';
+        endpointInput.disabled = true;
+      } else {
+        endpointInput.value = endpointInput.dataset.savedVal || 'https://api.yourcarrier.com/v1/insurance-bot';
+        endpointInput.disabled = false;
+      }
+      applyLiveChanges();
+    }
+
+    async function testApiConnectionLive() {
+      const resBox = document.getElementById('api-test-result');
+      resBox.style.display = 'block';
+      resBox.style.background = '#f1f5f9';
+      resBox.style.color = '#0f172a';
+      resBox.innerHTML = '🔄 Testing connection to API endpoint...';
+
+      const cfg = getFormConfig();
+      try {
+        const result = await InsuranceChatbot.testApiConnection();
+        if (result && result.ok) {
+          resBox.style.background = '#ecfdf5';
+          resBox.style.color = '#065f46';
+          resBox.style.border = '1px solid #a7f3d0';
+          resBox.innerHTML = `<strong>✅ Connection Successful (200 OK)</strong><br>` +
+            `<span style="font-size:10px;">Latency: ${result.latencyMs}ms | Extracted Answer: "${result.sampleReply}"</span>`;
+        } else {
+          resBox.style.background = '#fef2f2';
+          resBox.style.color = '#991b1b';
+          resBox.style.border = '1px solid #fecaca';
+          resBox.innerHTML = `<strong>❌ Connection Failed</strong><br>` +
+            `<span style="font-size:10px;">${result.error || 'Unable to fetch'}<br>${result.helpTip || ''}</span>`;
+        }
+      } catch (err) {
+        resBox.style.background = '#fef2f2';
+        resBox.style.color = '#991b1b';
+        resBox.innerHTML = `<strong>❌ Error</strong>: ${err.message}`;
+      }
+    }
+
+    // Handle File Upload for Data Training (.csv, .json, .txt, .md)
+    document.getElementById('cfg-kb-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const content = evt.target.result;
+        document.getElementById('cfg-training-text').value = content;
+        const hint = document.getElementById('training-format-hint');
+        hint.textContent = 'Loaded ' + file.name;
+        hint.style.color = '#059669';
+        trainBotFromInput();
+      };
+      reader.readAsText(file);
+    });
+
+    function trainBotFromInput() {
+      const text = document.getElementById('cfg-training-text').value;
+      const status = document.getElementById('training-status-msg');
+      if (!text || !text.trim()) {
+        status.style.display = 'block';
+        status.style.background = '#fffbeb';
+        status.style.color = '#92400e';
+        status.textContent = 'Please enter FAQ text or choose a sample template first.';
+        return;
+      }
+
+      status.style.display = 'block';
+      status.style.background = '#eff6ff';
+      status.style.color = '#1e40af';
+      status.innerHTML = '⚡ Parsing tokens and training chatbot NLP memory...';
+
+      setTimeout(() => {
+        const trainResult = InsuranceChatbot.trainData(text);
+        if (trainResult && trainResult.success) {
+          currentTrainedKnowledge = InsuranceChatbot.getTrainedData();
+          updateTrainedUiBadges();
+
+          status.style.background = '#ecfdf5';
+          status.style.color = '#065f46';
+          status.style.border = '1px solid #a7f3d0';
+          status.innerHTML = `🎉 <strong>Training Complete!</strong> Ingested <strong>${trainResult.countAdded}</strong> custom Q&A items (${currentTrainedKnowledge.length} total active). The bot in preview is now trained to answer questions from your data!`;
+          
+          updateEmbedDisplay(getFormConfig());
+        } else {
+          status.style.background = '#fef2f2';
+          status.style.color = '#991b1b';
+          status.textContent = 'Could not parse text. Please ensure Question and Answer format.';
+        }
+      }, 300);
+    }
+
+    function updateTrainedUiBadges() {
+      const count = currentTrainedKnowledge.length;
+      document.getElementById('trained-badge').textContent = `🟢 ${count} Custom Items`;
+      document.getElementById('btn-kb-count').textContent = count;
+      document.getElementById('kb-modal-count').textContent = `${count} items active`;
+    }
+
+    function clearAllTrainedData() {
+      if (confirm('Clear all custom trained knowledge items?')) {
+        currentTrainedKnowledge = [];
+        InsuranceChatbot.clearTrainedData();
+        updateTrainedUiBadges();
+        document.getElementById('cfg-training-text').value = '';
+        const status = document.getElementById('training-status-msg');
+        status.style.display = 'block';
+        status.style.background = '#f1f5f9';
+        status.style.color = '#475569';
+        status.style.border = 'none';
+        status.textContent = 'Custom training data cleared. Reverted to default knowledge base.';
+        applyLiveChanges();
+      }
+    }
+
+    function openTrainedKnowledgeModal() {
+      renderTrainedKnowledgeList();
+      document.getElementById('kb-inspector-modal').style.display = 'flex';
+    }
+
+    function closeTrainedKnowledgeModal() {
+      document.getElementById('kb-inspector-modal').style.display = 'none';
+    }
+
+    function renderTrainedKnowledgeList() {
+      const list = document.getElementById('kb-inspector-list');
+      if (currentTrainedKnowledge.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding: 40px; color:#64748b;">
+          <div style="font-size:32px; margin-bottom:8px;">📚</div>
+          <strong>No custom training items ingested yet.</strong><br>
+          <span style="font-size:12px;">Upload a CSV, JSON, or paste text in the studio sidebar to train the bot.</span>
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = currentTrainedKnowledge.map((item) => `
+        <div class="kb-item-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <div style="font-weight:700; font-size:13px; color:#0f172a;">Q: ${item.question}</div>
+            <button onclick="deleteTrainedItem('${item.id}')" style="background:none; border:none; color:#ef4444; font-size:11px; font-weight:700; cursor:pointer; padding:2px 6px;">✕ Delete</button>
+          </div>
+          <div style="font-size:12px; color:#334155; margin-top:4px; line-height:1.5;">${(item.answer || '').replace(/\n/g, '<br>')}</div>
+          <div style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+            <span style="font-size:10px; background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-weight:600;">${item.category || 'general'}</span>
+            ${(item.keywords || []).slice(0, 4).map(k => `<span style="font-size:10px; background:#f1f5f9; color:#64748b; padding:2px 6px; border-radius:4px;">#${k}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteTrainedItem(id) {
+      currentTrainedKnowledge = currentTrainedKnowledge.filter(item => item.id !== id);
+      InsuranceChatbot.clearTrainedData();
+      if (currentTrainedKnowledge.length > 0) {
+        InsuranceChatbot.updateConfig({ customKnowledge: currentTrainedKnowledge });
+      }
+      updateTrainedUiBadges();
+      renderTrainedKnowledgeList();
+    }
+
+    function downloadTrainedDataJson() {
+      const blob = new Blob([JSON.stringify(currentTrainedKnowledge, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `custom-insurance-knowledge-${Date.now()}.json`;
+      a.click();
+    }
+
     function getFormConfig() {
+      const apiEnabled = document.getElementById('cfg-api-enabled').checked;
+      const apiEndpoint = document.getElementById('cfg-api-endpoint').value;
+      const apiMethod = document.getElementById('cfg-api-method').value;
+      const apiResponsePath = document.getElementById('cfg-api-response-path').value;
+      const apiAuth = document.getElementById('cfg-api-auth').value;
+      const apiMode = document.getElementById('cfg-api-mode').value;
+      const isMock = document.getElementById('cfg-api-mock').checked;
+
       return {
         company: {
           name: document.getElementById('cfg-company-name').value,
@@ -264,6 +628,16 @@
         currency: {
           code: document.getElementById('cfg-currency-code').value,
           symbol: document.getElementById('cfg-currency-symbol').value
+        },
+        customKnowledge: currentTrainedKnowledge,
+        api: {
+          enabled: apiEnabled,
+          mode: apiMode,
+          endpoint: isMock ? 'mock://insurance-ai' : apiEndpoint,
+          method: apiMethod,
+          responsePath: apiResponsePath,
+          authBearer: apiAuth,
+          mockServer: isMock
         }
       };
     }
@@ -346,7 +720,15 @@
     });
 
     function updateEmbedDisplay(cfg) {
-      const snippet = `<!-- 1. Include Insurance Chatbot Stylesheet & Script -->\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n<!-- 2. Initialize with your company configuration -->\n<script>\n  InsuranceChatbot.init({\n    company: {\n      name: "${cfg.company.name}",\n      supportPhone: "${cfg.company.supportPhone}",\n      supportEmail: "${cfg.company.supportEmail}"\n    },\n    bot: {\n      name: "${cfg.bot.name}",\n      title: "${cfg.bot.title}"\n    },\n    theme: {\n      primaryColor: "${cfg.theme.primaryColor}",\n      accentColor: "${cfg.theme.accentColor}"\n    },\n    currency: {\n      code: "${cfg.currency.code}",\n      symbol: "${cfg.currency.symbol}"\n    }\n  });\n<\/script>`;
+      let extraConfig = '';
+      if (cfg.customKnowledge && cfg.customKnowledge.length > 0) {
+        extraConfig += `,\n    // Custom Uploaded Training Knowledge (${cfg.customKnowledge.length} items)\n    customKnowledge: ${JSON.stringify(cfg.customKnowledge.slice(0, 3), null, 4)}${cfg.customKnowledge.length > 3 ? ' /* ...+' + (cfg.customKnowledge.length - 3) + ' more items */' : ''}`;
+      }
+      if (cfg.api && cfg.api.enabled) {
+        extraConfig += `,\n    // Backend API Integration\n    api: {\n      enabled: true,\n      mode: "${cfg.api.mode}",\n      endpoint: "${cfg.api.endpoint}",\n      method: "${cfg.api.method}",\n      responsePath: "${cfg.api.responsePath}"\n    }`;
+      }
+
+      const snippet = `<!-- 1. Include Insurance Chatbot Stylesheet & Script -->\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n<!-- 2. Initialize with your company configuration -->\n<script>\n  InsuranceChatbot.init({\n    company: {\n      name: "${cfg.company.name}",\n      supportPhone: "${cfg.company.supportPhone}",\n      supportEmail: "${cfg.company.supportEmail}"\n    },\n    bot: {\n      name: "${cfg.bot.name}",\n      title: "${cfg.bot.title}"\n    },\n    theme: {\n      primaryColor: "${cfg.theme.primaryColor}",\n      accentColor: "${cfg.theme.accentColor}"\n    },\n    currency: {\n      code: "${cfg.currency.code}",\n      symbol: "${cfg.currency.symbol}"\n    }${extraConfig}\n  });\n<\/script>`;
       document.getElementById('embed-code-display').textContent = snippet;
     }
 
@@ -378,5 +760,27 @@
     // Initialize on page load
     loadPreset('aegisguard');
   </script>
+  <!-- Modal: Inspect & Manage Trained Knowledge -->
+  <div id="kb-inspector-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; width: 90%; max-width: 680px; max-height: 85vh; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800;">📚 Trained Knowledge Base Inspector</h3>
+          <span style="font-size: 12px; color: #64748b;">Active custom-trained items indexed in the chatbot's NLP memory:</span>
+        </div>
+        <button onclick="closeTrainedKnowledgeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+      </div>
+      <div id="kb-inspector-list" style="padding: 18px 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Items dynamically rendered here -->
+      </div>
+      <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <span id="kb-modal-count" style="font-size: 12px; font-weight: 600; color: #64748b;">0 items active</span>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="downloadTrainedDataJson()" class="btn-secondary-hero" style="font-size: 12px; padding: 6px 14px;">💾 Export KB JSON</button>
+          <button onclick="closeTrainedKnowledgeModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 14px;">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

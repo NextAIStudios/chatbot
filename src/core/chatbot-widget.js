@@ -4,6 +4,8 @@
 
 import { DEFAULT_CONFIG } from '../config/default-config.js';
 import { IntentEngine } from '../nlp/intent-engine.js';
+import { DataTrainingEngine } from '../nlp/data-training-engine.js';
+import { BackendConnector } from '../api/backend-connector.js';
 import { QuoteFlow } from '../flows/quote-flow.js';
 import { ClaimsFlow } from '../flows/claims-flow.js';
 import { PolicyLookupFlow } from '../flows/policy-lookup-flow.js';
@@ -15,6 +17,14 @@ export class InsuranceChatbotWidget {
   constructor(customConfig = {}) {
     this.config = this.mergeConfig(DEFAULT_CONFIG, customConfig);
     this.intentEngine = new IntentEngine(this.config);
+    this.dataTrainer = new DataTrainingEngine(this.config.customKnowledge || this.config.customFaqs || []);
+    this.backendConnector = new BackendConnector(this.config.api || {});
+
+    // Ingest custom knowledge if provided
+    if (this.dataTrainer.getItemCount() > 0) {
+      this.intentEngine.addCustomKnowledge(this.dataTrainer.getItems());
+    }
+
     this.quoteFlow = new QuoteFlow(this.config);
     this.claimsFlow = new ClaimsFlow(this.config);
     this.policyLookupFlow = new PolicyLookupFlow(this.config);
@@ -27,6 +37,7 @@ export class InsuranceChatbotWidget {
       this.handleAction(action, payload);
     });
 
+    this.sessionId = 'session_' + Math.random().toString(36).substring(2, 9);
     this.isInitialized = false;
   }
 
@@ -120,42 +131,74 @@ export class InsuranceChatbotWidget {
     this.processUserInput(payload);
   }
 
-  processUserInput(text) {
+  async processUserInput(text) {
     this.ui.appendUserMessage(text);
     this.ui.showTypingIndicator();
 
+    // 1. Check if Quote Flow is active
+    if (this.quoteFlow.state.active) {
+      const flowResult = this.quoteFlow.handleInput(text);
+      if (flowResult) {
+        if (flowResult.quoteCard) {
+          this.checkoutFlow.setQuote(flowResult.quoteCard);
+        }
+        this.ui.appendBotMessage(flowResult.message, flowResult);
+        return;
+      }
+    }
+
+    // 2. Check if Claims Flow is active
+    if (this.claimsFlow.state.active) {
+      const flowResult = this.claimsFlow.handleInput(text);
+      if (flowResult) {
+        this.ui.appendBotMessage(flowResult.message, flowResult);
+        return;
+      }
+    }
+
+    // 3. Check if Policy Lookup Flow is active
+    if (this.policyLookupFlow.active) {
+      const flowResult = this.policyLookupFlow.handleInput(text);
+      if (flowResult) {
+        this.ui.appendBotMessage(flowResult.message, flowResult);
+        return;
+      }
+    }
+
+    // 4. Backend API Query (if enabled)
+    if (this.backendConnector && this.backendConnector.isEnabled()) {
+      const mode = this.backendConnector.getMode();
+      if (mode === 'api_only' || mode === 'hybrid') {
+        const context = {
+          message: text,
+          sessionId: this.sessionId,
+          companyName: this.config.company?.name || 'Insurance Company'
+        };
+
+        const apiRes = await this.backendConnector.query(text, context);
+        if (apiRes.success && apiRes.reply) {
+          this.ui.appendBotMessage(apiRes.reply, {
+            quickReplies: apiRes.quickReplies || this.config.bot?.initialQuickReplies
+          });
+          if (apiRes.action === 'OPEN_QUOTE_WIZARD') this.startQuote();
+          else if (apiRes.action === 'OPEN_CLAIMS_WIZARD') this.startClaim();
+          else if (apiRes.action === 'OPEN_PAYMENT_WIZARD') this.startPayment();
+          return;
+        }
+
+        if (mode === 'api_only') {
+          this.ui.appendBotMessage(`⚠️ Unable to reach knowledge backend API (${apiRes.error || 'Request error'}). Please contact support at ${this.config.company?.supportPhone || '+1 (800) 555-0199'}.`);
+          return;
+        }
+
+        // Hybrid mode: smoothly fall through to local trained NLP
+        console.info('Backend API unfulfilled in hybrid mode, falling back to local & custom trained NLP:', apiRes.error);
+      }
+    }
+
+    // 5. Intent Classification & Knowledge Base (Local & Custom Trained)
+    const delay = this.config.bot?.typingDelayMs || 300;
     setTimeout(() => {
-      // 1. Check if Quote Flow is active
-      if (this.quoteFlow.state.active) {
-        const flowResult = this.quoteFlow.handleInput(text);
-        if (flowResult) {
-          if (flowResult.quoteCard) {
-            this.checkoutFlow.setQuote(flowResult.quoteCard);
-          }
-          this.ui.appendBotMessage(flowResult.message, flowResult);
-          return;
-        }
-      }
-
-      // 2. Check if Claims Flow is active
-      if (this.claimsFlow.state.active) {
-        const flowResult = this.claimsFlow.handleInput(text);
-        if (flowResult) {
-          this.ui.appendBotMessage(flowResult.message, flowResult);
-          return;
-        }
-      }
-
-      // 3. Check if Policy Lookup Flow is active
-      if (this.policyLookupFlow.active) {
-        const flowResult = this.policyLookupFlow.handleInput(text);
-        if (flowResult) {
-          this.ui.appendBotMessage(flowResult.message, flowResult);
-          return;
-        }
-      }
-
-      // 4. Intent Classification
       const res = this.intentEngine.classify(text);
 
       if (res.action === 'OPEN_QUOTE_WIZARD') {
@@ -179,11 +222,11 @@ export class InsuranceChatbotWidget {
         return;
       }
 
-      // 5. Default Bot Reply
+      // Default Bot Reply
       this.ui.appendBotMessage(res.reply, {
         quickReplies: res.suggestedQuickReplies || this.config.bot?.initialQuickReplies
       });
-    }, this.config.bot?.typingDelayMs || 400);
+    }, delay);
   }
 
   startQuote(productType = 'auto') {
@@ -241,8 +284,45 @@ export class InsuranceChatbotWidget {
 
   updateConfig(newConfig) {
     this.config = this.mergeConfig(this.config, newConfig);
+    if (newConfig.customKnowledge) {
+      this.dataTrainer.clear();
+      this.dataTrainer.ingestArray(newConfig.customKnowledge);
+      this.intentEngine.clearCustomKnowledge();
+      this.intentEngine.addCustomKnowledge(this.dataTrainer.getItems());
+    }
+    if (newConfig.api) {
+      this.backendConnector.updateConfig(this.config.api);
+    }
     this.intentEngine.updateConfig(this.config);
     this.ui.applyThemeStyles();
+  }
+
+  trainData(content, format = 'auto') {
+    const result = this.dataTrainer.trainFromText(content, format);
+    this.intentEngine.addCustomKnowledge(result.items);
+    this.config.customKnowledge = this.dataTrainer.getItems();
+    return result;
+  }
+
+  getTrainedData() {
+    return this.dataTrainer.getItems();
+  }
+
+  clearTrainedData() {
+    this.dataTrainer.clear();
+    this.intentEngine.clearCustomKnowledge();
+    this.config.customKnowledge = [];
+  }
+
+  async testApiConnection() {
+    return await this.backendConnector.testConnection({
+      companyName: this.config.company?.name
+    });
+  }
+
+  setApiConfig(apiConfig) {
+    this.config.api = { ...this.config.api, ...apiConfig };
+    this.backendConnector.updateConfig(this.config.api);
   }
 
   open() {
@@ -268,9 +348,11 @@ if (typeof window !== 'undefined') {
   window.InsuranceChatbot = {
     instance: null,
     init: function(config = {}, selector = null) {
-      if (!this.instance) {
+      if (!this.instance || selector) {
         this.instance = new InsuranceChatbotWidget(config);
         this.instance.init(selector);
+      } else {
+        this.instance.updateConfig(config);
       }
       return this.instance;
     },
@@ -279,6 +361,11 @@ if (typeof window !== 'undefined') {
     toggle: function() { this.instance?.toggle(); },
     triggerAction: function(payload) { this.instance?.triggerAction(payload); },
     updateConfig: function(cfg) { this.instance?.updateConfig(cfg); },
+    trainData: function(content, format) { return this.instance?.trainData(content, format); },
+    getTrainedData: function() { return this.instance?.getTrainedData() || []; },
+    clearTrainedData: function() { this.instance?.clearTrainedData(); },
+    testApiConnection: function() { return this.instance?.testApiConnection(); },
+    setApiConfig: function(cfg) { this.instance?.setApiConfig(cfg); },
     printCertificate: function(receipt) {
       const targetReceipt = receipt || window.__lastIssuedReceipt;
       if (targetReceipt) {

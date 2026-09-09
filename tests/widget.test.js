@@ -100,6 +100,51 @@ const receiptHtml = ReceiptGenerator.renderReceiptHtml(receiptData);
 assert(receiptHtml.includes('ACTIVE POLICY ISSUED'), 'Receipt HTML contains ACTIVE POLICY ISSUED badge');
 assert(receiptHtml.includes(receiptData.policyNumber), 'Receipt HTML contains policy number');
 
+console.log('\n--- 📚 5. Testing Custom User Data Training Engine ---');
+import { DataTrainingEngine } from '../src/nlp/data-training-engine.js';
+
+const trainer = new DataTrainingEngine();
+
+// CSV Test
+const sampleCSV = `Question,Answer,Category\n"What is your grace period?","We offer a 30-day grace period with 100% active coverage.","billing"\n"Do you allow preferred garages?","Yes, you can choose any certified garage nationwide.","claims"`;
+const csvRes = trainer.trainFromText(sampleCSV, 'csv');
+assert(csvRes.countAdded === 2, 'DataTrainingEngine parses CSV into structured Q&A items');
+
+// JSON Test
+const sampleJSON = JSON.stringify([
+  { question: 'What is your maternity waiting period?', answer: 'Our maternity waiting period is 10 months from inception.', category: 'health' }
+]);
+const jsonRes = trainer.trainFromText(sampleJSON, 'json');
+assert(jsonRes.countAdded === 1, 'DataTrainingEngine parses JSON array format');
+
+// Text Q: / A: Test
+const sampleText = `Q: Are drone collisions covered?\nA: Yes, commercial and recreational drone liability is covered up to KSh 1,000,000.`;
+const textRes = trainer.trainFromText(sampleText, 'auto');
+assert(textRes.countAdded === 1, 'DataTrainingEngine parses plain text Q: / A: format');
+assert(trainer.getItemCount() === 4, `Total custom items ingested: ${trainer.getItemCount()}`);
+
+// Verify priority classification in IntentEngine
+engine.addCustomKnowledge(trainer.getItems());
+const customRes = engine.classify('What is your grace period for paying?');
+assert(customRes.intent === 'faq' && customRes.reply.includes('30-day grace period'), 'IntentEngine matches custom user-trained data with priority');
+
+console.log('\n--- 🔌 6. Testing Backend API Connector ---');
+import { BackendConnector } from '../src/api/backend-connector.js';
+
+const connector = new BackendConnector({
+  enabled: true,
+  endpoint: 'mock://insurance-ai',
+  mode: 'hybrid',
+  mockServer: true
+});
+
+assert(connector.isEnabled() === true, 'BackendConnector is enabled');
+const testConn = await connector.testConnection();
+assert(testConn.ok === true && testConn.status === 200, 'Backend API mock connection test passed with 200 OK');
+
+const queryRes = await connector.query('What is the deductible on my corporate fleet?');
+assert(queryRes.success === true && queryRes.reply.includes('Backend API Response'), 'BackendConnector processes query and returns structured response');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);

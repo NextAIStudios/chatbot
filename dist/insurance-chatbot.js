@@ -246,7 +246,297 @@
     return matches / Math.sqrt(queryTokens.length * targetCount);
   }
 
-  function classifyQuery(text, config, customFaqs) {
+  // 3b. DATA TRAINING & INGESTION ENGINE
+  function extractTokens(text) {
+    if (!text) return [];
+    var stopWords = ['what', 'is', 'the', 'how', 'do', 'can', 'are', 'in', 'to', 'for', 'of', 'and', 'a', 'an', 'my', 'your', 'we', 'you', 'it', 'on', 'with', 'at', 'by', 'this', 'that', 'from', 'our', 'will', 'does'];
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(function(w) { return w.length > 2 && stopWords.indexOf(w) === -1; });
+  }
+
+  function parseCSVData(csvText) {
+    if (!csvText || !csvText.trim()) return [];
+    var lines = csvText.split(/\r?\n/).filter(function(l) { return l.trim().length > 0; });
+    if (lines.length === 0) return [];
+
+    function parseRow(row) {
+      var result = [];
+      var current = '';
+      var inQuotes = false;
+      for (var i = 0; i < row.length; i++) {
+        var char = row[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if ((char === ',' || char === '\t') && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+      return result;
+    }
+
+    var first = parseRow(lines[0]);
+    var lower = first.map(function(h) { return h.toLowerCase(); });
+    var hasHeader = lower.some(function(h) { return ['question', 'query', 'prompt', 'q', 'title'].indexOf(h) !== -1; });
+
+    var qIdx = 0, aIdx = 1, catIdx = -1, kwIdx = -1;
+    if (hasHeader) {
+      qIdx = lower.findIndex(function(h) { return ['question', 'query', 'prompt', 'q', 'title'].indexOf(h) !== -1; });
+      var foundA = lower.findIndex(function(h) { return ['answer', 'response', 'reply', 'a', 'content'].indexOf(h) !== -1; });
+      if (foundA !== -1) aIdx = foundA;
+      catIdx = lower.findIndex(function(h) { return ['category', 'topic', 'tag', 'department'].indexOf(h) !== -1; });
+      kwIdx = lower.findIndex(function(h) { return ['keywords', 'tags', 'synonyms'].indexOf(h) !== -1; });
+    }
+
+    var items = [];
+    var start = hasHeader ? 1 : 0;
+    for (var i = start; i < lines.length; i++) {
+      var cols = parseRow(lines[i]);
+      var q = cols[qIdx] || '';
+      var a = cols[aIdx] || '';
+      if (!q || !a) continue;
+      var cat = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx] : 'general';
+      var kw = (kwIdx >= 0 && cols[kwIdx]) ? cols[kwIdx].split(/[,;|]/).map(function(s) { return s.trim(); }) : extractTokens(q);
+      items.push({
+        id: 'custom_kb_' + Date.now() + '_' + items.length,
+        question: q.trim(),
+        answer: a.trim(),
+        category: cat.trim(),
+        keywords: kw,
+        isCustomTrained: true
+      });
+    }
+    return items;
+  }
+
+  function parseJSONData(jsonText) {
+    var data = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
+    var items = [];
+    if (Array.isArray(data)) {
+      data.forEach(function(item, idx) {
+        var q = item.question || item.query || item.q || item.title;
+        var a = item.answer || item.response || item.reply || item.a || item.content;
+        if (q && a) {
+          items.push({
+            id: item.id || ('custom_kb_' + Date.now() + '_' + idx),
+            question: String(q).trim(),
+            answer: String(a).trim(),
+            category: item.category || 'general',
+            keywords: Array.isArray(item.keywords) ? item.keywords : extractTokens(String(q)),
+            isCustomTrained: true
+          });
+        }
+      });
+    } else if (data && typeof data === 'object') {
+      var nested = data.faqs || data.items || data.data || data.questions;
+      if (Array.isArray(nested)) return parseJSONData(nested);
+      var idx = 0;
+      for (var k in data) {
+        if (typeof data[k] === 'string' || (data[k] && data[k].answer)) {
+          var ans = typeof data[k] === 'string' ? data[k] : data[k].answer;
+          items.push({
+            id: 'custom_kb_' + Date.now() + '_' + (idx++),
+            question: k.trim(),
+            answer: String(ans).trim(),
+            category: 'general',
+            keywords: extractTokens(k),
+            isCustomTrained: true
+          });
+        }
+      }
+    }
+    return items;
+  }
+
+  function parsePlainTextData(rawText) {
+    if (!rawText || !rawText.trim()) return [];
+    var text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    var items = [];
+
+    var lines = text.split('\n');
+    var currentQ = null;
+    var currentA = [];
+    var currentCat = 'general';
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var trimmed = line.trim();
+      var qMatch = trimmed.match(/^(?:Q|Question)\s*:\s*(.+)$/i);
+      var aMatch = trimmed.match(/^(?:A|Answer)\s*:\s*(.*)$/i);
+
+      if (qMatch) {
+        if (currentQ && currentA.length > 0) {
+          var ans = currentA.join('\n').trim();
+          if (ans) {
+            items.push({
+              id: 'custom_kb_' + Date.now() + '_' + items.length,
+              question: currentQ.trim(),
+              answer: ans,
+              category: currentCat,
+              keywords: extractTokens(currentQ),
+              isCustomTrained: true
+            });
+          }
+        }
+        currentQ = qMatch[1].trim();
+        currentA = [];
+      } else if (aMatch && currentQ) {
+        if (aMatch[1]) currentA.push(aMatch[1]);
+      } else if (currentQ && currentA.length > 0) {
+        currentA.push(line);
+      }
+    }
+
+    if (currentQ && currentA.length > 0) {
+      var lastAns = currentA.join('\n').trim();
+      if (lastAns) {
+        items.push({
+          id: 'custom_kb_' + Date.now() + '_' + items.length,
+          question: currentQ.trim(),
+          answer: lastAns,
+          category: currentCat,
+          keywords: extractTokens(currentQ),
+          isCustomTrained: true
+        });
+      }
+    }
+
+    if (items.length > 0) return items;
+
+    var mdRegex = /(?:^|\n)#{1,4}\s*([^\n]+)\s*\n([\s\S]+?)(?=(?:\n#{1,4}\s*)|$)/g;
+    while ((match = mdRegex.exec(rawText)) !== null) {
+      var mq = match[1].trim();
+      var ma = match[2].trim();
+      if (mq && ma) {
+        items.push({
+          id: 'custom_kb_' + Date.now() + '_' + items.length,
+          question: mq,
+          answer: ma,
+          category: 'general',
+          keywords: extractTokens(mq),
+          isCustomTrained: true
+        });
+      }
+    }
+    if (items.length > 0) return items;
+
+    var paras = rawText.split(/\n\s*\n/).filter(function(p) { return p.trim().length > 15; });
+    paras.forEach(function(p, idx) {
+      var lines = p.trim().split('\n');
+      var f = lines[0].replace(/^[0-9]+[\.\)]\s*/, '').trim();
+      items.push({
+        id: 'custom_kb_' + Date.now() + '_' + idx,
+        question: f.length < 120 ? f : f.slice(0, 117) + '...',
+        answer: p.trim(),
+        category: 'document',
+        keywords: extractTokens(f),
+        isCustomTrained: true
+      });
+    });
+    return items;
+  }
+
+  function parseTrainingData(content, format) {
+    format = format || 'auto';
+    var trimmed = (content || '').trim();
+    var parsed = [];
+    if (format === 'json' || (format === 'auto' && (trimmed.charAt(0) === '{' || trimmed.charAt(0) === '['))) {
+      try { parsed = parseJSONData(trimmed); } catch(e) {}
+    }
+    if (parsed.length === 0 && (format === 'csv' || (format === 'auto' && (trimmed.indexOf(',') !== -1 || trimmed.indexOf('\t') !== -1) && trimmed.indexOf('\n') !== -1))) {
+      parsed = parseCSVData(trimmed);
+    }
+    if (parsed.length === 0) {
+      parsed = parsePlainTextData(trimmed);
+    }
+    return parsed;
+  }
+
+  // 3c. BACKEND API CONNECTOR
+  function queryBackendApi(apiConfig, text, context, callback) {
+    if (!apiConfig || (!apiConfig.endpoint && !apiConfig.mockServer)) {
+      callback({ success: false, error: 'API not configured' });
+      return;
+    }
+
+    if (apiConfig.mockServer || apiConfig.endpoint === 'mock://insurance-ai') {
+      setTimeout(function() {
+        callback({
+          success: true,
+          reply: '[⚡ Backend API Response] "' + text + '" was verified and answered by your custom backend underwriter for ' + (context.companyName || 'AegisGuard') + '.',
+          latencyMs: 75,
+          raw: { status: 'success', query: text, timestamp: new Date().toISOString() }
+        });
+      }, 75);
+      return;
+    }
+
+    var method = (apiConfig.method || 'POST').toUpperCase();
+    var url = apiConfig.endpoint;
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, apiConfig.headers || {});
+    if (apiConfig.authBearer) {
+      headers['Authorization'] = apiConfig.authBearer.indexOf('Bearer ') === 0 ? apiConfig.authBearer : ('Bearer ' + apiConfig.authBearer);
+    }
+
+    var body = null;
+    if (method === 'GET') {
+      url += (url.indexOf('?') === -1 ? '?' : '&') + 'query=' + encodeURIComponent(text);
+    } else {
+      var template = apiConfig.payloadTemplate || '{"message": "{{message}}", "sessionId": "{{sessionId}}", "company": "{{companyName}}"}';
+      body = template
+        .replace(/\{\{message\}\}/g, JSON.stringify(text).slice(1, -1))
+        .replace(/\{\{sessionId\}\}/g, context.sessionId || 'session_web')
+        .replace(/\{\{companyName\}\}/g, (context.companyName || 'Insurance Company').replace(/"/g, '\\"'));
+    }
+
+    var startTime = Date.now();
+    fetch(url, { method: method, headers: headers, body: body })
+      .then(function(res) {
+        var latency = Date.now() - startTime;
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+        }
+        return res.json().then(function(data) {
+          return { data: data, latency: latency };
+        });
+      })
+      .then(function(result) {
+        var path = apiConfig.responsePath || 'reply';
+        var reply = result.data;
+        if (path && typeof result.data === 'object' && result.data !== null) {
+          var parts = path.split('.');
+          var curr = result.data;
+          for (var i = 0; i < parts.length; i++) {
+            if (curr) curr = curr[parts[i]];
+          }
+          if (curr) reply = curr;
+        }
+        if (typeof reply === 'object') reply = reply.content || reply.text || reply.message || JSON.stringify(reply);
+        callback({
+          success: true,
+          reply: String(reply),
+          latencyMs: result.latency,
+          raw: result.data,
+          quickReplies: result.data.quickReplies || null,
+          action: result.data.action || null
+        });
+      })
+      .catch(function(err) {
+        callback({
+          success: false,
+          latencyMs: Date.now() - startTime,
+          error: err.message
+        });
+      });
+  }
+
+  function classifyQuery(text, config, customFaqs, customKnowledge) {
     var raw = (text || '').trim();
     var queryTokens = tokenize(raw);
     var lower = raw.toLowerCase();
@@ -297,12 +587,13 @@
       return { intent: 'start_quote_flow', productType: prod, action: 'OPEN_QUOTE_WIZARD' };
     }
 
-    // Knowledge Base Search
-    var allFaqs = INSURANCE_KNOWLEDGE_BASE.concat(customFaqs || []);
+    // Knowledge Base Search (Custom Trained Knowledge has priority boost)
+    var allFaqs = (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
     var best = null;
     var highest = 0;
     allFaqs.forEach(function(item) {
       var score = computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords);
+      if (item.isCustomTrained) score *= 1.35;
       if (score > highest) {
         highest = score;
         best = item;
@@ -315,7 +606,7 @@
 
     return {
       intent: 'fallback',
-      reply: "I want to make sure you get the exact information you need! Here are some things I can do for you right now:\n\n• **Instant Quotes:** Real-time pricing for Auto, Health, Home, Life, or Travel.\n• **Claims & Emergency:** Step-by-step incident reporting.\n• **In-Chat Payment:** Instant checkout via Card, Apple Pay, or Mobile Money.\n\nPick an option below or type your question!",
+      reply: "I want to make sure you get the exact information you need! Here are some things I can do for you right now:\n\n• **Instant Quotes:** Real-time pricing for Auto, Health, Home, Life, or Travel.\n• **Claims & Emergency:** Step-by-step incident reporting.\n• **In-Chat Payment:** Instant checkout via M-Pesa or Card.\n\nPick an option below or type your question!",
       suggestedQuickReplies: [
         { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
         { label: '🏥 Health Plans', payload: 'intent_quote_health' },
@@ -329,6 +620,12 @@
   // 4. MAIN CHATBOT WIDGET CONTROLLER
   function InsuranceChatbotController(userConfig) {
     this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});
+    this.trainedKnowledge = [];
+    if (this.config.customKnowledge && Array.isArray(this.config.customKnowledge)) {
+      this.trainedKnowledge = this.config.customKnowledge.map(function(item) {
+        return Object.assign({}, item, { isCustomTrained: true });
+      });
+    }
     this.activeQuote = null;
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
@@ -604,37 +901,71 @@
     this.appendUser(text);
     this.showTyping();
 
+    // 1. Quote Flow Active?
+    if (self.quoteState.active) {
+      setTimeout(function() { self.processQuoteStep(text); }, self.config.bot?.typingDelayMs || 400);
+      return;
+    }
+
+    // 2. Claims Flow Active?
+    if (self.claimState.active) {
+      setTimeout(function() { self.processClaimStep(text); }, self.config.bot?.typingDelayMs || 400);
+      return;
+    }
+
+    // 3. Backend API configured & active?
+    var api = self.config.api;
+    if (api && api.enabled && (api.endpoint || api.mockServer)) {
+      var mode = api.mode || 'hybrid';
+      if (mode === 'api_only' || mode === 'hybrid') {
+        var context = {
+          message: text,
+          sessionId: 'session_web_' + (self.sessionKey || (self.sessionKey = Math.random().toString(36).slice(2))),
+          companyName: self.config.company?.name || 'Insurance Carrier'
+        };
+
+        queryBackendApi(api, text, context, function(apiRes) {
+          if (apiRes.success && apiRes.reply) {
+            self.appendBot(apiRes.reply, { quickReplies: apiRes.quickReplies });
+            if (apiRes.action === 'OPEN_QUOTE_WIZARD') self.startQuoteWizard('auto');
+            else if (apiRes.action === 'OPEN_CLAIMS_WIZARD') self.startClaimWizard();
+            else if (apiRes.action === 'OPEN_PAYMENT_WIZARD') self.startInChatCheckout();
+            return;
+          }
+
+          if (mode === 'api_only') {
+            self.appendBot('⚠️ Could not connect to the underwriting backend API (' + (apiRes.error || 'Network error') + '). Please contact support at ' + (self.config.company?.supportPhone || '+1 (800) 555-0199') + '.');
+            return;
+          }
+
+          // Hybrid fallback to local NLP + trained data
+          self.resolveLocalQuery(text);
+        });
+        return;
+      }
+    }
+
+    // Default Local NLP + Custom Trained Knowledge
     setTimeout(function() {
-      // 1. Quote Flow Active?
-      if (self.quoteState.active) {
-        self.processQuoteStep(text);
-        return;
-      }
-
-      // 2. Claims Flow Active?
-      if (self.claimState.active) {
-        self.processClaimStep(text);
-        return;
-      }
-
-      // 3. NLP Intent Classification
-      var res = classifyQuery(text, self.config, self.config.customFaqs);
-
-      if (res.action === 'OPEN_QUOTE_WIZARD') {
-        self.startQuoteWizard(res.productType || 'auto');
-        return;
-      }
-      if (res.action === 'OPEN_CLAIMS_WIZARD') {
-        self.startClaimWizard();
-        return;
-      }
-      if (res.action === 'OPEN_PAYMENT_WIZARD') {
-        self.startInChatCheckout();
-        return;
-      }
-
-      self.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
+      self.resolveLocalQuery(text);
     }, self.config.bot?.typingDelayMs || 400);
+  };
+
+  InsuranceChatbotController.prototype.resolveLocalQuery = function(text) {
+    var res = classifyQuery(text, this.config, this.config.customFaqs, this.trainedKnowledge);
+    if (res.action === 'OPEN_QUOTE_WIZARD') {
+      this.startQuoteWizard(res.productType || 'auto');
+      return;
+    }
+    if (res.action === 'OPEN_CLAIMS_WIZARD') {
+      this.startClaimWizard();
+      return;
+    }
+    if (res.action === 'OPEN_PAYMENT_WIZARD') {
+      this.startInChatCheckout();
+      return;
+    }
+    this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
   };
 
   InsuranceChatbotController.prototype.startQuoteWizard = function(productKey) {
@@ -1016,6 +1347,69 @@
       .replace(/•\s/g, '•&nbsp;');
   };
 
+  InsuranceChatbotController.prototype.trainData = function(content, format) {
+    var items = parseTrainingData(content, format);
+    var self = this;
+    var count = 0;
+    items.forEach(function(item) {
+      item.isCustomTrained = true;
+      var existing = self.trainedKnowledge.findIndex(function(ex) {
+        return ex.question.toLowerCase().trim() === item.question.toLowerCase().trim();
+      });
+      if (existing >= 0) {
+        self.trainedKnowledge[existing] = item;
+      } else {
+        self.trainedKnowledge.unshift(item);
+        count++;
+      }
+    });
+    return { success: true, countAdded: items.length, totalCount: this.trainedKnowledge.length, items: items };
+  };
+
+  InsuranceChatbotController.prototype.getTrainedData = function() {
+    return this.trainedKnowledge || [];
+  };
+
+  InsuranceChatbotController.prototype.clearTrainedData = function() {
+    this.trainedKnowledge = [];
+  };
+
+  InsuranceChatbotController.prototype.testApiConnection = function(callback) {
+    var api = this.config.api || {};
+    var context = { companyName: this.config.company?.name || 'Insurance Company' };
+    if (api.mockServer || api.endpoint === 'mock://insurance-ai') {
+      var res = {
+        ok: true,
+        latencyMs: 75,
+        status: 200,
+        sampleReply: 'Mock Backend API connection active! 🟢 System operational.',
+        raw: { status: 'healthy', version: '2.4.0' }
+      };
+      if (typeof callback === 'function') callback(res);
+      return Promise.resolve(res);
+    }
+    return new Promise(function(resolve) {
+      queryBackendApi(api, 'ping test', context, function(r) {
+        var out = {
+          ok: r.success,
+          latencyMs: r.latencyMs,
+          status: r.success ? 200 : 500,
+          sampleReply: r.reply,
+          error: r.error,
+          helpTip: (r.error && r.error.indexOf('Failed to fetch') !== -1)
+            ? 'Ensure your API server allows CORS with "Access-Control-Allow-Origin: *".'
+            : 'Check that your endpoint URL, method, and auth token are valid.'
+        };
+        if (typeof callback === 'function') callback(out);
+        resolve(out);
+      });
+    });
+  };
+
+  InsuranceChatbotController.prototype.setApiConfig = function(apiCfg) {
+    this.config.api = Object.assign({}, this.config.api || {}, apiCfg);
+  };
+
   // Public Singleton Instance
   var instance = null;
 
@@ -1031,6 +1425,11 @@
     triggerAction: function(p) { instance && instance.handleQuickReply(p); },
     reset: function() { instance && instance.reset(); },
     printCertificate: function(r) { instance && instance.printCertificate(r); },
+    trainData: function(content, format) { return instance && instance.trainData(content, format); },
+    getTrainedData: function() { return (instance && instance.getTrainedData()) || []; },
+    clearTrainedData: function() { instance && instance.clearTrainedData(); },
+    testApiConnection: function(cb) { return instance && instance.testApiConnection(cb); },
+    setApiConfig: function(cfg) { instance && instance.setApiConfig(cfg); },
     getInstance: function() { return instance; }
   };
 }));
