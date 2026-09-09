@@ -19,14 +19,14 @@ export class PaymentCard {
     return {
       quoteId: 'QT-DIRECT',
       productName: 'Comprehensive Shield Policy',
-      tierName: 'Gold Advantage',
-      deductible: '$500',
-      coverageLimit: '$100,000',
-      annualTotal: 720,
-      tax: 32,
-      subtotal: 688,
-      currencySymbol: this.config.currency?.symbol || '$',
-      currency: this.config.currency?.code || 'USD'
+      tierName: 'Comprehensive Shield',
+      deductible: 'KSh 10,000',
+      coverageLimit: 'KSh 3,000,000',
+      annualTotal: 48000,
+      tax: 2160,
+      subtotal: 45840,
+      currencySymbol: this.config.currency?.symbol || 'KSh ',
+      currency: this.config.currency?.code || 'KES'
     };
   }
 

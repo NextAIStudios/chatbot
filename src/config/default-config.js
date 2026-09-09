@@ -56,9 +56,9 @@ export const DEFAULT_CONFIG = {
 
   // 💰 Currency & Rates
   currency: {
-    code: 'USD',
-    symbol: '$',
-    locale: 'en-US'
+    code: 'KES',
+    symbol: 'KSh ',
+    locale: 'en-KE'
   },
 
   // 🛡️ Insurance Product Catalog (Customizable for any company)
@@ -67,76 +67,76 @@ export const DEFAULT_CONFIG = {
       name: 'Comprehensive Auto Shield',
       icon: '🚗',
       description: 'Total collision, comprehensive, third-party liability, and 24/7 roadside rescue.',
-      baseAnnualRate: 720,
+      baseAnnualRate: 48000,
       tiers: [
-        { id: 'auto_standard', name: 'Liability Plus', deductible: 1000, rateMultiplier: 0.75, coverageLimit: 50000 },
-        { id: 'auto_comp', name: 'Comprehensive Shield', deductible: 500, rateMultiplier: 1.0, coverageLimit: 100000, popular: true },
-        { id: 'auto_elite', name: 'Elite Premier Zero-Ded', deductible: 0, rateMultiplier: 1.4, coverageLimit: 300000 }
+        { id: 'auto_standard', name: 'Liability Plus', deductible: 15000, rateMultiplier: 0.75, coverageLimit: 1500000 },
+        { id: 'auto_comp', name: 'Comprehensive Shield', deductible: 10000, rateMultiplier: 1.0, coverageLimit: 3000000, popular: true },
+        { id: 'auto_elite', name: 'Elite Premier Zero-Ded', deductible: 0, rateMultiplier: 1.35, coverageLimit: 6000000 }
       ],
       addons: [
-        { id: 'addon_roadside', name: '24/7 Roadside Assistance & Towing', costPerYear: 48 },
-        { id: 'addon_rental', name: 'Rental Car Reimbursement ($45/day)', costPerYear: 36 },
-        { id: 'addon_glass', name: 'Zero-Deductible Windshield Replacement', costPerYear: 28 }
+        { id: 'addon_roadside', name: '24/7 Roadside Rescue & Towing', costPerYear: 3500 },
+        { id: 'addon_rental', name: 'Courtesy Car Replacement (10 Days)', costPerYear: 4000 },
+        { id: 'addon_glass', name: 'Zero-Excess Windshield Replacement', costPerYear: 2500 }
       ]
     },
     health: {
       name: 'CareVital Health & Medical',
       icon: '🏥',
       description: 'Inpatient, outpatient, prescription drug coverage, and telemedicine.',
-      baseAnnualRate: 1440,
+      baseAnnualRate: 72000,
       tiers: [
-        { id: 'health_silver', name: 'Silver Care', deductible: 2500, rateMultiplier: 0.8, outOfPocketMax: 6000 },
-        { id: 'health_gold', name: 'Gold Advantage', deductible: 1000, rateMultiplier: 1.1, outOfPocketMax: 4000, popular: true },
-        { id: 'health_platinum', name: 'Platinum Complete', deductible: 250, rateMultiplier: 1.5, outOfPocketMax: 1500 }
+        { id: 'health_silver', name: 'Silver Care', deductible: 10000, rateMultiplier: 0.8, coverageLimit: 2000000 },
+        { id: 'health_gold', name: 'Gold Advantage', deductible: 5000, rateMultiplier: 1.1, coverageLimit: 5000000, popular: true },
+        { id: 'health_platinum', name: 'Platinum Complete', deductible: 0, rateMultiplier: 1.5, coverageLimit: 10000000 }
       ],
       addons: [
-        { id: 'addon_dental', name: 'Comprehensive Dental Care', costPerYear: 120 },
-        { id: 'addon_vision', name: 'Vision Care & Designer Frames', costPerYear: 60 },
-        { id: 'addon_mental', name: 'Mental Wellness & Therapy Sessions', costPerYear: 84 }
+        { id: 'addon_dental', name: 'Comprehensive Dental Care', costPerYear: 8500 },
+        { id: 'addon_vision', name: 'Vision Care & Designer Frames', costPerYear: 5000 },
+        { id: 'addon_maternity', name: 'Maternity Cover & Newborn Care', costPerYear: 12000 }
       ]
     },
     home: {
       name: 'HomeGuard Property & Contents',
       icon: '🏡',
       description: 'Dwelling, personal property, fire, storm, theft, and personal liability protection.',
-      baseAnnualRate: 640,
+      baseAnnualRate: 28000,
       tiers: [
-        { id: 'home_renters', name: 'Renters Content Shield', deductible: 500, rateMultiplier: 0.45, coverageLimit: 40000 },
-        { id: 'home_standard', name: 'Homeowners Essential', deductible: 1000, rateMultiplier: 1.0, coverageLimit: 350000, popular: true },
-        { id: 'home_estate', name: 'Estate Luxury Protection', deductible: 1500, rateMultiplier: 1.7, coverageLimit: 900000 }
+        { id: 'home_renters', name: 'Renters Content Shield', deductible: 5000, rateMultiplier: 0.5, coverageLimit: 1500000 },
+        { id: 'home_standard', name: 'Homeowners Essential', deductible: 10000, rateMultiplier: 1.0, coverageLimit: 15000000, popular: true },
+        { id: 'home_estate', name: 'Estate Luxury Protection', deductible: 15000, rateMultiplier: 1.6, coverageLimit: 40000000 }
       ],
       addons: [
-        { id: 'addon_flood', name: 'Flood & Water Backup Endorsement', costPerYear: 90 },
-        { id: 'addon_jewelry', name: 'Scheduled High-Value Jewelry / Art', costPerYear: 65 }
+        { id: 'addon_flood', name: 'Flood & Water Backup Endorsement', costPerYear: 4500 },
+        { id: 'addon_jewelry', name: 'Scheduled High-Value Jewelry / Electronics', costPerYear: 3500 }
       ]
     },
     life: {
       name: 'EverSure Term Life',
       icon: '🕊️',
       description: 'Guaranteed lump-sum financial security for your loved ones.',
-      baseAnnualRate: 360,
+      baseAnnualRate: 36000,
       tiers: [
-        { id: 'life_250k', name: '20-Year Term ($250,000)', benefit: 250000, rateMultiplier: 0.8 },
-        { id: 'life_500k', name: '20-Year Term ($500,000)', benefit: 500000, rateMultiplier: 1.0, popular: true },
-        { id: 'life_1m', name: '30-Year Term ($1,000,000)', benefit: 1000000, rateMultiplier: 1.8 }
+        { id: 'life_5m', name: '20-Year Term (KSh 5,000,000)', benefit: 5000000, rateMultiplier: 0.8 },
+        { id: 'life_10m', name: '20-Year Term (KSh 10,000,000)', benefit: 10000000, rateMultiplier: 1.0, popular: true },
+        { id: 'life_25m', name: '30-Year Term (KSh 25,000,000)', benefit: 25000000, rateMultiplier: 1.8 }
       ],
       addons: [
-        { id: 'addon_critical', name: 'Accelerated Critical Illness Rider', costPerYear: 75 },
-        { id: 'addon_disability', name: 'Premium Waiver on Disability', costPerYear: 40 }
+        { id: 'addon_critical', name: 'Accelerated Critical Illness Rider', costPerYear: 6000 },
+        { id: 'addon_disability', name: 'Premium Waiver on Disability', costPerYear: 3000 }
       ]
     },
     travel: {
       name: 'GlobeTrek Travel Shield',
       icon: '✈️',
       description: 'Emergency international medical evacuation, trip cancellation, and baggage loss.',
-      baseAnnualRate: 120,
+      baseAnnualRate: 15000,
       tiers: [
         { id: 'travel_single', name: 'Single Trip Worldwide', rateMultiplier: 0.6 },
         { id: 'travel_annual', name: 'Multi-Trip Annual Pass', rateMultiplier: 1.0, popular: true },
-        { id: 'travel_adventure', name: 'Extreme Sports & Ski Endorsement', rateMultiplier: 1.4 }
+        { id: 'travel_adventure', name: 'Extreme Sports & Safari Endorsement', rateMultiplier: 1.4 }
       ],
       addons: [
-        { id: 'addon_cancel_any', name: 'Cancel For Any Reason (CFAR 75%)', costPerYear: 35 }
+        { id: 'addon_cancel_any', name: 'Cancel For Any Reason (CFAR 75%)', costPerYear: 2500 }
       ]
     }
   },

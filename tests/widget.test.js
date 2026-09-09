@@ -67,8 +67,8 @@ quoteFlow.handleInput('Comprehensive Shield');
 // Select no extra add-ons
 const finalQuote = quoteFlow.handleInput('none');
 assert(finalQuote.quoteCard !== undefined, 'Successfully generates final quote card');
-assert(finalQuote.quoteCard.annualTotal > 0, `Calculated annual total: $${finalQuote.quoteCard.annualTotal}`);
-assert(finalQuote.quoteCard.deductible === '$500', 'Comp shield deductible is $500');
+assert(finalQuote.quoteCard.annualTotal > 0, `Calculated annual total: KSh ${finalQuote.quoteCard.annualTotal}`);
+assert(finalQuote.quoteCard.deductible === 'KSh 10,000', 'Comp shield deductible is KSh 10,000');
 
 console.log('\n--- 📑 3. Testing Claims Assistant Flow ---');
 const claimsFlow = new ClaimsFlow(DEFAULT_CONFIG);
@@ -84,10 +84,10 @@ const mockQuote = finalQuote.quoteCard;
 const receiptData = ReceiptGenerator.generateReceiptData({
   quote: mockQuote,
   paymentDetails: {
-    totalAmount: 752,
-    paymentMethod: 'card',
+    totalAmount: 50160,
+    paymentMethod: 'mpesa',
     cardholderName: 'Sarah Jenkins',
-    cardNumber: '4000 1234 5678 9010'
+    phone: '+254 712 345 678'
   },
   company: DEFAULT_CONFIG.company
 });
