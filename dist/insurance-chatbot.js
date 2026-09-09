@@ -23,7 +23,7 @@
     bot: {
       name: 'Aegis AI',
       title: 'Certified Insurance Advisor',
-      avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232563eb"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.38-1 1.72V7h2a5 5 0 0 1 5 5v1h1a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h1v-1a5 5 0 0 1 5-5h2V5.72A2 2 0 0 1 12 2zm3 10H9a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1zm-4.5 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg>',
+      avatar: null,
       greeting: "Hello! 👋 I'm **Aegis**, your 24/7 licensed digital insurance assistant.\n\nI can calculate instant quotes, guide your claims, answer coverage questions, or process your policy payments securely right here in chat.",
       initialQuickReplies: [
         { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
@@ -373,7 +373,7 @@
     launcher.className = 'ins-chatbot-launcher';
     launcher.id = 'ins-widget-launcher';
     launcher.innerHTML = '<div class="ins-launcher-teaser">💬 Need a quick quote or help?</div>' +
-      '<div class="ins-launcher-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>' +
+      '<div class="ins-launcher-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>' +
       '<div class="ins-launcher-badge">1</div>';
 
     var container = document.createElement('div');
@@ -381,8 +381,8 @@
     container.id = 'ins-widget-window';
     container.innerHTML = '<div class="ins-header">' +
       '<div class="ins-header-profile">' +
-        '<div class="ins-avatar-wrapper"><img src="' + (bot.avatar || '') + '" alt="' + bot.name + '" class="ins-avatar-img"><span class="ins-status-dot"></span></div>' +
-        '<div class="ins-profile-info"><span class="ins-bot-name">' + (bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + (bot.title || company.name) + '</span></div>' +
+        '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
+        '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'Certified Advisor') + '</span></div>' +
       '</div>' +
       '<div class="ins-header-actions">' +
         '<button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button>' +
@@ -421,6 +421,35 @@
     });
   };
 
+  InsuranceChatbotController.prototype.renderAvatarHtml = function() {
+    var bot = this.config.bot || {};
+    var t = this.config.theme || {};
+    var primary = t.primaryColor || '#2563eb';
+    var accent = t.accentColor || '#10b981';
+
+    if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.indexOf('http') === 0 || bot.avatar.indexOf('/') === 0 || bot.avatar.indexOf('./') === 0)) {
+      return '<img src="' + this.escape(bot.avatar) + '" alt="' + this.escape(bot.name || 'Bot') + '" class="ins-avatar-img">';
+    }
+
+    return '<svg class="ins-avatar-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs>' +
+        '<linearGradient id="ins-av-bg" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">' +
+          '<stop offset="0%" stop-color="' + primary + '"/>' +
+          '<stop offset="100%" stop-color="#1e293b"/>' +
+        '</linearGradient>' +
+        '<linearGradient id="ins-av-shield" x1="12" y1="9" x2="32" y2="35" gradientUnits="userSpaceOnUse">' +
+          '<stop offset="0%" stop-color="#ffffff"/>' +
+          '<stop offset="100%" stop-color="#dbeafe"/>' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<rect width="44" height="44" rx="14" fill="url(#ins-av-bg)"/>' +
+      '<rect x="0.75" y="0.75" width="42.5" height="42.5" rx="13.25" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>' +
+      '<path d="M22 8.5L11 13V20.5C11 28 15.7 34.8 22 36.8C28.3 34.8 33 28 33 20.5V13L22 8.5Z" fill="url(#ins-av-shield)"/>' +
+      '<path d="M17 21.5L20.5 25L27 18" stroke="' + primary + '" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="22" cy="13.5" r="1.5" fill="' + accent + '"/>' +
+    '</svg>';
+  };
+
   InsuranceChatbotController.prototype.renderInline = function(target) {
     var self = this;
     var bot = this.config.bot || {};
@@ -429,8 +458,8 @@
     target.innerHTML = '<div class="ins-chatbot-container open" style="position:relative; bottom:auto; right:auto; width:100%; height:620px;">' +
       '<div class="ins-header">' +
         '<div class="ins-header-profile">' +
-          '<div class="ins-avatar-wrapper"><img src="' + (bot.avatar || '') + '" alt="' + bot.name + '" class="ins-avatar-img"><span class="ins-status-dot"></span></div>' +
-          '<div class="ins-profile-info"><span class="ins-bot-name">' + (bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + (bot.title || company.name) + '</span></div>' +
+          '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
+          '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'Certified Advisor') + '</span></div>' +
         '</div>' +
         '<div class="ins-header-actions"><button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button></div>' +
       '</div>' +
