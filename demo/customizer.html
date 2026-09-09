@@ -76,6 +76,29 @@
         </div>
       </div>
 
+      <!-- Custom Logo Upload -->
+      <div class="form-section">
+        <h4>🖼️ Upload Logo & Avatar</h4>
+        <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 14px;">
+          <div id="logo-preview-thumb" style="width: 48px; height: 48px; border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <div id="logo-status-text" style="font-size: 13px; font-weight: 700; color: #0f172a;">Default Protection Shield</div>
+            <div style="font-size: 11px; color: #64748b;">Upload PNG, JPG, SVG or WebP file</div>
+            <div style="margin-top: 8px; display: flex; gap: 8px;">
+              <label for="cfg-logo-file" class="btn-upload-label" style="background: #2563eb; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-block;">
+                📁 Upload Logo...
+              </label>
+              <input type="file" id="cfg-logo-file" accept="image/*" style="display: none;">
+              <button type="button" id="btn-reset-logo" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: none;" onclick="resetUploadedLogo()">
+                ✕ Reset Logo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Bot Identity -->
       <div class="form-section">
         <h4>🤖 Bot Persona & Copy</h4>
@@ -214,6 +237,7 @@
     };
 
     let activeConfig = {};
+    let uploadedLogoDataUrl = null;
 
     function getFormConfig() {
       return {
@@ -221,11 +245,13 @@
           name: document.getElementById('cfg-company-name').value,
           tagline: document.getElementById('cfg-company-tagline').value,
           supportPhone: document.getElementById('cfg-company-phone').value,
-          supportEmail: document.getElementById('cfg-company-email').value
+          supportEmail: document.getElementById('cfg-company-email').value,
+          logo: uploadedLogoDataUrl || null
         },
         bot: {
           name: document.getElementById('cfg-bot-name').value,
           title: document.getElementById('cfg-bot-title').value,
+          avatar: uploadedLogoDataUrl || null,
           greeting: document.getElementById('cfg-bot-greeting').value
         },
         theme: {
@@ -240,6 +266,38 @@
           symbol: document.getElementById('cfg-currency-symbol').value
         }
       };
+    }
+
+    // Handle Custom Logo Upload
+    document.getElementById('cfg-logo-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        uploadedLogoDataUrl = evt.target.result;
+        
+        // Update thumbnail preview
+        const thumb = document.getElementById('logo-preview-thumb');
+        thumb.innerHTML = `<img src="${uploadedLogoDataUrl}" style="width:100%; height:100%; object-fit:contain; border-radius:10px;" />`;
+        
+        document.getElementById('logo-status-text').textContent = file.name;
+        document.getElementById('btn-reset-logo').style.display = 'inline-block';
+
+        // Apply immediately to the live preview chatbot!
+        applyLiveChanges();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function resetUploadedLogo() {
+      uploadedLogoDataUrl = null;
+      document.getElementById('cfg-logo-file').value = '';
+      const thumb = document.getElementById('logo-preview-thumb');
+      thumb.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
+      document.getElementById('logo-status-text').textContent = 'Default Protection Shield';
+      document.getElementById('btn-reset-logo').style.display = 'none';
+      applyLiveChanges();
     }
 
     function initBotWithConfig(cfg) {
@@ -257,6 +315,13 @@
 
     function loadPreset(key) {
       const p = PRESETS[key] || PRESETS.aegisguard;
+      uploadedLogoDataUrl = null;
+      document.getElementById('cfg-logo-file').value = '';
+      const thumb = document.getElementById('logo-preview-thumb');
+      thumb.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${p.theme.primaryColor}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
+      document.getElementById('logo-status-text').textContent = 'Default Protection Shield';
+      document.getElementById('btn-reset-logo').style.display = 'none';
+
       document.getElementById('cfg-company-name').value = p.company.name;
       document.getElementById('cfg-company-tagline').value = p.company.tagline;
       document.getElementById('cfg-company-phone').value = p.company.phone;

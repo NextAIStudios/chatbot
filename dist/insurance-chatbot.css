@@ -928,3 +928,34 @@
     right: 16px;
   }
 }
+
+/* Dedicated Print Styles: cleans up page if printed from main window */
+@media print {
+  body > *:not(.ins-chatbot-container) {
+    display: none !important;
+  }
+  .ins-chatbot-launcher, .ins-header, .ins-footer, .ins-quick-replies, .receipt-actions, .ins-msg-time, .ins-msg-row:not(:has(.insurance-receipt-card)) {
+    display: none !important;
+  }
+  .ins-chatbot-container {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+  .ins-messages-body {
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+  .insurance-receipt-card {
+    border: 2px solid #059669 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin: 20px auto !important;
+    max-width: 650px !important;
+  }
+}

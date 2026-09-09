@@ -12,7 +12,7 @@ export class PaymentCard {
     this.onComplete = onComplete;
     this.appliedDiscount = 0;
     this.discountCode = '';
-    this.currentMethod = 'card'; // 'card' | 'apple_pay' | 'mpesa'
+    this.currentMethod = 'mpesa'; // 'mpesa' | 'card'
   }
 
   getFallbackQuote() {
@@ -38,7 +38,7 @@ export class PaymentCard {
 
   render() {
     const cardId = 'checkout-' + Math.random().toString(36).substring(2, 8);
-    const sym = this.quote.currencySymbol || '$';
+    const sym = this.quote.currencySymbol || 'KSh ';
     const total = this.calculateTotal();
 
     const html = `
@@ -63,13 +63,21 @@ export class PaymentCard {
 
         <!-- Payment Method Tabs -->
         <div class="payment-tabs">
-          <button type="button" class="tab-btn active" data-method="card">💳 Card</button>
-          <button type="button" class="tab-btn" data-method="apple_pay">🍏 Apple / G-Pay</button>
-          <button type="button" class="tab-btn" data-method="mpesa">📱 M-Pesa</button>
+          <button type="button" class="tab-btn active" data-method="mpesa">📱 M-Pesa</button>
+          <button type="button" class="tab-btn" data-method="card">💳 Card (Visa/Mastercard)</button>
+        </div>
+
+        <!-- M-Pesa Mobile Money Tab -->
+        <div class="tab-content method-mpesa" id="${cardId}-tab-mpesa">
+          <div class="form-group">
+            <label>M-Pesa Mobile Number</label>
+            <input type="tel" class="input-field field-phone" placeholder="0712 345 678" value="+254 712 345 678" />
+            <small class="helper-text">You will receive an instant STK prompt on your phone to enter your M-Pesa PIN.</small>
+          </div>
         </div>
 
         <!-- Card Form -->
-        <div class="tab-content method-card" id="${cardId}-tab-card">
+        <div class="tab-content method-card hidden" id="${cardId}-tab-card">
           <div class="form-group">
             <label>Cardholder Name</label>
             <input type="text" class="input-field field-name" placeholder="Sarah Jenkins" value="Sarah Jenkins" />
@@ -90,26 +98,6 @@ export class PaymentCard {
               <label>CVV / CVC</label>
               <input type="password" class="input-field field-cvv" placeholder="•••" maxlength="4" value="882" />
             </div>
-          </div>
-        </div>
-
-        <!-- Apple / Google Pay Tab -->
-        <div class="tab-content method-wallet hidden" id="${cardId}-tab-apple_pay">
-          <div class="wallet-pay-box">
-            <p>Pay instantly with your device's biometric wallet:</p>
-            <button type="button" class="btn-wallet-express">
-               Pay with Passkey / Face ID
-            </button>
-            <span class="wallet-sub">Instant zero-touch authorization</span>
-          </div>
-        </div>
-
-        <!-- M-Pesa Mobile Money Tab -->
-        <div class="tab-content method-mpesa hidden" id="${cardId}-tab-mpesa">
-          <div class="form-group">
-            <label>M-Pesa Mobile Number</label>
-            <input type="tel" class="input-field field-phone" placeholder="0712 345 678" value="+254 712 345 678" />
-            <small class="helper-text">You will receive an STK prompt on your phone to enter your M-Pesa PIN.</small>
           </div>
         </div>
 
@@ -195,11 +183,6 @@ export class PaymentCard {
     // Submission Handler
     if (submitBtn) {
       submitBtn.addEventListener('click', () => this.handlePaymentSubmit(cardEl));
-    }
-
-    const expressBtn = cardEl.querySelector('.btn-wallet-express');
-    if (expressBtn) {
-      expressBtn.addEventListener('click', () => this.handlePaymentSubmit(cardEl));
     }
   }
 

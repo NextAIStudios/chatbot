@@ -803,11 +803,13 @@
         '<div class="plan-price" id="' + cardId + '-price">' + sym + discountedTotal.toLocaleString() + '</div>' +
       '</div>' +
       '<div class="payment-tabs">' +
-        '<button type="button" class="tab-btn active" data-tab="card">💳 Card</button>' +
-        '<button type="button" class="tab-btn" data-tab="apple">🍏 Apple / G-Pay</button>' +
-        '<button type="button" class="tab-btn" data-tab="mpesa">📱 M-Pesa</button>' +
+        '<button type="button" class="tab-btn active" data-tab="mpesa">📱 M-Pesa</button>' +
+        '<button type="button" class="tab-btn" data-tab="card">💳 Card (Visa/Mastercard)</button>' +
       '</div>' +
-      '<div class="tab-content" id="' + cardId + '-card-box">' +
+      '<div class="tab-content" id="' + cardId + '-mpesa-box">' +
+        '<div class="form-group"><label>M-Pesa Mobile Number</label><input type="tel" class="input-field f-phone" value="+254 712 345 678" /><small class="helper-text">You will receive an instant STK push prompt on your phone to enter your M-Pesa PIN.</small></div>' +
+      '</div>' +
+      '<div class="tab-content hidden" id="' + cardId + '-card-box">' +
         '<div class="form-group"><label>Cardholder Name</label><input type="text" class="input-field f-name" value="Sarah Jenkins" /></div>' +
         '<div class="form-group"><label>Card Number</label><div class="card-input-wrapper"><input type="text" class="input-field f-num" value="4000 1234 5678 9010" /><span class="card-icon">💳</span></div></div>' +
         '<div class="form-row">' +
@@ -815,8 +817,6 @@
           '<div class="form-group half"><label>CVV</label><input type="password" class="input-field f-cvv" value="882" /></div>' +
         '</div>' +
       '</div>' +
-      '<div class="tab-content hidden" id="' + cardId + '-apple-box"><div class="wallet-pay-box"><p>Pay with Touch ID / Face ID</p><button type="button" class="btn-wallet-express"> Pay with Apple Pay</button></div></div>' +
-      '<div class="tab-content hidden" id="' + cardId + '-mpesa-box"><div class="form-group"><label>M-Pesa Mobile Number</label><input type="tel" class="input-field f-phone" value="+254 712 345 678" /><small class="helper-text">You will receive an STK push prompt on your phone.</small></div></div>' +
       '<div class="promo-code-section">' +
         '<div class="promo-input-row"><input type="text" class="input-promo" value="SAVE15" /><button type="button" class="btn-apply-promo">Apply</button></div>' +
         '<div class="promo-message" style="color:#10b981;">✅ Promo "SAVE15" active! 15% discount applied.</div>' +
@@ -824,8 +824,8 @@
       '<button type="button" class="btn-submit-payment" id="' + cardId + '-pay-btn"><span>🔒 Pay ' + sym + discountedTotal.toLocaleString() + ' & Issue Policy</span></button>' +
       '<div class="payment-processing-overlay hidden" id="' + cardId + '-proc">' +
         '<div class="processing-spinner"></div>' +
-        '<div class="processing-step" id="' + cardId + '-step">Connecting to Gateway...</div>' +
-        '<div class="processing-sub">Authorizing bank transaction securely</div>' +
+        '<div class="processing-step" id="' + cardId + '-step">Connecting to M-Pesa Gateway...</div>' +
+        '<div class="processing-sub">Authorizing transaction securely</div>' +
       '</div>' +
     '</div>';
 
@@ -845,7 +845,6 @@
           t.classList.add('active');
           var method = t.getAttribute('data-tab');
           cardEl.querySelector('#' + cardId + '-card-box').classList.toggle('hidden', method !== 'card');
-          cardEl.querySelector('#' + cardId + '-apple-box').classList.toggle('hidden', method !== 'apple');
           cardEl.querySelector('#' + cardId + '-mpesa-box').classList.toggle('hidden', method !== 'mpesa');
         });
       });
@@ -856,8 +855,8 @@
 
       function executePayment() {
         overlay.classList.remove('hidden');
-        setTimeout(function() { step.textContent = 'Verifying with Underwriting Network...'; }, 800);
-        setTimeout(function() { step.textContent = '3D-Secure Biometric Verification...'; }, 1600);
+        setTimeout(function() { step.textContent = 'Sending STK Prompt to Mobile Phone...'; }, 800);
+        setTimeout(function() { step.textContent = 'PIN Verified! Processing Underwriting...'; }, 1600);
         setTimeout(function() { step.textContent = '✅ Payment Verified! Generating Certificate...'; }, 2400);
         setTimeout(function() {
           overlay.classList.add('hidden');
@@ -866,15 +865,30 @@
       }
 
       if (payBtn) payBtn.addEventListener('click', executePayment);
-      var walletBtn = cardEl.querySelector('.btn-wallet-express');
-      if (walletBtn) walletBtn.addEventListener('click', executePayment);
     }, 100);
   };
 
   InsuranceChatbotController.prototype.renderPolicyCertificate = function(quote, amountPaid) {
     var policyNo = 'POL-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
-    var sym = quote.currencySymbol || '$';
+    var sym = quote.currencySymbol || 'KSh ';
     var company = this.config.company || {};
+
+    this.lastIssuedReceipt = {
+      policyNumber: policyNo,
+      company: company,
+      policyholder: { name: 'Sarah Jenkins', phone: '+254 712 345 678' },
+      plan: quote,
+      payment: {
+        amount: amountPaid,
+        currencySymbol: sym,
+        method: 'M-Pesa / STK Push',
+        transactionId: 'TXN-' + Math.random().toString(36).substring(2, 9).toUpperCase()
+      },
+      dates: {
+        effective: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        expires: new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      }
+    };
 
     var receiptHtml = '<div class="insurance-receipt-card">' +
       '<div class="receipt-header">' +
@@ -890,8 +904,8 @@
         '<div class="receipt-row total"><span>Total Paid:</span> <strong class="receipt-amount">' + sym + Number(amountPaid).toLocaleString() + '</strong></div>' +
       '</div>' +
       '<div class="receipt-actions">' +
-        '<button class="btn-receipt-action" onclick="window.print()">🖨️ Print Certificate</button>' +
-        '<button class="btn-receipt-action" onclick="alert(\'Official Policy Certificate downloaded!\')">📥 Save PDF Card</button>' +
+        '<button type="button" class="btn-receipt-action" onclick="InsuranceChatbot.printCertificate()">🖨️ Print Certificate</button>' +
+        '<button type="button" class="btn-receipt-action" onclick="InsuranceChatbot.printCertificate()">📥 Save PDF Card</button>' +
       '</div>' +
     '</div>';
 
@@ -903,6 +917,80 @@
         { label: '❓ Ask Coverage Questions', payload: 'intent_coverage_overview' }
       ]
     });
+  };
+
+  InsuranceChatbotController.prototype.printCertificate = function() {
+    var receipt = this.lastIssuedReceipt || {
+      policyNumber: 'POL-2026-882190',
+      company: this.config.company || { name: 'AegisGuard Insurance', tagline: 'Smart & Compassionate Insurance', licenseNumber: 'INS-LIC-2026-882190' },
+      policyholder: { name: 'Sarah Jenkins', phone: '+254 712 345 678' },
+      plan: { productName: 'Comprehensive Auto Shield', tierName: 'Comprehensive Shield', coverageLimit: 'KSh 3,000,000', deductible: 'KSh 10,000' },
+      payment: { amount: 42636, currencySymbol: 'KSh ', method: 'M-Pesa STK Push', transactionId: 'TXN-882190K' },
+      dates: { effective: 'Today', expires: '1 Year From Today' }
+    };
+
+    var printWin = window.open('', '_blank', 'width=800,height=900');
+    if (!printWin) {
+      alert('Please allow popups to print your certificate.');
+      return;
+    }
+
+    var doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate of Insurance - ' + receipt.policyNumber + '</title>' +
+      '<style>' +
+        '@page { size: A4 portrait; margin: 12mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 0; padding: 24px; background: #fff; }' +
+        '.cert-box { border: 3px double #059669; border-radius: 12px; padding: 32px; position: relative; max-width: 720px; margin: 0 auto; }' +
+        '.cert-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 20px; }' +
+        '.badge { background: #ecfdf5; border: 1.5px solid #10b981; color: #059669; font-weight: 800; padding: 6px 14px; border-radius: 20px; font-size: 12px; }' +
+        '.title { text-align: center; margin: 20px 0; }' +
+        '.title h2 { font-size: 22px; font-weight: 800; color: #059669; margin: 0; text-transform: uppercase; }' +
+        '.pill { display: inline-block; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 16px; border-radius: 8px; font-weight: 800; margin-top: 6px; }' +
+        '.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }' +
+        '.item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }' +
+        '.item label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; }' +
+        '.item value { font-size: 14px; font-weight: 700; color: #0f172a; display: block; margin-top: 2px; }' +
+        '.table { width: 100%; border-collapse: collapse; margin: 20px 0; }' +
+        '.table th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }' +
+        '.table td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }' +
+        '.footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 36px; padding-top: 16px; border-top: 1px dashed #cbd5e1; }' +
+        '.seal { width: 85px; height: 85px; border: 2.5px solid #059669; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 9px; font-weight: 800; color: #059669; }' +
+        '.watermark { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 48px; font-weight: 900; color: rgba(5, 150, 105, 0.05); text-transform: uppercase; pointer-events: none; white-space: nowrap; }' +
+      '</style></head><body>' +
+      '<div class="cert-box">' +
+        '<div class="watermark">OFFICIAL CERTIFIED POLICY</div>' +
+        '<div class="cert-header">' +
+          '<div><h1 style="font-size:22px; margin:0;">' + (receipt.company.name || 'AegisGuard Insurance') + '</h1><div style="font-size:11px; color:#64748b;">Statutory Insurance Registrar • Lic #' + (receipt.company.licenseNumber || 'INS-2026') + '</div></div>' +
+          '<div class="badge">● ACTIVE POLICY ISSUED</div>' +
+        '</div>' +
+        '<div class="title">' +
+          '<h2>Certificate of Insurance</h2>' +
+          '<p style="font-size:12px; color:#64748b;">Official proof of coverage under statutory regulatory standards.</p>' +
+          '<div class="pill">Policy Reference: ' + receipt.policyNumber + '</div>' +
+        '</div>' +
+        '<div class="grid">' +
+          '<div class="item"><label>Insured Party</label><value>' + receipt.policyholder.name + '</value></div>' +
+          '<div class="item"><label>Contact</label><value>' + (receipt.policyholder.phone || '+254 712 345 678') + '</value></div>' +
+          '<div class="item"><label>Policy Plan</label><value>' + receipt.plan.productName + ' (' + receipt.plan.tierName + ')</value></div>' +
+          '<div class="item"><label>Coverage Limit</label><value>' + receipt.plan.coverageLimit + '</value></div>' +
+          '<div class="item"><label>Deductible / Excess</label><value>' + receipt.plan.deductible + '</value></div>' +
+          '<div class="item"><label>Effective Term</label><value>' + receipt.dates.effective + ' – ' + receipt.dates.expires + '</value></div>' +
+        '</div>' +
+        '<table class="table">' +
+          '<tr><th>Coverage Details</th><th>Status</th><th style="text-align:right;">Amount Paid</th></tr>' +
+          '<tr><td>' + receipt.plan.productName + '<br><small style="color:#64748b;">Statutory Premium & Mandatory Levies</small></td><td>Issued & Active</td><td style="text-align:right;">' + receipt.payment.currencySymbol + Number(receipt.payment.amount).toLocaleString() + '</td></tr>' +
+          '<tr style="font-weight:800; color:#059669;"><td colspan="2">TOTAL PAID (' + receipt.payment.method + ' - ' + receipt.payment.transactionId + ')</td><td style="text-align:right;">' + receipt.payment.currencySymbol + Number(receipt.payment.amount).toLocaleString() + '</td></tr>' +
+        '</table>' +
+        '<div class="footer">' +
+          '<div class="seal"><span>★ OFFICIAL ★</span><span>DIGITAL</span><span>SEAL</span></div>' +
+          '<div style="text-align:right;"><div style="width:160px; border-bottom:1.5px solid #0f172a; margin-bottom:4px; margin-left:auto;"></div><strong>Authorized Registrar</strong><div style="font-size:11px; color:#64748b;">Digital Verification Validated</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<script>window.onload = function() { window.print(); };<\/script>' +
+      '</body></html>';
+
+    printWin.document.open();
+    printWin.document.write(doc);
+    printWin.document.close();
   };
 
   InsuranceChatbotController.prototype.reset = function() {
@@ -942,6 +1030,7 @@
     toggle: function() { instance && instance.toggle(); },
     triggerAction: function(p) { instance && instance.handleQuickReply(p); },
     reset: function() { instance && instance.reset(); },
+    printCertificate: function(r) { instance && instance.printCertificate(r); },
     getInstance: function() { return instance; }
   };
 }));

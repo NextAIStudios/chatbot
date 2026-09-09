@@ -278,7 +278,15 @@ if (typeof window !== 'undefined') {
     close: function() { this.instance?.close(); },
     toggle: function() { this.instance?.toggle(); },
     triggerAction: function(payload) { this.instance?.triggerAction(payload); },
-    updateConfig: function(cfg) { this.instance?.updateConfig(cfg); }
+    updateConfig: function(cfg) { this.instance?.updateConfig(cfg); },
+    printCertificate: function(receipt) {
+      const targetReceipt = receipt || window.__lastIssuedReceipt;
+      if (targetReceipt) {
+        ReceiptGenerator.printCertificate(targetReceipt);
+      } else {
+        window.print();
+      }
+    }
   };
 }
 
