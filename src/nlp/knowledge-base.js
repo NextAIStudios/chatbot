@@ -176,8 +176,7 @@ export const INSURANCE_KNOWLEDGE_BASE = [
     category: 'company',
     tags: ['contact', 'phone', 'email', 'hours', 'support', 'human agent'],
     keywords: ['how to contact you', 'phone number', 'customer support email', 'talk to human agent', 'speak to representative'],
-    question: 'How do I speak with a human agent or contact customer support?',
-    answer: `📞 **Customer Care & Human Handover:**\n\n• **Toll-Free Phone:** +1 (800) 555-0199 (Mon–Fri 8am–8pm)\n• **Email Support:** care@aegisguard.example.com\n• **Claims Emergency Hotline:** 24/7/365 toll-free\n\nWould you like me to connect you with a live licensed underwriter right now? Type **"Connect to agent"** and leave your phone or email!`
+    answer: `📞 **Customer Care & Human Handover:**\n\n• **Toll-Free Phone:** +1 (800) 555-0199 (Mon–Fri 8am–8pm)\n• **Email Support:** care@botly.ai\n• **Claims Emergency Hotline:** 24/7/365 toll-free\n\nWould you like me to connect you with a live licensed underwriter right now? Type **"Connect to agent"** and leave your phone or email!`
   }
 ];
 

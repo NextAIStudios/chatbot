@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Botly | Conversational AI Platform for Every Company</title>
+  <meta name="description" content="Deploy autonomous conversational AI chatbots for any company. Answer customer questions, capture qualified leads, calculate real-time quotes, and complete in-chat checkout.">
+  <link rel="icon" type="image/svg+xml" href="demo/botly-icon.svg">
+  <link rel="stylesheet" href="dist/insurance-chatbot.css">
+  <link rel="stylesheet" href="demo/demo.css">
+</head>
+<body class="botly-body">
+
+  <!-- Grainy Film-Noise Texture Overlay -->
+  <div class="botly-grain-overlay" aria-hidden="true"></div>
+
+  <!-- Top Navigation (Insurely Minimalist Reference Style) -->
+  <header>
+    <nav class="botly-navbar">
+      <!-- Logo -->
+      <a href="index.html" class="botly-logo-wrap">
+        <img src="demo/botly-logo.svg" alt="Botly" height="36" style="display: block;" />
+      </a>
+
+      <!-- Center Menu -->
+      <div class="botly-nav-menu">
+        <a href="#capabilities" class="botly-nav-item">
+          Building with AI
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#use-cases" class="botly-nav-item">Use cases</a>
+        <a href="#products" class="botly-nav-item">
+          Products
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#developer-hub" class="botly-nav-item">Docs</a>
+        <a href="#about" class="botly-nav-item">
+          About us
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+
+      <!-- Action Pill Buttons -->
+      <div class="botly-nav-actions">
+        <a href="demo/customizer.html" class="pill-btn-dark">
+          <span>Sandbox access</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <button type="button" class="pill-btn-lime" onclick="openChatWithPrompt('Hello, I would like to explore Botly for my company')">Contact us</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section (Editorial Serif Style with Grainy Texture) -->
+  <main>
+    <section class="botly-hero">
+      <div class="hero-tag-pill">API & Widget Access</div>
+      
+      <h1 class="hero-editorial-headline">
+        Create fully customizable conversational AI experiences.
+      </h1>
+
+      <p class="hero-editorial-sub">
+        Use our APIs to access and use data directly in your applications - in exactly the way you want to.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="demo/customizer.html" class="pill-btn-dark">
+          <span>Sandbox access</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#developer-hub" class="pill-btn-lime">For developers</a>
+      </div>
+    </section>
+
+    <!-- Interactive Sandbox & Platform Showcase Card -->
+    <section class="sandbox-hero-preview" id="capabilities">
+      <div class="sandbox-frame">
+        <div class="sandbox-frame-left">
+          <div class="sandbox-tag">Interactive Sandbox Preview</div>
+          <h3>Deploy conversational agents that qualify, quote, and close.</h3>
+          <p>
+            Botly empowers every company to deploy autonomous AI agents capable of answering complex inquiries, generating instant quotes, capturing verified leads, and processing checkout inside the conversation thread.
+          </p>
+
+          <!-- Interactive Testing Chips (Zero Emojis) -->
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">
+            <button class="prompt-chip" onclick="openChatWithPrompt('Show me your product catalog and pricing')">Product Catalog</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('Calculate a pricing quote for my business')">Instant Quote</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('I want to complete payment checkout')">In-Chat Payment</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('How does your onboarding and integration work?')">Integration FAQ</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('Connect me with a product specialist')">Talk to Specialist</button>
+          </div>
+
+          <div>
+            <a href="demo/customizer.html" class="pill-btn-dark" style="padding: 10px 20px; font-size: 13.5px;">
+              <span>Open Botly Customizer Studio</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="sandbox-frame-right">
+          <!-- Live Widget Floating Card Demo -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="demo/botly-icon.svg" width="28" height="28" alt="Botly">
+                <div>
+                  <div style="font-weight: 800; font-size: 14px; color: #18221c;">Botly AI</div>
+                  <div style="font-size: 11px; color: #15803d; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    <span style="width: 6px; height: 6px; background: #16a34a; border-radius: 50%; display: inline-block;"></span>
+                    Active Agent
+                  </div>
+                </div>
+              </div>
+              <span style="font-size: 10.5px; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 600; color: #64748b;">Ready</span>
+            </div>
+
+            <!-- Simulated Chat Bubble -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.5; color: #334155; margin-bottom: 12px;">
+              Hello. I am Botly, your company assistant. I can answer inquiries, generate custom quotes, qualify requirements, or process payments directly in chat.
+            </div>
+
+            <!-- Simulated Card -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; font-size: 12px; margin-bottom: 14px;">
+              <div style="font-weight: 800; color: #166534; margin-bottom: 4px;">Verified Tier Calculation</div>
+              <div style="color: #15803d;">Rate: <strong>$49.00 / month</strong></div>
+              <div style="font-size: 10.5px; color: #16a34a; margin-top: 2px;">Zero redirect payment link verified</div>
+            </div>
+
+            <button class="pill-btn-lime" style="width: 100%; border-radius: 10px; font-size: 13px; padding: 10px;" onclick="openChatWithPrompt('I want to complete payment checkout')">
+              Complete Checkout in Chat
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platform Superpowers Section (Clean Minimalist Vector Icons, No Emojis) -->
+    <section class="botly-section" id="products">
+      <div class="botly-section-header">
+        <span class="botly-section-tag">Platform Architecture</span>
+        <h2 class="botly-section-title">Built for every company that needs a smarter chatbot.</h2>
+        <p class="botly-section-desc">
+          Modular, robust capabilities designed to convert visitors into customers, automate repetitive workflows, and handle transactions natively.
+        </p>
+      </div>
+
+      <div class="botly-cards-grid">
+        <!-- Autonomous Intelligence -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+          </div>
+          <h4>Autonomous Intelligence</h4>
+          <p>Context-aware conversational engine that classifies user intent, navigates multi-step workflows, and delivers accurate, actionable responses.</p>
+        </div>
+
+        <!-- In-Chat Payment Checkout -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <h4>In-Chat Checkout</h4>
+          <p>PCI-DSS Level 1 payment cards mount directly inside conversation threads. Accept Credit/Debit cards, Apple Pay, Google Pay, and Mobile Money without external redirects.</p>
+        </div>
+
+        <!-- Instant Receipts & Proof -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <h4>Instant Digital Receipts</h4>
+          <p>Generates verifiable transaction numbers, automated PDF order confirmations, policy certificates, and official receipts on day one.</p>
+        </div>
+
+        <!-- Lead Qualification & Handover -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h4>Lead Capture & Handover</h4>
+          <p>Intelligently captures contact details, qualifies prospect intent, and routes conversations to human representatives with zero context loss.</p>
+        </div>
+
+        <!-- 100% White-Label Studio -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <h4>White-Label Customizer</h4>
+          <p>Fully adaptable in the live sandbox. Configure brand colors, logos, agent persona, currencies, and custom UI parameters to match your company brand.</p>
+        </div>
+
+        <!-- Custom Domain Training -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <h4>Custom Knowledge Ingestion</h4>
+          <p>Ingest product catalogs, FAQs, pricing tables, or policy documents via CSV, JSON, or plain text to train your bot instantly with high priority.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases for Every Company Section -->
+    <section class="botly-section" id="use-cases" style="border-top: 1px solid #f1f5f9; padding-top: 80px;">
+      <div class="botly-section-header">
+        <span class="botly-section-tag">Universal Use Cases</span>
+        <h2 class="botly-section-title">Designed for any company that needs customer automation.</h2>
+        <p class="botly-section-desc">
+          From high-growth SaaS startups and digital retail brands to healthcare clinics, financial services, and property management firms.
+        </p>
+      </div>
+
+      <div class="botly-cards-grid">
+        <!-- E-Commerce & Retail -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <h4>E-Commerce & DTC Brands</h4>
+          <p>Product recommendations, real-time order tracking, promo code redemption, and seamless in-chat checkout for higher store conversions.</p>
+        </div>
+
+        <!-- SaaS & Technology -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <h4>SaaS & Technology Companies</h4>
+          <p>Interactive feature walk-throughs, subscription tier comparison, technical documentation lookup, and automated demo scheduling.</p>
+        </div>
+
+        <!-- Financial Services & FinTech -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h4>Financial Services & FinTech</h4>
+          <p>Account inquiries, loan eligibility calculators, KYC documentation assistance, and secure PCI-DSS transactions with digital confirmation.</p>
+        </div>
+
+        <!-- Healthcare & Clinics -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <h4>Healthcare & Wellness</h4>
+          <p>Patient appointment scheduling, clinical service FAQs, insurance eligibility verification, and automated appointment reminders.</p>
+        </div>
+
+        <!-- Real Estate & Property -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <h4>Real Estate & Property</h4>
+          <p>Property catalog navigation, schedule private viewings, buyer qualification, amenity inquiries, and direct agent connection.</p>
+        </div>
+
+        <!-- Professional Services & Agencies -->
+        <div class="botly-feature-card">
+          <div class="card-icon-pill">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+          </div>
+          <h4>Professional Services & Agencies</h4>
+          <p>Automate client intake, scope estimations, retainer deposit collection, and 24/7 lead capture across time zones.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developer & Integration Hub Section -->
+    <section class="botly-section" id="developer-hub" style="border-top: 1px solid #f1f5f9; padding-top: 80px;">
+      <div class="botly-section-header">
+        <span class="botly-section-tag">Developer & Integration Hub</span>
+        <h2 class="botly-section-title">Built for developers. Ready in two lines of code.</h2>
+        <p class="botly-section-desc">
+          Zero external dependencies. Pure lightweight JavaScript bundle compatible with React, Vue, Next.js, Webflow, Shopify, WordPress, or static HTML.
+        </p>
+      </div>
+
+      <div class="dev-hub-card" style="box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);">
+        <div class="dev-nav-tabs">
+          <button class="dev-tab-btn active" onclick="switchDevTab('html')">HTML Drop-in Snippet</button>
+          <button class="dev-tab-btn" onclick="switchDevTab('python')">Python FastAPI Webhook (server.py)</button>
+          <button class="dev-tab-btn" onclick="switchDevTab('node')">Node.js Express API (server.js)</button>
+        </div>
+
+        <div class="code-terminal">
+          <div class="code-terminal-header">
+            <div class="terminal-dots">
+              <span class="terminal-dot dot-red"></span>
+              <span class="terminal-dot dot-yellow"></span>
+              <span class="terminal-dot dot-green"></span>
+            </div>
+            <span class="terminal-title" id="terminal-file-title">index.html (Drop-in Embed)</span>
+            <button class="terminal-copy-btn" onclick="copyDevSnippet()">Copy Snippet</button>
+          </div>
+          <pre class="code-terminal-body" id="dev-code-display"><!-- 1. Include Botly Stylesheet & JavaScript Bundle -->
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
+
+<!-- 2. Initialize Botly for your company -->
+&lt;script&gt;
+  InsuranceChatbot.init({
+    company: {
+      name: "Your Company Name",
+      supportPhone: "+1 (800) 555-0199",
+      supportEmail: "support@yourcompany.com"
+    },
+    bot: {
+      name: "Botly",
+      title: "AI Assistant",
+      avatar: "demo/botly-icon.svg"
+    },
+    theme: {
+      primaryColor: "#18221c",
+      primaryGradient: "linear-gradient(135deg, #18221c 0%, #26352c 100%)",
+      accentColor: "#9be553"
+    },
+    currency: {
+      code: "USD",
+      symbol: "$"
+    }
+  });
+&lt;/script&gt;</pre>
+        </div>
+
+        <!-- Integration Resources -->
+        <div class="integration-links-grid">
+          <a href="demo/customizer.html" class="integration-link-card">
+            <div class="int-icon" style="color: #18221c;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div>
+              <div class="int-title">Botly Customizer Studio</div>
+              <div class="int-sub">Interactive sandbox, presets and live editor</div>
+            </div>
+          </a>
+
+          <a href="demo/embed-example.html" class="integration-link-card">
+            <div class="int-icon" style="color: #18221c;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div>
+              <div class="int-title">Minimal Embed Demo</div>
+              <div class="int-sub">Five-line static integration test page</div>
+            </div>
+          </a>
+
+          <a href="examples/backend-api/README.md" class="integration-link-card">
+            <div class="int-icon" style="color: #18221c;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <div>
+              <div class="int-title">Backend API Webhooks</div>
+              <div class="int-sub">Node.js Express & Python FastAPI guides</div>
+            </div>
+          </a>
+
+          <a href="tests/widget.test.js" class="integration-link-card">
+            <div class="int-icon" style="color: #18221c;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div>
+              <div class="int-title">Automated Test Suite</div>
+              <div class="int-sub">27 of 27 Tests Passing (NLP, Quotes, Payments)</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA Banner (Insurely Minimalist Dark Style) -->
+    <section class="botly-cta-banner" id="about">
+      <h3>Ready to create open conversational experiences?</h3>
+      <p>
+        Explore the Botly Customizer Studio sandbox, configure your company assistant, and integrate in-chat checkout into your product today.
+      </p>
+      <div class="hero-cta-group">
+        <a href="demo/customizer.html" class="pill-btn-lime" style="padding: 12px 28px; font-size: 15px;">
+          <span>Sandbox access</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <button type="button" class="pill-btn-dark" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); padding: 12px 28px; font-size: 15px;" onclick="openChatWithPrompt('Tell me about Botly and how it works')">
+          Chat with Botly AI
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Clean SaaS Footer (Zero Emojis) -->
+  <footer style="background: #ffffff; border-top: 1px solid #e5e7eb; padding: 60px 48px 30px 48px; margin-top: 0; color: #4b5563;">
+    <div style="max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; padding-bottom: 48px; border-bottom: 1px solid #f1f5f9;">
+      <div>
+        <a href="index.html" style="text-decoration: none; display: inline-block; margin-bottom: 14px;">
+          <img src="demo/botly-logo.svg" alt="Botly" height="34" />
+        </a>
+        <p style="font-size: 14px; color: #6b7280; line-height: 1.6; max-width: 320px;">
+          The conversational AI and commerce platform for every company. Built with zero external dependencies.
+        </p>
+        <div style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
+          Statutory Technology • 256-Bit SSL • PCI-DSS Level 1 Compliant
+        </div>
+      </div>
+
+      <div>
+        <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Platform</h5>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
+          <li style="margin-bottom: 10px;"><a href="#capabilities" style="color: #6b7280; text-decoration: none;">Building with AI</a></li>
+          <li style="margin-bottom: 10px;"><a href="#products" style="color: #6b7280; text-decoration: none;">Autonomous Intelligence</a></li>
+          <li style="margin-bottom: 10px;"><a href="#products" style="color: #6b7280; text-decoration: none;">In-Chat Checkout</a></li>
+          <li style="margin-bottom: 10px;"><a href="#products" style="color: #6b7280; text-decoration: none;">Lead Capture Engine</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Use cases</h5>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
+          <li style="margin-bottom: 10px;"><a href="#use-cases" style="color: #6b7280; text-decoration: none;">E-Commerce & DTC</a></li>
+          <li style="margin-bottom: 10px;"><a href="#use-cases" style="color: #6b7280; text-decoration: none;">SaaS & Technology</a></li>
+          <li style="margin-bottom: 10px;"><a href="#use-cases" style="color: #6b7280; text-decoration: none;">Financial Services</a></li>
+          <li style="margin-bottom: 10px;"><a href="#use-cases" style="color: #6b7280; text-decoration: none;">Healthcare & Wellness</a></li>
+          <li style="margin-bottom: 10px;"><a href="#use-cases" style="color: #6b7280; text-decoration: none;">Real Estate & Services</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Developers & Sandbox</h5>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
+          <li style="margin-bottom: 10px;"><a href="demo/customizer.html" style="color: #15803d; font-weight: 700; text-decoration: none;">Botly Customizer Studio</a></li>
+          <li style="margin-bottom: 10px;"><a href="demo/embed-example.html" style="color: #6b7280; text-decoration: none;">Embed Guide</a></li>
+          <li style="margin-bottom: 10px;"><a href="examples/backend-api/README.md" style="color: #6b7280; text-decoration: none;">Webhook APIs</a></li>
+          <li style="margin-bottom: 10px;"><a href="tests/widget.test.js" style="color: #6b7280; text-decoration: none;">Unit Tests (27 of 27 Passing)</a></li>
+          <li style="margin-bottom: 10px;"><a href="https://github.com/NextAIStudios/chatbot" target="_blank" rel="noopener" style="color: #6b7280; text-decoration: none;">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="max-width: 1180px; margin: 24px auto 0 auto; display: flex; justify-content: space-between; font-size: 12.5px; color: #9ca3af; flex-wrap: wrap; gap: 12px;">
+      <span>© 2026 Botly Technologies Inc. All rights reserved.</span>
+      <span>MIT Licensed • Zero External Dependencies • Open Platform Architecture</span>
+    </div>
+  </footer>
+
+  <!-- Botly Chatbot Bundle -->
+  <script src="dist/insurance-chatbot.js"></script>
+
+  <!-- Botly Initialization & Helpers -->
+  <script>
+    // Initialize Botly with universal configuration
+    InsuranceChatbot.init({
+      company: {
+        name: 'Botly',
+        supportPhone: '+1 (800) 555-0199',
+        supportEmail: 'care@botly.ai'
+      },
+      bot: {
+        name: 'Botly',
+        title: 'AI Assistant',
+        avatar: 'demo/botly-icon.svg',
+        greeting: "Hello! I am Botly, your company's conversational AI assistant. How can I help you today? You can explore our product catalog, request a quote, or complete payment checkout."
+      },
+      theme: {
+        primaryColor: '#18221c',
+        primaryGradient: 'linear-gradient(135deg, #18221c 0%, #26352c 100%)',
+        accentColor: '#9be553',
+        headerBg: '#18221c',
+        userBubbleBg: '#18221c'
+      },
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    });
+
+    // Helper to open chat with specific trigger
+    function openChatWithPrompt(promptText) {
+      InsuranceChatbot.open();
+      setTimeout(() => {
+        InsuranceChatbot.triggerAction(promptText);
+      }, 350);
+    }
+
+    // Developer Snippet Switcher
+    const SNIPPETS = {
+      html: `<!-- 1. Include Botly Stylesheet & JavaScript Bundle -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
+<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>
+
+<!-- 2. Initialize Botly for your company -->
+<script>
+  InsuranceChatbot.init({
+    company: {
+      name: "Your Company Name",
+      supportPhone: "+1 (800) 555-0199",
+      supportEmail: "support@yourcompany.com"
+    },
+    bot: {
+      name: "Botly",
+      title: "AI Assistant",
+      avatar: "demo/botly-icon.svg"
+    },
+    theme: {
+      primaryColor: "#18221c",
+      primaryGradient: "linear-gradient(135deg, #18221c 0%, #26352c 100%)",
+      accentColor: "#9be553"
+    },
+    currency: {
+      code: "USD",
+      symbol: "$"
+    }
+  });
+<\/script>`,
+
+      python: `# FastAPI Webhook Server for Botly (examples/backend-api/server.py)
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI(title="Botly Webhook Server")
+
+class QueryRequest(BaseModel):
+    query: str
+    sessionId: str
+    userProfile: dict = {}
+
+@app.post("/api/insurance/query")
+async def handle_query(req: QueryRequest):
+    return {
+        "text": f"Response calculated for session {req.sessionId}.",
+        "quickReplies": ["View Details", "Contact Team"],
+        "confidence": 0.98
+    }`,
+
+      node: `// Node.js Express Webhook for Botly (examples/backend-api/server.js)
+import express from 'express';
+const app = express();
+app.use(express.json());
+
+app.post('/api/insurance/query', (req, res) => {
+  const { query, sessionId } = req.body;
+  res.json({
+    text: \`Response processed for session \${sessionId}.\`,
+    quickReplies: ["View Catalog", "Speak with Team"],
+    confidence: 0.99
+  });
+});
+
+app.listen(3000, () => console.log('Botly webhook live on port 3000'));`
+    };
+
+    function switchDevTab(tabKey) {
+      document.querySelectorAll('.dev-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const titles = {
+        html: 'index.html (Drop-in Embed)',
+        python: 'server.py (FastAPI Webhook Server)',
+        node: 'server.js (Node.js Express Webhook Server)'
+      };
+
+      document.getElementById('terminal-file-title').textContent = titles[tabKey];
+      document.getElementById('dev-code-display').textContent = SNIPPETS[tabKey];
+    }
+
+    function copyDevSnippet() {
+      const code = document.getElementById('dev-code-display').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.terminal-copy-btn');
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy Snippet'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

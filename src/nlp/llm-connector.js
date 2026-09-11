@@ -17,7 +17,7 @@ export class LLMConnector {
 
     const provider = this.config.nlp?.llmProvider || 'gemini';
     const apiKey = this.config.nlp?.apiKey;
-    const systemPrompt = `You are ${this.config.bot?.name || 'Aegis AI'}, an expert licensed insurance advisor representing ${this.config.company?.name || 'AegisGuard Insurance'}.
+    const systemPrompt = `You are ${this.config.bot?.name || 'Botly AI'}, an expert licensed insurance advisor representing ${this.config.company?.name || 'Botly Insurance'}.
 Company Tagline: ${this.config.company?.tagline || ''}
 Support Phone: ${this.config.company?.supportPhone || ''}
 Support Email: ${this.config.company?.supportEmail || ''}

@@ -145,6 +145,84 @@ assert(testConn.ok === true && testConn.status === 200, 'Backend API mock connec
 const queryRes = await connector.query('What is the deductible on my corporate fleet?');
 assert(queryRes.success === true && queryRes.reply.includes('Backend API Response'), 'BackendConnector processes query and returns structured response');
 
+console.log('\n--- 📋 7. Testing Lead Capture & Human Follow-Up Dynamics ---');
+import { LeadCaptureFlow } from '../src/flows/lead-capture-flow.js';
+
+// Test 7.1: Unlisted inquiry triggers LEAD_CAPTURE
+const unlistedRes = engine.classify('Do you offer cyber liability insurance for SaaS cloud infrastructure?');
+assert(unlistedRes.action === 'LEAD_CAPTURE', 'Unlisted inquiry correctly routes to LEAD_CAPTURE action');
+assert(unlistedRes.inquiredNeed.toLowerCase().includes('cyber'), 'Extracts core inquired need topic from user query');
+
+// Test 7.2: LeadCaptureFlow starts and asks for name
+const leadFlow = new LeadCaptureFlow(DEFAULT_CONFIG);
+const leadStart = leadFlow.start(unlistedRes.inquiredNeed);
+assert(leadStart.message.includes('full name'), 'Lead capture flow prompts user for full name');
+
+// Test 7.3: Submitting name prompts for phone number
+const nameStep = leadFlow.handleInput('David Muindi');
+assert(nameStep.message.includes('phone number') && nameStep.message.includes('David Muindi'), 'Captures name and requests contact phone number');
+
+// Test 7.4: Submitting phone number persists lead and generates confirmation with follow-up
+const phoneStep = leadFlow.handleInput('+1 (555) 019-2834');
+assert(phoneStep.leadCaptured !== undefined, 'Completes lead capture and creates structured lead object');
+assert(phoneStep.leadCaptured.phone === '+1 (555) 019-2834', 'Stores phone number correctly');
+assert(phoneStep.leadCaptured.name === 'David Muindi', 'Stores customer name correctly');
+assert(phoneStep.message.includes('💬 **In the meantime'), 'Includes contextual human follow-up question');
+
+// Test 7.5: Persistent storage & CSV export
+const storedLeads = LeadCaptureFlow.getLeads();
+assert(storedLeads.length > 0 && storedLeads[0].name === 'David Muindi', 'Persists captured leads in storage');
+const csvData = LeadCaptureFlow.exportCSV();
+assert(csvData.includes('David Muindi') && csvData.includes('+1 (555) 019-2834'), 'Exports captured leads to valid CSV format');
+
+// Test 7.6: Human follow-up questions present on FAQ answers
+const autoFaq = engine.classify('What does third party liability cover?');
+assert(autoFaq.reply.includes('💬'), 'FAQ responses include human follow-up question');
+
+console.log('\n--- 🎯 8. Testing Company Goals & Conversion Strategy Customization ---');
+import { COMPANY_GOALS } from '../src/config/default-config.js';
+
+// Test 8.1: Verify all 4 company goals catalog presets exist
+assert(COMPANY_GOALS.lead_generation !== undefined, 'COMPANY_GOALS has lead_generation preset');
+assert(COMPANY_GOALS.payment_checkout !== undefined, 'COMPANY_GOALS has payment_checkout preset');
+assert(COMPANY_GOALS.customer_support !== undefined, 'COMPANY_GOALS has customer_support preset');
+assert(COMPANY_GOALS.consultation_booking !== undefined, 'COMPANY_GOALS has consultation_booking preset');
+
+// Test 8.2: LeadCaptureFlow initialized with payment_checkout goal
+const paymentGoalConfig = {
+  ...DEFAULT_CONFIG,
+  goal: 'payment_checkout',
+  leadCapture: {
+    ...DEFAULT_CONFIG.leadCapture,
+    askNamePrompt: COMPANY_GOALS.payment_checkout.askNamePrompt,
+    askPhonePrompt: COMPANY_GOALS.payment_checkout.askPhonePrompt,
+    confirmationMessage: COMPANY_GOALS.payment_checkout.confirmationMessage,
+    followUpQuestion: COMPANY_GOALS.payment_checkout.followUpQuestion
+  }
+};
+const paymentFlow = new LeadCaptureFlow(paymentGoalConfig);
+const pStart = paymentFlow.start('High-Limit Cargo Insurance');
+assert(pStart.message.includes('instant checkout catalog'), 'Uses goal-specific lead capture name prompt');
+
+// Test 8.3: Lead captured under payment_checkout goal records goalKey
+paymentFlow.handleInput('Alice Mwangi');
+const pDone = paymentFlow.handleInput('+254 700 111 222');
+assert(pDone.leadCaptured.goal === 'payment_checkout', 'Stores company goal in lead record');
+assert(pDone.message.includes('Payment request initiated'), 'Uses goal-specific confirmation prompt');
+
+// Test 8.4: CSV export includes Company Goal column
+const goalCsv = LeadCaptureFlow.exportCSV();
+assert(goalCsv.includes('Goal') && goalCsv.includes('payment_checkout'), 'CSV export includes Goal column with goal key');
+
+// Test 8.5: Tone-aware human follow-up engine
+const supportEngine = new IntentEngine({
+  ...DEFAULT_CONFIG,
+  goal: 'customer_support',
+  followUpDynamics: { enabled: true, tone: 'support' }
+});
+const supportFaq = supportEngine.classify('How long does a collision claim take to process?');
+assert(supportFaq.reply.includes('support specialist') || supportFaq.reply.includes('file this claim'), 'Follow-up question adapts tone to customer support goal');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);

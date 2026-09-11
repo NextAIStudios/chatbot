@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 72" width="280" height="72" fill="none">
+  <!-- Botly Geometric Icon: Shield + Chat Loop + AI Spark -->
+  <g transform="translate(4, 8)">
+    <!-- Outer Shield-Bubble Contour -->
+    <path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#18221c" />
+    
+    <!-- Inner Radiant Guard Shield -->
+    <path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553" />
+    
+    <!-- AI Core Sparkle -->
+    <circle cx="28" cy="24" r="4.5" fill="#18221c" />
+    <path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2" stroke-linecap="round" />
+  </g>
+
+  <!-- Typography: "Botly" Wordmark -->
+  <text x="74" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', sans-serif" font-size="34" font-weight="800" letter-spacing="-0.8" fill="#18221c">
+    Botly
+  </text>
+  
+  <!-- Subtle Lime Spark Indicator -->
+  <circle cx="166" cy="24" r="4" fill="#9be553" />
+</svg>

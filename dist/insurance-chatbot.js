@@ -9,39 +9,151 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.InsuranceChatbot = factory());
 })(this, (function () { 'use strict';
 
-  // 1. DEFAULT CONFIGURATION
+  // 1. COMPANY GOALS CATALOG
+  var COMPANY_GOALS = {
+    lead_generation: {
+      id: 'lead_generation',
+      title: 'Lead Generation & Sales',
+      icon: '🚀',
+      description: 'Capture prospect names, phones, and custom needs to grow sales pipeline',
+      botTitle: 'Sales & Solutions Concierge',
+      greeting: "Hello! I am **{botName}**, your sales & solutions concierge. How can I help you find the perfect coverage or customized package today?",
+      quickReplies: [
+        { label: '🚗 Instant Quote', payload: 'intent_quote_auto' },
+        { label: '💡 Custom Package', payload: 'intent_custom_package' },
+        { label: '📞 Talk to Specialist', payload: 'intent_human_handover' },
+        { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+      ],
+      askNamePrompt: "That's a fantastic inquiry{needTopic}! That is a specialized requirement, and our solutions team can prepare a custom quote for you.\n\nMay I please have your **full name**?",
+      askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
+      confirmationMessage: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
+      followUpQuestion: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
+      followUpTone: 'sales',
+      checkoutEnabled: true
+    },
+    payment_checkout: {
+      id: 'payment_checkout',
+      title: 'In-Chat Payments & Checkout',
+      icon: '💳',
+      description: 'Direct frictionless transactions, M-Pesa/Card payments, and instant certificates',
+      botTitle: 'Instant Checkout & Billing Concierge',
+      greeting: "Welcome! I am **{botName}**, ready to assist with instant policy activations, premium payments, and digital receipt generation. What would you like to activate or pay today?",
+      quickReplies: [
+        { label: '💳 Pay Premium Now', payload: 'intent_pay' },
+        { label: '🚗 Fast Quote & Pay', payload: 'intent_quote_auto' },
+        { label: '📑 Check Active Invoices', payload: 'intent_policy_lookup' },
+        { label: '🎟️ Apply Discount Promo', payload: 'intent_promo_info' }
+      ],
+      askNamePrompt: "While that specific package isn't in our instant checkout catalog yet, we can prepare a bespoke payment link and certificate. May I have your **full name** to start?",
+      askPhonePrompt: "Thank you, **{name}**! What **phone number** should receive your M-Pesa prompt or payment confirmation SMS?",
+      confirmationMessage: "🎉 **Payment request initiated, {name}!** Our billing desk has logged your order for **{need}**. You will receive an SMS confirmation at **{phone}**.",
+      followUpQuestion: "Would you like to complete an instant checkout right now, or view our active promo code discounts?",
+      followUpTone: 'sales',
+      checkoutEnabled: true
+    },
+    customer_support: {
+      id: 'customer_support',
+      title: '24/7 Customer Support',
+      icon: '🎧',
+      description: 'Instant FAQ answers, claims filing, and human agent callback escalation',
+      botTitle: '24/7 Customer Support Concierge',
+      greeting: "Hello! I am **{botName}**, your 24/7 support assistant. Ask me anything about policies, claims, coverage rules, or account services.",
+      quickReplies: [
+        { label: '❓ Common FAQs', payload: 'intent_coverage_overview' },
+        { label: '📑 File a Claim', payload: 'intent_claim' },
+        { label: '🔍 Check Deductibles', payload: 'intent_deductible_faq' },
+        { label: '🆘 Speak with Human Agent', payload: 'intent_human_handover' }
+      ],
+      askNamePrompt: "I want to make sure you get the exact, accurate assistance for that! Let me connect you directly with a dedicated support specialist. Could you please share your **full name**?",
+      askPhonePrompt: "Thank you, **{name}**! What is the best **phone number** for our support agent to call you back?",
+      confirmationMessage: "📋 **Support ticket logged, {name}!** Your inquiry regarding **{need}** has been marked for immediate agent callback at **{phone}**.",
+      followUpQuestion: "Did that help resolve your current concern, or is there another account matter I can check for you?",
+      followUpTone: 'support',
+      checkoutEnabled: false
+    },
+    consultation_booking: {
+      id: 'consultation_booking',
+      title: 'Consultation & Booking',
+      icon: '📅',
+      description: 'Pre-qualify leads, assess requirements, and schedule 1-on-1 advisor sessions',
+      botTitle: 'Consultation & Advisory Concierge',
+      greeting: "Welcome! I am **{botName}**, your consultation advisor. I can help assess your requirements, answer questions, and schedule a 1-on-1 advisor session.",
+      quickReplies: [
+        { label: '📅 Book 1-on-1 Consultation', payload: 'intent_book_consultation' },
+        { label: '📋 Pre-Qualify My Needs', payload: 'intent_prequalify' },
+        { label: '📞 Request Advisor Callback', payload: 'intent_human_handover' },
+        { label: '💼 View Advisory Services', payload: 'intent_coverage_overview' }
+      ],
+      askNamePrompt: "That sounds like a great topic to discuss during a dedicated consultation! Let's get your advisor session scheduled. May I have your **full name**?",
+      askPhonePrompt: "Thank you, **{name}**! What is your preferred **phone number** to confirm your consultation schedule?",
+      confirmationMessage: "📅 **Consultation booked, {name}!** An advisor will contact you at **{phone}** to finalize your consultation for **{need}**.",
+      followUpQuestion: "Would morning or afternoon work better for your consultation call?",
+      followUpTone: 'consultative',
+      checkoutEnabled: true
+    }
+  };
+
+  // 2. DEFAULT CONFIGURATION
   var DEFAULT_CONFIG = {
+    goal: 'lead_generation',
+    leadCapture: {
+      enabled: true,
+      triggerOnUnlisted: true,
+      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?",
+      askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?",
+      confirmationMessage: "🎉 **Thank you, {name}!**\n\nYour request for **{need}** has been saved and routed directly to our specialist team. An advisor will reach out to you at **{phone}** shortly.",
+      followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?",
+      storageKey: 'botly_captured_leads',
+      requirePhone: true
+    },
+    checkout: {
+      enabled: true,
+      defaultItemName: 'Comprehensive Policy Premium',
+      defaultAmount: 5000,
+      supportedMethods: ['mpesa', 'card', 'bank_transfer'],
+      allowPromoCodes: true,
+      promoCodes: {
+        'BOTLY20': 0.20,
+        'SAVE15': 0.15,
+        'WELCOME10': 0.10
+      },
+      followUpQuestion: "Would you like me to email you an official stamped certificate, or download your receipt?"
+    },
+    followUpDynamics: {
+      enabled: true,
+      tone: 'consultative'
+    },
     company: {
-      name: 'AegisGuard Insurance',
-      tagline: 'Smart, Instant & Compassionate Protection',
+      name: 'Botly Insurance',
+      tagline: 'Next-Gen Insurance AI Platform',
       logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232563eb"><path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-2.33v8.02z"/></svg>',
-      supportEmail: 'care@aegisguard.example.com',
+      supportEmail: 'care@botly.ai',
       supportPhone: '+1 (800) 555-0199',
-      websiteUrl: 'https://aegisguard.example.com',
+      websiteUrl: 'https://botly.ai',
       licenseNumber: 'INS-LIC-2026-882190'
     },
     bot: {
-      name: 'Aegis AI',
-      title: 'Certified Insurance Advisor',
-      avatar: null,
-      greeting: "Hello! 👋 I'm **Aegis**, your 24/7 licensed digital insurance assistant.\n\nI can calculate instant quotes, guide your claims, answer coverage questions, or process your policy payments securely right here in chat.",
+      name: 'Botly',
+      title: 'AI Assistant',
+      avatar: 'demo/botly-icon.svg',
+      greeting: "Hello! I am **Botly**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
       initialQuickReplies: [
-        { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
-        { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-        { label: '📑 File a Claim', payload: 'intent_claim' },
-        { label: '💳 Pay Premium', payload: 'intent_pay' },
-        { label: '❓ What do you cover?', payload: 'intent_coverage_overview' }
+        { label: 'Auto Quote', payload: 'intent_quote_auto' },
+        { label: 'Health Plans', payload: 'intent_quote_health' },
+        { label: 'File a Claim', payload: 'intent_claim' },
+        { label: 'Pay Premium', payload: 'intent_pay' },
+        { label: 'Coverage Overview', payload: 'intent_coverage_overview' }
       ],
       typingDelayMs: 400
     },
     theme: {
-      primaryColor: '#2563eb',
-      primaryGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-      primaryHover: '#1e40af',
-      accentColor: '#10b981',
-      headerBg: '#0f172a',
+      primaryColor: '#18221c',
+      primaryGradient: 'linear-gradient(135deg, #18221c 0%, #26352c 100%)',
+      primaryHover: '#26352c',
+      accentColor: '#9be553',
+      headerBg: '#18221c',
       headerText: '#ffffff',
-      userBubbleBg: '#2563eb',
+      userBubbleBg: '#18221c',
       userBubbleText: '#ffffff',
       fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       borderRadius: '18px',
@@ -207,7 +319,7 @@
       category: 'company',
       keywords: ['how to contact you', 'phone number', 'customer support email', 'talk to human agent', 'speak to representative'],
       question: 'How do I speak with a human agent or contact customer support?',
-      answer: '📞 **Customer Support:**\n\n• **Toll-Free Phone:** +1 (800) 555-0199 (Mon–Fri 8am–8pm)\n• **Email Support:** care@aegisguard.example.com\n• **24/7 Claims Emergency:** Available worldwide\n\nType **"Connect to agent"** and leave your phone or email to schedule an instant callback!'
+      answer: '📞 **Customer Support:**\n\n• **Toll-Free Phone:** +1 (800) 555-0199 (Mon–Fri 8am–8pm)\n• **Email Support:** care@botly.ai\n• **24/7 Claims Emergency:** Available worldwide\n\nType **"Connect to agent"** and leave your phone or email to schedule an instant callback!'
     }
   ];
 
@@ -469,7 +581,7 @@
       setTimeout(function() {
         callback({
           success: true,
-          reply: '[⚡ Backend API Response] "' + text + '" was verified and answered by your custom backend underwriter for ' + (context.companyName || 'AegisGuard') + '.',
+          reply: '[⚡ Backend API Response] "' + text + '" was verified and answered by your custom backend underwriter for ' + (context.companyName || 'Botly Insurance') + '.',
           latencyMs: 75,
           raw: { status: 'success', query: text, timestamp: new Date().toISOString() }
         });
@@ -544,7 +656,7 @@
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
       return {
         intent: 'greeting',
-        reply: "Hello! 👋 I'm **" + (config.bot?.name || 'Aegis AI') + "**, your 24/7 insurance concierge. How can I protect you today? You can calculate instant quotes, report a claim, or ask any coverage question."
+        reply: "Hello! 👋 I'm **" + (config.bot?.name || 'Botly AI') + "**, your 24/7 insurance concierge. How can I protect you today? You can calculate instant quotes, report a claim, or ask any coverage question."
       };
     }
 
@@ -589,10 +701,25 @@
 
     // Knowledge Base Search (Custom Trained Knowledge has priority boost)
     var allFaqs = (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
+    var stopWords = { 'do': 1, 'you': 1, 'we': 1, 'i': 1, 'the': 1, 'a': 1, 'an': 1, 'and': 1, 'or': 1, 'of': 1, 'for': 1, 'in': 1, 'on': 1, 'to': 1, 'is': 1, 'are': 1, 'it': 1, 'can': 1, 'how': 1, 'what': 1, 'offer': 1, 'have': 1, 'insurance': 1, 'policy': 1 };
     var best = null;
     var highest = 0;
     allFaqs.forEach(function(item) {
+      var qTokens = tokenize(item.question).concat((item.keywords || []).flatMap(function(k) { return tokenize(k); }));
+      var keyMatches = 0;
+      queryTokens.forEach(function(t) {
+        if (qTokens.indexOf(t) !== -1 && !stopWords[t]) {
+          keyMatches += 2.5;
+        }
+      });
+
       var score = computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords);
+      if (keyMatches > 0) {
+        score += keyMatches * 0.2;
+      } else {
+        score *= 0.2;
+      }
+
       if (item.isCustomTrained) score *= 1.35;
       if (score > highest) {
         highest = score;
@@ -600,21 +727,133 @@
       }
     });
 
-    if (best && highest >= 0.28) {
-      return { intent: 'faq', reply: best.answer };
+    function generateFollowUpQuestion(item) {
+      var tone = (config && config.followUpDynamics && config.followUpDynamics.tone) || (config && config.goal === 'customer_support' ? 'support' : (config && config.goal === 'payment_checkout' ? 'sales' : 'consultative'));
+
+      if (tone === 'direct') {
+        return '💬 Would you like to proceed with this or explore other options?';
+      }
+
+      if (!item) {
+        if (tone === 'sales') return '💬 Would you like me to connect you with an advisor to reserve this rate today?';
+        if (tone === 'support') return '💬 Did this completely solve your inquiry, or can I clarify anything else?';
+        return '💬 Does this answer your question, or would you like me to clarify anything specific?';
+      }
+
+      var cat = item.category || '';
+      var q = (item.question || '').toLowerCase();
+
+      if (tone === 'sales') {
+        if (cat === 'payments' || q.indexOf('pay') !== -1) {
+          return '💬 Shall we complete your activation and lock in your discount right now?';
+        }
+        if (cat === 'auto' || cat === 'health') {
+          return '💬 Would you like our underwriter to reserve this quote for you today?';
+        }
+      }
+
+      if (tone === 'support') {
+        if (cat === 'claims' || q.indexOf('claim') !== -1) {
+          return '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?';
+        }
+        return '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?';
+      }
+
+      if (cat === 'claims' || q.indexOf('claim') !== -1) {
+        return '💬 Would you like me to start an incident report and fast-track a claim for you right now?';
+      }
+      if (cat === 'auto' || q.indexOf('auto') !== -1 || q.indexOf('car') !== -1) {
+        return '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?';
+      }
+      if (cat === 'health' || q.indexOf('health') !== -1 || q.indexOf('medical') !== -1) {
+        return '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?';
+      }
+      if (cat === 'payments' || q.indexOf('pay') !== -1 || q.indexOf('discount') !== -1) {
+        return '💬 Would you like to proceed with checkout and apply your active discount code now?';
+      }
+      if (q.indexOf('deductible') !== -1) {
+        return '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?';
+      }
+      return '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?';
     }
 
+    if (best && highest >= 0.28) {
+      var followUp = generateFollowUpQuestion(best);
+      return {
+        intent: 'faq',
+        reply: best.answer + '\n\n' + followUp,
+        suggestedQuickReplies: [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '💳 Proceed to Payment', payload: 'intent_pay' },
+          { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+        ]
+      };
+    }
+
+    // Lead Capture Fallback for Unlisted / Custom Queries
+    var needTopic = raw.replace(/^(do you have|do you offer|can you do|can you provide|tell me about|how about|what about|i want|i need|i'm looking for|we need)\s+/i, '').trim();
+    if (!needTopic || needTopic.length < 3) needTopic = raw;
+
     return {
-      intent: 'fallback',
-      reply: "I want to make sure you get the exact information you need! Here are some things I can do for you right now:\n\n• **Instant Quotes:** Real-time pricing for Auto, Health, Home, Life, or Travel.\n• **Claims & Emergency:** Step-by-step incident reporting.\n• **In-Chat Payment:** Instant checkout via M-Pesa or Card.\n\nPick an option below or type your question!",
-      suggestedQuickReplies: [
-        { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
-        { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-        { label: '📑 File a Claim', payload: 'intent_claim' },
-        { label: '💳 Pay Premium', payload: 'intent_pay' },
-        { label: '📞 Speak to Advisor', payload: 'intent_agent_handover' }
-      ]
+      intent: 'lead_capture_needed',
+      confidence: 0.2,
+      action: 'LEAD_CAPTURE',
+      inquiredNeed: needTopic,
+      reply: "That's a fantastic inquiry regarding **" + needTopic + "**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?"
     };
+  }
+
+  // 3.5. PERSISTENT LEAD CAPTURE & INQUIRY STORAGE
+  var LEAD_STORAGE_KEY = 'botly_captured_leads';
+  function getStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        var raw = localStorage.getItem(LEAD_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      }
+    } catch(e) {}
+    return window.__botly_memory_leads || [];
+  }
+  function saveStoredLead(lead) {
+    try {
+      var current = getStoredLeads();
+      var updated = [lead].concat(current);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(updated));
+      }
+      window.__botly_memory_leads = updated;
+      return updated;
+    } catch(e) {
+      if (!window.__botly_memory_leads) window.__botly_memory_leads = [];
+      window.__botly_memory_leads.unshift(lead);
+      return window.__botly_memory_leads;
+    }
+  }
+  function clearStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(LEAD_STORAGE_KEY);
+      }
+      window.__botly_memory_leads = [];
+      return true;
+    } catch(e) { return false; }
+  }
+  function exportLeadsToCsv() {
+    var leads = getStoredLeads();
+    if (!leads || leads.length === 0) return 'ID,Name,Phone,Need,Goal,Status,Date\n';
+    var headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Date'];
+    var rows = leads.map(function(l) {
+      return [
+        '"' + (l.id || '').replace(/"/g, '""') + '"',
+        '"' + (l.name || '').replace(/"/g, '""') + '"',
+        '"' + (l.phone || '').replace(/"/g, '""') + '"',
+        '"' + (l.need || '').replace(/"/g, '""') + '"',
+        '"' + (l.goal || 'lead_generation').replace(/"/g, '""') + '"',
+        '"' + (l.status || '').replace(/"/g, '""') + '"',
+        '"' + (l.createdAtFormatted || l.timestamp || '').replace(/"/g, '""') + '"'
+      ].join(',');
+    });
+    return headers.join(',') + '\n' + rows.join('\n');
   }
 
   // 4. MAIN CHATBOT WIDGET CONTROLLER
@@ -629,6 +868,7 @@
     this.activeQuote = null;
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
+    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
     this.container = null;
     this.launcher = null;
   }
@@ -653,7 +893,12 @@
   InsuranceChatbotController.prototype.applyTheme = function() {
     var root = document.documentElement;
     var t = this.config.theme || {};
-    if (t.primaryColor) root.style.setProperty('--ins-primary', t.primaryColor);
+    if (t.primaryColor) {
+      root.style.setProperty('--ins-primary', t.primaryColor);
+      if (!t.primaryGradient) {
+        root.style.setProperty('--ins-primary-gradient', 'linear-gradient(135deg, ' + t.primaryColor + ' 0%, #26352c 100%)');
+      }
+    }
     if (t.primaryGradient) root.style.setProperty('--ins-primary-gradient', t.primaryGradient);
     if (t.primaryHover) root.style.setProperty('--ins-primary-hover', t.primaryHover);
     if (t.accentColor) root.style.setProperty('--ins-accent', t.accentColor);
@@ -669,8 +914,14 @@
     var launcher = document.createElement('button');
     launcher.className = 'ins-chatbot-launcher';
     launcher.id = 'ins-widget-launcher';
-    launcher.innerHTML = '<div class="ins-launcher-teaser">💬 Need a quick quote or help?</div>' +
-      '<div class="ins-launcher-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>' +
+    launcher.setAttribute('aria-label', 'Open Botly Assistant');
+    launcher.innerHTML = '<div class="ins-launcher-teaser">Need assistance? Chat with Botly</div>' +
+      '<div class="ins-launcher-icon"><svg width="34" height="34" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>' +
+        '<path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/>' +
+        '<circle cx="28" cy="24" r="4.5" fill="#18221c"/>' +
+        '<path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/>' +
+      '</svg></div>' +
       '<div class="ins-launcher-badge">1</div>';
 
     var container = document.createElement('div');
@@ -679,7 +930,7 @@
     container.innerHTML = '<div class="ins-header">' +
       '<div class="ins-header-profile">' +
         '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
-        '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'Certified Advisor') + '</span></div>' +
+        '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
       '</div>' +
       '<div class="ins-header-actions">' +
         '<button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button>' +
@@ -721,29 +972,28 @@
   InsuranceChatbotController.prototype.renderAvatarHtml = function() {
     var bot = this.config.bot || {};
     var t = this.config.theme || {};
-    var primary = t.primaryColor || '#2563eb';
-    var accent = t.accentColor || '#10b981';
+    var primary = t.primaryColor || '#18221c';
+    var accent = t.accentColor || '#9be553';
 
-    if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.indexOf('http') === 0 || bot.avatar.indexOf('/') === 0 || bot.avatar.indexOf('./') === 0)) {
-      return '<img src="' + this.escape(bot.avatar) + '" alt="' + this.escape(bot.name || 'Bot') + '" class="ins-avatar-img">';
+    if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.indexOf('http') === 0 || bot.avatar.indexOf('/') === 0 || bot.avatar.indexOf('./') === 0 || bot.avatar.indexOf('data:') === 0)) {
+      return '<img src="' + this.escape(bot.avatar) + '" alt="' + this.escape(bot.name || 'Botly') + '" class="ins-avatar-img">';
     }
 
     return '<svg class="ins-avatar-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">' +
       '<defs>' +
         '<linearGradient id="ins-av-bg" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">' +
           '<stop offset="0%" stop-color="' + primary + '"/>' +
-          '<stop offset="100%" stop-color="#1e293b"/>' +
-        '</linearGradient>' +
-        '<linearGradient id="ins-av-shield" x1="12" y1="9" x2="32" y2="35" gradientUnits="userSpaceOnUse">' +
-          '<stop offset="0%" stop-color="#ffffff"/>' +
-          '<stop offset="100%" stop-color="#dbeafe"/>' +
+          '<stop offset="100%" stop-color="#26352c"/>' +
         '</linearGradient>' +
       '</defs>' +
-      '<rect width="44" height="44" rx="14" fill="url(#ins-av-bg)"/>' +
-      '<rect x="0.75" y="0.75" width="42.5" height="42.5" rx="13.25" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>' +
-      '<path d="M22 8.5L11 13V20.5C11 28 15.7 34.8 22 36.8C28.3 34.8 33 28 33 20.5V13L22 8.5Z" fill="url(#ins-av-shield)"/>' +
-      '<path d="M17 21.5L20.5 25L27 18" stroke="' + primary + '" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<circle cx="22" cy="13.5" r="1.5" fill="' + accent + '"/>' +
+      '<rect width="44" height="44" rx="13" fill="url(#ins-av-bg)"/>' +
+      '<rect x="0.75" y="0.75" width="42.5" height="42.5" rx="12.25" stroke="rgba(155, 229, 83, 0.3)" stroke-width="1.5"/>' +
+      '<g transform="translate(9, 8) scale(0.48)">' +
+        '<path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>' +
+        '<path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="' + accent + '"/>' +
+        '<circle cx="28" cy="24" r="4.5" fill="#18221c"/>' +
+        '<path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/>' +
+      '</g>' +
     '</svg>';
   };
 
@@ -756,7 +1006,7 @@
       '<div class="ins-header">' +
         '<div class="ins-header-profile">' +
           '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
-          '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Insurance Assistant') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'Certified Advisor') + '</span></div>' +
+          '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
         '</div>' +
         '<div class="ins-header-actions"><button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button></div>' +
       '</div>' +
@@ -901,6 +1151,12 @@
     this.appendUser(text);
     this.showTyping();
 
+    // 0. Lead Capture Flow Active?
+    if (self.leadState && self.leadState.active) {
+      setTimeout(function() { self.processLeadCaptureStep(text); }, self.config.bot?.typingDelayMs || 400);
+      return;
+    }
+
     // 1. Quote Flow Active?
     if (self.quoteState.active) {
       setTimeout(function() { self.processQuoteStep(text); }, self.config.bot?.typingDelayMs || 400);
@@ -953,6 +1209,10 @@
 
   InsuranceChatbotController.prototype.resolveLocalQuery = function(text) {
     var res = classifyQuery(text, this.config, this.config.customFaqs, this.trainedKnowledge);
+    if (res.action === 'LEAD_CAPTURE') {
+      this.startLeadCapture(res.inquiredNeed || text);
+      return;
+    }
     if (res.action === 'OPEN_QUOTE_WIZARD') {
       this.startQuoteWizard(res.productType || 'auto');
       return;
@@ -966,6 +1226,121 @@
       return;
     }
     this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
+  };
+
+  InsuranceChatbotController.prototype.startLeadCapture = function(inquiredNeed) {
+    var cleanNeed = (inquiredNeed || '').trim();
+    this.leadState = {
+      active: true,
+      step: 'awaiting_name',
+      inquiredNeed: cleanNeed || 'Custom Service & Solution Inquiry',
+      name: '',
+      phone: ''
+    };
+    var needDisplay = cleanNeed ? ' regarding "**' + this.escape(cleanNeed) + '**"' : '';
+    var startMsg = '';
+    if (this.config.leadCapture && this.config.leadCapture.askNamePrompt) {
+      startMsg = this.config.leadCapture.askNamePrompt
+        .replace(/\{need\}/g, cleanNeed || 'your custom request')
+        .replace(/\{needTopic\}/g, needDisplay);
+    } else {
+      startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?";
+    }
+    this.appendBot(startMsg, {
+      quickReplies: [
+        { label: 'Cancel & Main Menu', payload: 'intent_cancel_lead' }
+      ]
+    });
+  };
+
+  InsuranceChatbotController.prototype.processLeadCaptureStep = function(text) {
+    var input = (text || '').trim();
+    if (/^(cancel|nevermind|stop|exit|main menu|back)\b/i.test(input) || input === 'intent_cancel_lead') {
+      this.leadState.active = false;
+      this.leadState.step = 'idle';
+      this.appendBot("No problem at all! We can explore other options anytime.\n\nWhat would you like to check next?", {
+        quickReplies: [
+          { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
+          { label: '🏥 Health Plans', payload: 'intent_quote_health' },
+          { label: '💳 Make a Payment', payload: 'intent_pay' },
+          { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+        ]
+      });
+      return;
+    }
+
+    if (this.leadState.step === 'awaiting_name') {
+      var name = input.replace(/^(my name is|i am|i'm|call me|this is)\s+/i, '').trim();
+      if (!name || name.length < 2) {
+        this.appendBot("Could you please share your name so our specialist knows who they'll be assisting?");
+        return;
+      }
+      this.leadState.name = name;
+      this.leadState.step = 'awaiting_phone';
+
+      var phonePrompt = '';
+      if (this.config.leadCapture && this.config.leadCapture.askPhonePrompt) {
+        phonePrompt = this.config.leadCapture.askPhonePrompt.replace(/\{name\}/g, this.escape(name));
+      } else {
+        phonePrompt = "Wonderful to meet you, **" + this.escape(name) + "**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?";
+      }
+      this.appendBot(phonePrompt);
+      return;
+    }
+
+    if (this.leadState.step === 'awaiting_phone') {
+      var digitsOnly = input.replace(/\D/g, '');
+      if (digitsOnly.length < 6) {
+        this.appendBot("Please provide a valid phone number (e.g. **+1 555-0199** or **0712 345 678**) so our advisor can reach you:");
+        return;
+      }
+      this.leadState.phone = input;
+      this.leadState.step = 'completed';
+      this.leadState.active = false;
+
+      var leadRecord = {
+        id: 'LEAD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
+        name: this.leadState.name,
+        phone: this.leadState.phone,
+        need: this.leadState.inquiredNeed,
+        goal: this.config.goal || 'lead_generation',
+        timestamp: new Date().toISOString(),
+        createdAtFormatted: new Date().toLocaleString(),
+        status: 'New',
+        company: this.config.company?.name || 'Botly AI'
+      };
+
+      saveStoredLead(leadRecord);
+
+      if (this.config.webhooks?.onLeadCaptured && typeof this.config.webhooks.onLeadCaptured === 'function') {
+        try { this.config.webhooks.onLeadCaptured(leadRecord); } catch(e) {}
+      }
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        try { window.dispatchEvent(new CustomEvent('botly:leadCaptured', { detail: leadRecord })); } catch(e) {}
+      }
+
+      var confirmMsg = '';
+      if (this.config.leadCapture && this.config.leadCapture.confirmationMessage) {
+        confirmMsg = this.config.leadCapture.confirmationMessage
+          .replace(/\{name\}/g, this.escape(this.leadState.name))
+          .replace(/\{need\}/g, this.escape(this.leadState.inquiredNeed))
+          .replace(/\{phone\}/g, this.escape(this.leadState.phone));
+      } else {
+        confirmMsg = "🎉 **Thank you, " + this.escape(this.leadState.name) + "!**\n\nYour request for **" + this.escape(this.leadState.inquiredNeed) + "** has been saved and routed directly to our specialist team. An advisor will reach out to you at **" + this.escape(this.leadState.phone) + "** shortly.";
+      }
+
+      var followUp = (this.config.leadCapture && this.config.leadCapture.followUpQuestion) ||
+        "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?";
+
+      this.appendBot(confirmMsg + "\n\n" + followUp, {
+        quickReplies: [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
+          { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+        ]
+      });
+      return;
+    }
   };
 
   InsuranceChatbotController.prototype.startQuoteWizard = function(productKey) {
@@ -1253,7 +1628,7 @@
   InsuranceChatbotController.prototype.printCertificate = function() {
     var receipt = this.lastIssuedReceipt || {
       policyNumber: 'POL-2026-882190',
-      company: this.config.company || { name: 'AegisGuard Insurance', tagline: 'Smart & Compassionate Insurance', licenseNumber: 'INS-LIC-2026-882190' },
+      company: this.config.company || { name: 'Botly Insurance', tagline: 'Next-Gen Insurance AI Platform', licenseNumber: 'INS-LIC-2026-882190' },
       policyholder: { name: 'Sarah Jenkins', phone: '+254 712 345 678' },
       plan: { productName: 'Comprehensive Auto Shield', tierName: 'Comprehensive Shield', coverageLimit: 'KSh 3,000,000', deductible: 'KSh 10,000' },
       payment: { amount: 42636, currencySymbol: 'KSh ', method: 'M-Pesa STK Push', transactionId: 'TXN-882190K' },
@@ -1290,7 +1665,7 @@
       '<div class="cert-box">' +
         '<div class="watermark">OFFICIAL CERTIFIED POLICY</div>' +
         '<div class="cert-header">' +
-          '<div><h1 style="font-size:22px; margin:0;">' + (receipt.company.name || 'AegisGuard Insurance') + '</h1><div style="font-size:11px; color:#64748b;">Statutory Insurance Registrar • Lic #' + (receipt.company.licenseNumber || 'INS-2026') + '</div></div>' +
+          '<div><h1 style="font-size:22px; margin:0;">' + (receipt.company.name || 'Botly Insurance') + '</h1><div style="font-size:11px; color:#64748b;">Statutory Insurance Registrar • Lic #' + (receipt.company.licenseNumber || 'INS-2026') + '</div></div>' +
           '<div class="badge">● ACTIVE POLICY ISSUED</div>' +
         '</div>' +
         '<div class="title">' +
@@ -1327,6 +1702,7 @@
   InsuranceChatbotController.prototype.reset = function() {
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
+    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
     if (this.messagesList) this.messagesList.innerHTML = '';
     this.sendGreeting();
   };
@@ -1410,6 +1786,26 @@
     this.config.api = Object.assign({}, this.config.api || {}, apiCfg);
   };
 
+  InsuranceChatbotController.prototype.setCompanyGoal = function(goalKey) {
+    if (!COMPANY_GOALS[goalKey]) return false;
+    var preset = COMPANY_GOALS[goalKey];
+    this.config.goal = goalKey;
+    if (!this.config.leadCapture) this.config.leadCapture = {};
+    if (preset.askNamePrompt) this.config.leadCapture.askNamePrompt = preset.askNamePrompt;
+    if (preset.askPhonePrompt) this.config.leadCapture.askPhonePrompt = preset.askPhonePrompt;
+    if (preset.confirmationMessage) this.config.leadCapture.confirmationMessage = preset.confirmationMessage;
+    if (preset.followUpQuestion) this.config.leadCapture.followUpQuestion = preset.followUpQuestion;
+    if (!this.config.followUpDynamics) this.config.followUpDynamics = {};
+    if (preset.followUpTone) this.config.followUpDynamics.tone = preset.followUpTone;
+    return true;
+  };
+
+  InsuranceChatbotController.prototype.simulateUnlistedInquiry = function(queryText) {
+    var text = queryText || 'Can you provide commercial drone delivery fleet protection?';
+    this.toggle(true);
+    this.handleUserInput(text);
+  };
+
   // Public Singleton Instance
   var instance = null;
 
@@ -1424,12 +1820,20 @@
     toggle: function() { instance && instance.toggle(); },
     triggerAction: function(p) { instance && instance.handleQuickReply(p); },
     reset: function() { instance && instance.reset(); },
+    setCompanyGoal: function(goalKey) { return instance && instance.setCompanyGoal(goalKey); },
+    simulateUnlistedInquiry: function(q) { instance && instance.simulateUnlistedInquiry(q); },
+    getCompanyGoals: function() { return COMPANY_GOALS; },
     printCertificate: function(r) { instance && instance.printCertificate(r); },
     trainData: function(content, format) { return instance && instance.trainData(content, format); },
     getTrainedData: function() { return (instance && instance.getTrainedData()) || []; },
     clearTrainedData: function() { instance && instance.clearTrainedData(); },
     testApiConnection: function(cb) { return instance && instance.testApiConnection(cb); },
     setApiConfig: function(cfg) { instance && instance.setApiConfig(cfg); },
+    getCapturedLeads: function() { return getStoredLeads(); },
+    saveLead: function(lead) { return saveStoredLead(lead); },
+    clearCapturedLeads: function() { return clearStoredLeads(); },
+    exportLeadsCSV: function() { return exportLeadsToCsv(); },
+    startCheckout: function() { instance && instance.startInChatCheckout(); },
     getInstance: function() { return instance; }
   };
 }));

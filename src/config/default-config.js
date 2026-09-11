@@ -3,47 +3,167 @@
  * Easily customizable for ANY insurance company (Auto, Health, Home, Life, Travel, Commercial)
  */
 
+// 🎯 Available Company Goals Catalog
+export const COMPANY_GOALS = {
+  lead_generation: {
+    id: 'lead_generation',
+    title: 'Lead Generation & Sales',
+    icon: '🚀',
+    description: 'Capture prospect names, phones, and custom needs to grow sales pipeline',
+    botTitle: 'Sales & Solutions Concierge',
+    greeting: "Hello! I am **{botName}**, your sales & solutions concierge. How can I help you find the perfect coverage or customized package today?",
+    quickReplies: [
+      { label: '🚗 Instant Quote', payload: 'intent_quote_auto' },
+      { label: '💡 Custom Package', payload: 'intent_custom_package' },
+      { label: '📞 Talk to Specialist', payload: 'intent_human_handover' },
+      { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+    ],
+    askNamePrompt: "That's a fantastic inquiry{needTopic}! That is a specialized requirement, and our solutions team can prepare a custom quote for you.\n\nMay I please have your **full name**?",
+    askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
+    confirmationMessage: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
+    followUpQuestion: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
+    followUpTone: 'sales',
+    checkoutEnabled: true
+  },
+  payment_checkout: {
+    id: 'payment_checkout',
+    title: 'In-Chat Payments & Checkout',
+    icon: '💳',
+    description: 'Direct frictionless transactions, M-Pesa/Card payments, and instant certificates',
+    botTitle: 'Instant Checkout & Billing Concierge',
+    greeting: "Welcome! I am **{botName}**, ready to assist with instant policy activations, premium payments, and digital receipt generation. What would you like to activate or pay today?",
+    quickReplies: [
+      { label: '💳 Pay Premium Now', payload: 'intent_pay' },
+      { label: '🚗 Fast Quote & Pay', payload: 'intent_quote_auto' },
+      { label: '📑 Check Active Invoices', payload: 'intent_policy_lookup' },
+      { label: '🎟️ Apply Discount Promo', payload: 'intent_promo_info' }
+    ],
+    askNamePrompt: "While that specific package isn't in our instant checkout catalog yet, we can prepare a bespoke payment link and certificate. May I have your **full name** to start?",
+    askPhonePrompt: "Thank you, **{name}**! What **phone number** should receive your M-Pesa prompt or payment confirmation SMS?",
+    confirmationMessage: "🎉 **Payment request initiated, {name}!** Our billing desk has logged your order for **{need}**. You will receive an SMS confirmation at **{phone}**.",
+    followUpQuestion: "Would you like to complete an instant checkout right now, or view our active promo code discounts?",
+    followUpTone: 'sales',
+    checkoutEnabled: true
+  },
+  customer_support: {
+    id: 'customer_support',
+    title: '24/7 Customer Support',
+    icon: '🎧',
+    description: 'Instant FAQ answers, claims filing, and human agent callback escalation',
+    botTitle: '24/7 Customer Support Concierge',
+    greeting: "Hello! I am **{botName}**, your 24/7 support assistant. Ask me anything about policies, claims, coverage rules, or account services.",
+    quickReplies: [
+      { label: '❓ Common FAQs', payload: 'intent_coverage_overview' },
+      { label: '📑 File a Claim', payload: 'intent_claim' },
+      { label: '🔍 Check Deductibles', payload: 'intent_deductible_faq' },
+      { label: '🆘 Speak with Human Agent', payload: 'intent_human_handover' }
+    ],
+    askNamePrompt: "I want to make sure you get the exact, accurate assistance for that! Let me connect you directly with a dedicated support specialist. Could you please share your **full name**?",
+    askPhonePrompt: "Thank you, **{name}**! What is the best **phone number** for our support agent to call you back?",
+    confirmationMessage: "📋 **Support ticket logged, {name}!** Your inquiry regarding **{need}** has been marked for immediate agent callback at **{phone}**.",
+    followUpQuestion: "Did that help resolve your current concern, or is there another account matter I can check for you?",
+    followUpTone: 'support',
+    checkoutEnabled: false
+  },
+  consultation_booking: {
+    id: 'consultation_booking',
+    title: 'Consultation & Booking',
+    icon: '📅',
+    description: 'Pre-qualify leads, assess requirements, and schedule 1-on-1 advisor sessions',
+    botTitle: 'Consultation & Advisory Concierge',
+    greeting: "Welcome! I am **{botName}**, your consultation advisor. I can help assess your requirements, answer questions, and schedule a 1-on-1 advisor session.",
+    quickReplies: [
+      { label: '📅 Book 1-on-1 Consultation', payload: 'intent_book_consultation' },
+      { label: '📋 Pre-Qualify My Needs', payload: 'intent_prequalify' },
+      { label: '📞 Request Advisor Callback', payload: 'intent_human_handover' },
+      { label: '💼 View Advisory Services', payload: 'intent_coverage_overview' }
+    ],
+    askNamePrompt: "That sounds like a great topic to discuss during a dedicated consultation! Let's get your advisor session scheduled. May I have your **full name**?",
+    askPhonePrompt: "Thank you, **{name}**! What is your preferred **phone number** to confirm your consultation schedule?",
+    confirmationMessage: "📅 **Consultation booked, {name}!** An advisor will contact you at **{phone}** to finalize your consultation for **{need}**.",
+    followUpQuestion: "Would morning or afternoon work better for your consultation call?",
+    followUpTone: 'consultative',
+    checkoutEnabled: true
+  }
+};
+
 export const DEFAULT_CONFIG = {
+  // 🎯 Primary Company Goal
+  goal: 'lead_generation', // 'lead_generation' | 'payment_checkout' | 'customer_support' | 'consultation_booking'
+
   // 🏢 Company Branding
   company: {
-    name: 'AegisGuard Insurance',
-    tagline: 'Smart, Instant & Compassionate Protection',
+    name: 'Botly Insurance',
+    tagline: 'Next-Gen Insurance AI Platform',
     logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232563eb"><path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-2.33v8.02z"/></svg>',
-    supportEmail: 'care@aegisguard.example.com',
+    supportEmail: 'care@botly.ai',
     supportPhone: '+1 (800) 555-0199',
-    websiteUrl: 'https://aegisguard.example.com',
+    websiteUrl: 'https://botly.ai',
     licenseNumber: 'INS-LIC-2026-882190'
+  },
+
+  // 📋 Lead Capture & Custom Inquiries
+  leadCapture: {
+    enabled: true,
+    triggerOnUnlisted: true,
+    askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?",
+    askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?",
+    confirmationMessage: "🎉 **Thank you, {name}!**\n\nYour request for **{need}** has been saved and routed directly to our specialist team. An advisor will reach out to you at **{phone}** shortly.",
+    followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?",
+    storageKey: 'botly_captured_leads',
+    requirePhone: true
+  },
+
+  // 💳 In-Chat Payment & Checkout
+  checkout: {
+    enabled: true,
+    defaultItemName: 'Comprehensive Policy Premium',
+    defaultAmount: 5000,
+    supportedMethods: ['mpesa', 'card', 'bank_transfer'],
+    allowPromoCodes: true,
+    promoCodes: {
+      'BOTLY20': 0.20,
+      'SAVE15': 0.15,
+      'WELCOME10': 0.10
+    },
+    followUpQuestion: "Would you like me to email you an official stamped certificate, or download your receipt?"
+  },
+
+  // 💬 Human Follow-up Dynamics
+  followUpDynamics: {
+    enabled: true,
+    tone: 'consultative' // 'consultative' | 'sales' | 'support' | 'direct'
   },
 
   // 🤖 Bot Persona & Tone
   bot: {
-    name: 'Aegis AI',
-    title: 'Certified Insurance Advisor',
-    avatar: null, // Dynamic vector Insurance Shield Logo with AI Protective Star
-    greeting: "Hello! 👋 I'm **Aegis**, your 24/7 licensed digital insurance assistant.\n\nI can calculate instant quotes, guide your claims, answer coverage questions, or process your policy payments securely right here in chat.",
+    name: 'Botly',
+    title: 'AI Assistant',
+    avatar: 'demo/botly-icon.svg',
+    greeting: "Hello! I am **Botly**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
     initialQuickReplies: [
-      { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
-      { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-      { label: '📑 File a Claim', payload: 'intent_claim' },
-      { label: '💳 Pay Premium', payload: 'intent_pay' },
-      { label: '❓ What do you cover?', payload: 'intent_coverage_overview' }
+      { label: 'Auto Quote', payload: 'intent_quote_auto' },
+      { label: 'Health Plans', payload: 'intent_quote_health' },
+      { label: 'File a Claim', payload: 'intent_claim' },
+      { label: 'Pay Premium', payload: 'intent_pay' },
+      { label: 'Coverage Overview', payload: 'intent_coverage_overview' }
     ],
     typingDelayMs: 400
   },
 
   // 🎨 Visual Theme (Any color scheme can be injected)
   theme: {
-    primaryColor: '#2563eb',          // Brand primary (blues, greens, purples, reds, etc.)
-    primaryGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-    primaryHover: '#1e40af',
-    accentColor: '#10b981',           // Success / highlights
+    primaryColor: '#18221c',          // Botly obsidian
+    primaryGradient: 'linear-gradient(135deg, #18221c 0%, #26352c 100%)',
+    primaryHover: '#26352c',
+    accentColor: '#9be553',           // Botly vibrant lime
     backgroundColor: '#ffffff',
     surfaceColor: '#f8fafc',
-    headerBg: '#1e293b',
+    headerBg: '#18221c',
     headerText: '#ffffff',
     botBubbleBg: '#f1f5f9',
     botBubbleText: '#0f172a',
-    userBubbleBg: '#2563eb',
+    userBubbleBg: '#18221c',
     userBubbleText: '#ffffff',
     fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     borderRadius: '16px',

@@ -187,7 +187,7 @@ export class BackendConnector {
         ok: true,
         latencyMs: 78,
         status: 200,
-        sampleReply: `Mock Backend API connection verified! 🟢 System operational. Model: ${this.config.responsePath || 'AegisUnderwrite-v2'}`,
+        sampleReply: `Mock Backend API connection verified! 🟢 System operational. Model: ${this.config.responsePath || 'BotlyUnderwrite-v2'}`,
         raw: { status: 'healthy', version: '2.4.0', model: 'mock-insurance-ai-v2', timestamp: new Date().toISOString() }
       };
     }
@@ -226,11 +226,11 @@ export class BackendConnector {
       setTimeout(() => {
         resolve({
           success: true,
-          reply: `[⚡ Backend API Response] "${messageText}" was received and answered by your backend underwriting API for ${context.companyName || 'AegisGuard'}.`,
+          reply: `[⚡ Backend API Response] "${messageText}" was received and answered by your backend underwriting API for ${context.companyName || 'Botly Insurance'}.`,
           latencyMs: latency,
           raw: {
             status: 'success',
-            backend: 'AegisUnderwrite-API-v1',
+            backend: 'BotlyUnderwrite-API-v1',
             query: messageText,
             timestamp: new Date().toISOString()
           }

@@ -13,32 +13,61 @@
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px; }
     .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-    .switch input:checked + .slider { background-color: #2563eb; }
-    .switch input:checked + .slider:before { transform: translateX(18px); }
+    .switch input:checked + .slider { background-color: #18221c; }
+    .switch input:checked + .slider:before { transform: translateX(18px); background-color: #9be553; }
     .btn-sample-tmpl:hover { filter: brightness(0.95); }
     .kb-item-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; transition: border-color 0.2s; }
     .kb-item-card:hover { border-color: #94a3b8; }
+
+    /* Goal Selection Cards */
+    .goal-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .goal-card:hover {
+      border-color: #9be553;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .goal-card.active {
+      border-color: #18221c;
+      background: #18221c;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(24, 34, 28, 0.2);
+    }
+    .goal-card .goal-icon { font-size: 20px; margin-bottom: 4px; }
+    .goal-card .goal-name { font-size: 11.5px; font-weight: 800; color: #0f172a; }
+    .goal-card.active .goal-name { color: #9be553; }
+    .goal-card .goal-desc { font-size: 9.5px; color: #64748b; margin-top: 2px; line-height: 1.25; }
+    .goal-card.active .goal-desc { color: #cbd5e1; }
   </style>
 </head>
 <body style="overflow: hidden;">
 
   <!-- Header -->
   <header>
-    <nav class="navbar" style="padding: 14px 28px;">
-      <a href="index.html" class="nav-brand">
-        <div class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M9 12l2 2 4-4"/>
-          </svg>
+    <nav class="navbar" style="padding: 12px 28px;">
+      <a href="../index.html" class="nav-brand">
+        <div class="brand-icon" style="background: transparent; width: 34px; height: 34px;">
+          <img src="botly-icon.svg" alt="Botly" width="34" height="34" />
         </div>
         <div class="brand-text">
-          <h1>White-Label Customizer Studio</h1>
-          <span>Tailor For Any Insurance Carrier in Minutes</span>
+          <h1>Botly Customizer Studio</h1>
+          <span>Interactive Sandbox & Integration Engine</span>
         </div>
       </a>
       <div class="nav-links">
-        <a href="index.html" class="nav-link">← Back to Showcase</a>
+        <a href="../index.html" class="nav-link">← Back to Botly</a>
+        <button type="button" class="nav-link" style="background: none; border: none; font-size: 14px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="openLeadsModal()">
+          <span>📋 Captured Leads</span>
+          <span id="nav-leads-badge" style="background: #9be553; color: #18221c; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 800;">0</span>
+        </button>
+        <button type="button" class="nav-link" style="background: none; border: none; font-size: 14px; font-weight: 700; color: #2563eb; cursor: pointer;" onclick="openDevHubModal()">🔌 Developer Hub</button>
         <a href="embed-example.html" class="nav-link">Quick Embed Guide</a>
         <button class="btn-nav-cta" onclick="copyEmbedSnippet()">📋 Copy Embed Code</button>
       </div>
@@ -57,7 +86,8 @@
       <div class="form-section">
         <h4>⚡ 1-Click Brand Presets</h4>
         <select id="preset-selector" class="input-field" style="font-weight: 600;">
-          <option value="aegisguard">🛡️ AegisGuard (Default Modern Blue)</option>
+          <option value="botly">🤖 Botly Insurance (Default Modern Blue)</option>
+          <option value="aegisguard" style="display:none;">Botly</option>
           <option value="medicare">🏥 VitalHealth (Health & Life Emerald)</option>
           <option value="autoshield">🏎️ TurboDrive (Auto & Motor Racing Red)</option>
           <option value="luxuryestate">🏰 HavenStone (High-End Property Royal Purple)</option>
@@ -65,12 +95,47 @@
         </select>
       </div>
 
+      <!-- 🎯 Company Goal & Strategy -->
+      <div class="form-section" style="border: 2px solid #9be553; background: #fbfdf9;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4 style="margin: 0; color: #18221c; font-size: 13.5px; font-weight: 800;">🎯 Primary Company Goal</h4>
+          <span id="active-goal-tag" style="font-size: 10.5px; background: #18221c; color: #9be553; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Lead Gen & Sales</span>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">
+          Select your business objective. Botly automatically adapts its conversational behavior, lead capture prompts, checkout triggers, and follow-up style.
+        </p>
+
+        <!-- Goal Cards Grid -->
+        <div class="goal-selection-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <div class="goal-card active" id="goal-card-lead_generation" onclick="selectCompanyGoal('lead_generation')">
+            <div class="goal-icon">🚀</div>
+            <div class="goal-name">Lead Gen & Sales</div>
+            <div class="goal-desc">Capture name, phone & custom needs</div>
+          </div>
+          <div class="goal-card" id="goal-card-payment_checkout" onclick="selectCompanyGoal('payment_checkout')">
+            <div class="goal-icon">💳</div>
+            <div class="goal-name">In-Chat Payments</div>
+            <div class="goal-desc">Direct M-Pesa/Card sales & receipts</div>
+          </div>
+          <div class="goal-card" id="goal-card-customer_support" onclick="selectCompanyGoal('customer_support')">
+            <div class="goal-icon">🎧</div>
+            <div class="goal-name">24/7 Support</div>
+            <div class="goal-desc">Instant FAQs & human triage callback</div>
+          </div>
+          <div class="goal-card" id="goal-card-consultation_booking" onclick="selectCompanyGoal('consultation_booking')">
+            <div class="goal-icon">📅</div>
+            <div class="goal-name">Consultation</div>
+            <div class="goal-desc">Pre-qualify & book advisor calls</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Company Identity -->
       <div class="form-section">
         <h4>🏢 Company Information</h4>
         <div class="form-group">
           <label>Company Name</label>
-          <input type="text" id="cfg-company-name" class="input-field" value="AegisGuard Insurance">
+          <input type="text" id="cfg-company-name" class="input-field" value="Botly Insurance">
         </div>
         <div class="form-group">
           <label>Tagline / Motto</label>
@@ -83,7 +148,7 @@
           </div>
           <div class="form-group half">
             <label>Support Email</label>
-            <input type="text" id="cfg-company-email" class="input-field" value="care@aegisguard.example.com">
+            <input type="text" id="cfg-company-email" class="input-field" value="care@botly.ai">
           </div>
         </div>
       </div>
@@ -92,11 +157,16 @@
       <div class="form-section">
         <h4>🖼️ Upload Logo & Avatar</h4>
         <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 14px;">
-          <div id="logo-preview-thumb" style="width: 48px; height: 48px; border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          <div id="logo-preview-thumb" style="width: 48px; height: 48px; border-radius: 12px; background: #18221c; border: 1px solid rgba(155, 229, 83, 0.3); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.15); flex-shrink: 0;">
+            <svg width="28" height="30" viewBox="0 0 54 60" fill="none">
+              <path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>
+              <path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/>
+              <circle cx="28" cy="24" r="4.5" fill="#18221c"/>
+              <path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
           </div>
           <div style="flex: 1;">
-            <div id="logo-status-text" style="font-size: 13px; font-weight: 700; color: #0f172a;">Default Protection Shield</div>
+            <div id="logo-status-text" style="font-size: 13px; font-weight: 700; color: #0f172a;">Default Botly Brand Mark</div>
             <div style="font-size: 11px; color: #64748b;">Upload PNG, JPG, SVG or WebP file</div>
             <div style="margin-top: 8px; display: flex; gap: 8px;">
               <label for="cfg-logo-file" class="btn-upload-label" style="background: #2563eb; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-block;">
@@ -117,16 +187,16 @@
         <div class="form-row">
           <div class="form-group half">
             <label>Assistant Name</label>
-            <input type="text" id="cfg-bot-name" class="input-field" value="Aegis AI">
+            <input type="text" id="cfg-bot-name" class="input-field" value="Botly">
           </div>
           <div class="form-group half">
             <label>Role / Subtitle</label>
-            <input type="text" id="cfg-bot-title" class="input-field" value="Certified Insurance Advisor">
+            <input type="text" id="cfg-bot-title" class="input-field" value="AI Assistant">
           </div>
         </div>
         <div class="form-group">
           <label>Greeting Message</label>
-          <textarea id="cfg-bot-greeting" class="input-field" rows="3" style="resize: vertical;">Hello! 👋 I'm Aegis, your 24/7 licensed digital insurance assistant. How can I protect you today?</textarea>
+          <textarea id="cfg-bot-greeting" class="input-field" rows="3" style="resize: vertical;">Hello! I am Botly, your 24/7 conversational digital assistant. How can I help you today?</textarea>
         </div>
       </div>
 
@@ -134,21 +204,21 @@
       <div class="form-section">
         <h4>🎨 Color Palette</h4>
         <div class="color-picker-row">
-          <input type="color" id="cfg-primary-color" class="color-input" value="#2563eb">
+          <input type="color" id="cfg-primary-color" class="color-input" value="#18221c">
           <div>
             <label style="font-size: 12px; font-weight: 700;">Primary Brand Color</label>
             <div style="font-size: 11px; color: #64748b;">Buttons, User bubbles, Launcher</div>
           </div>
         </div>
         <div class="color-picker-row">
-          <input type="color" id="cfg-accent-color" class="color-input" value="#10b981">
+          <input type="color" id="cfg-accent-color" class="color-input" value="#9be553">
           <div>
             <label style="font-size: 12px; font-weight: 700;">Accent Color</label>
             <div style="font-size: 11px; color: #64748b;">Success badges, Pay button, Verified status</div>
           </div>
         </div>
         <div class="color-picker-row">
-          <input type="color" id="cfg-header-bg" class="color-input" value="#0f172a">
+          <input type="color" id="cfg-header-bg" class="color-input" value="#18221c">
           <div>
             <label style="font-size: 12px; font-weight: 700;">Header Background</label>
             <div style="font-size: 11px; color: #64748b;">Dark mode top bar</div>
@@ -156,9 +226,18 @@
         </div>
       </div>
 
-      <!-- Currency & Payment -->
+      <!-- 💳 In-Chat Payment & Checkout -->
       <div class="form-section">
-        <h4>💰 Currency & Checkout</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4>💳 In-Chat Payment & Checkout</h4>
+          <label class="switch">
+            <input type="checkbox" id="cfg-checkout-enabled" checked onchange="applyLiveChanges()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+          Enable frictionless payments inside chat via M-Pesa, Card, and Bank Wire with digital policy certificate issuance.
+        </p>
         <div class="form-row">
           <div class="form-group half">
             <label>Currency Code</label>
@@ -168,6 +247,86 @@
             <label>Currency Symbol</label>
             <input type="text" id="cfg-currency-symbol" class="input-field" value="KSh ">
           </div>
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px;">Default Product / Service Item</label>
+          <input type="text" id="cfg-checkout-item" class="input-field" value="Comprehensive Policy Premium" style="font-size: 11.5px;">
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label style="font-size: 11px;">Default Amount</label>
+            <input type="number" id="cfg-checkout-amount" class="input-field" value="5000" style="font-size: 11.5px;">
+          </div>
+          <div class="form-group half">
+            <label style="font-size: 11px;">Promo Code</label>
+            <input type="text" id="cfg-checkout-promo" class="input-field" value="BOTLY20" placeholder="20% Off" style="font-size: 11.5px;">
+          </div>
+        </div>
+        <div style="margin-top: 6px;">
+          <button type="button" class="btn-secondary-hero" style="width: 100%; padding: 7px; font-size: 11px; justify-content: center;" onclick="InsuranceChatbot.triggerAction('intent_pay')">
+            💳 Test In-Chat Checkout Flow
+          </button>
+        </div>
+      </div>
+
+      <!-- 📋 Lead Capture & Custom Inquiries -->
+      <div class="form-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4>📋 Lead & Custom Inquiry Capture</h4>
+          <label class="switch">
+            <input type="checkbox" id="cfg-lead-capture-enabled" checked onchange="applyLiveChanges()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+          When a user asks for an unlisted product or service, Botly automatically prompts for their Name & Phone and saves it for your team.
+        </p>
+        <div class="form-group">
+          <label style="font-size: 11px;">Awaiting Name Prompt</label>
+          <textarea id="cfg-lead-name-prompt" class="input-field" rows="2" style="font-size: 11px; resize: vertical;">That's a fantastic inquiry regarding **{need}**! That is a specialized requirement, and our solutions team can prepare a custom quote for you.&#10;&#10;May I please have your **full name**?</textarea>
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px;">Awaiting Phone Prompt</label>
+          <input type="text" id="cfg-lead-phone-prompt" class="input-field" style="font-size: 11px;" value="Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px;">Confirmation Message</label>
+          <textarea id="cfg-lead-confirm-prompt" class="input-field" rows="2" style="font-size: 11px; resize: vertical;">🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.</textarea>
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px;">Follow-up Question</label>
+          <input type="text" id="cfg-lead-followup-prompt" class="input-field" style="font-size: 11px;" value="Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?">
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button type="button" class="btn-secondary-hero" style="flex: 1; padding: 7px; font-size: 11px; justify-content: center;" onclick="openLeadsModal()">
+            📋 Captured Leads (<span id="btn-leads-panel-count">0</span>)
+          </button>
+          <button type="button" class="btn-secondary-hero" style="flex: 1; padding: 7px; font-size: 11px; justify-content: center;" onclick="simulateUnlistedLeadTest()">
+            💡 Test Lead Flow
+          </button>
+        </div>
+      </div>
+
+      <!-- 💬 Human Follow-up Dynamics -->
+      <div class="form-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4>💬 Human Follow-up Questions Engine</h4>
+          <label class="switch">
+            <input type="checkbox" id="cfg-followup-enabled" checked onchange="applyLiveChanges()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+          Just like an expert human advisor, the bot naturally follows up every answer with proactive next steps.
+        </p>
+        <div class="form-group">
+          <label style="font-size: 11px;">Conversational Follow-up Tone</label>
+          <select id="cfg-followup-tone" class="input-field" style="font-size: 11.5px;" onchange="applyLiveChanges()">
+            <option value="sales">🎯 Sales & Closing (Reserve rates, lock discounts, book calls)</option>
+            <option value="consultative">🤝 Consultative & Helpful (Walkthroughs & Clarifications)</option>
+            <option value="support">🎧 Support & Empathetic (Issue resolution & agent escalation)</option>
+            <option value="direct">⚡ Direct & Concise (Quick confirmation to proceed)</option>
+          </select>
         </div>
       </div>
 
@@ -302,12 +461,36 @@
         </button>
       </div>
 
-      <!-- Embed Code Snippet -->
-      <div style="margin-top: 24px;">
-        <h4 style="font-size: 13px; font-weight: 700; color: #1e293b;">Generated Website Embed Code:</h4>
-        <div class="code-export-box">
-          <button class="btn-copy-code" onclick="copyEmbedSnippet()">Copy</button>
-          <code id="embed-code-display">&lt;!-- Insurance Chatbot Embed --&gt;</code>
+      <!-- 🔌 Developer & Integration Hub in Studio -->
+      <div class="form-section" id="dev-hub-section" style="margin-top: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4 style="margin: 0; color: #0f172a; font-size: 13.5px; font-weight: 800;">🔌 Developer & Integration Hub</h4>
+          <span style="font-size: 10.5px; background: #ecfdf5; color: #059669; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid #a7f3d0;">27/27 Tests Pass</span>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">
+          Export drop-in widgets, configure backend webhooks, or test API connections in this sandbox.
+        </p>
+
+        <!-- Hub Sub-Tabs -->
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <button type="button" class="devhub-pill-btn active" id="btn-devtab-embed" onclick="selectDevHubTab('embed')" style="font-size: 11px; padding: 5px 9px; font-weight: 700; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: #fff; cursor: pointer;">📄 Drop-in HTML</button>
+          <button type="button" class="devhub-pill-btn" id="btn-devtab-python" onclick="selectDevHubTab('python')" style="font-size: 11px; padding: 5px 9px; font-weight: 600; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer;">🐍 Python API</button>
+          <button type="button" class="devhub-pill-btn" id="btn-devtab-node" onclick="selectDevHubTab('node')" style="font-size: 11px; padding: 5px 9px; font-weight: 600; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer;">🟢 Node.js API</button>
+        </div>
+
+        <div class="code-export-box" style="margin-top: 4px; font-size: 11px; max-height: 190px; overflow-y: auto;">
+          <button class="btn-copy-code" id="btn-copy-devhub" onclick="copyDevHubSnippet()">Copy</button>
+          <code id="devhub-code-preview" style="color: #38bdf8;">&lt;!-- Code loading... --&gt;</code>
+          <pre id="embed-code-display" style="display: none;"></pre>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button type="button" onclick="openDevHubModal()" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-size: 11px; font-weight: 700; padding: 7px 10px; border-radius: 8px; cursor: pointer;">
+            🔍 Full Screen Hub
+          </button>
+          <a href="../examples/backend-api/README.md" style="flex: 1; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 11px; font-weight: 700; padding: 7px 10px; border-radius: 8px; text-decoration: none;">
+            📖 Webhook Docs →
+          </a>
         </div>
       </div>
     </div>
@@ -319,9 +502,11 @@
           <h3 style="font-size: 18px; font-weight: 800;">Interactive Live Preview</h3>
           <span style="font-size: 12px; color: #64748b;">Test quotes, in-chat checkout, and Q&A with your live custom branding:</span>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="prompt-chip" onclick="InsuranceChatbot.triggerAction('intent_quote_auto')">🚗 Test Auto Quote</button>
-          <button class="prompt-chip" onclick="InsuranceChatbot.triggerAction('intent_pay')">💳 Test In-Chat Payment</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="prompt-chip" style="background: #18221c; color: #ffffff; border-color: #18221c;" onclick="openLeadsModal()">📋 Leads (<span id="preview-leads-count">0</span>)</button>
+          <button class="prompt-chip" onclick="simulateUnlistedLeadTest()">💡 Test Lead Capture</button>
+          <button class="prompt-chip" onclick="InsuranceChatbot.triggerAction('intent_pay')">💳 Payment Checkout</button>
+          <button class="prompt-chip" onclick="InsuranceChatbot.simulateUnlistedInquiry ? InsuranceChatbot.simulateUnlistedInquiry('What does third party liability cover?') : InsuranceChatbot.triggerAction('intent_coverage_overview')">💬 Test Human FAQ</button>
           <button class="prompt-chip" onclick="InsuranceChatbot.reset()">🔄 Reset Bot</button>
         </div>
       </div>
@@ -337,11 +522,17 @@
   <script>
     // Presets catalog
     const PRESETS = {
+      botly: {
+        company: { name: 'Botly AI', tagline: 'Universal Conversational AI Platform', phone: '+1 (800) 555-0199', email: 'care@botly.ai' },
+        bot: { name: 'Botly', title: 'AI Assistant', greeting: "Hello! I am **Botly**, your 24/7 conversational digital assistant. How can I help you today?" },
+        theme: { primaryColor: '#18221c', accentColor: '#9be553', headerBg: '#18221c' },
+        currency: { code: 'USD', symbol: '$' }
+      },
       aegisguard: {
-        company: { name: 'AegisGuard Insurance', tagline: 'Smart, Instant & Compassionate Protection', phone: '+1 (800) 555-0199', email: 'care@aegisguard.example.com' },
-        bot: { name: 'Aegis AI', title: 'Certified Insurance Advisor', greeting: "Hello! 👋 I'm **Aegis**, your 24/7 licensed digital insurance assistant. How can I protect you today?" },
-        theme: { primaryColor: '#2563eb', accentColor: '#10b981', headerBg: '#0f172a' },
-        currency: { code: 'KES', symbol: 'KSh ' }
+        company: { name: 'Botly AI', tagline: 'Universal Conversational AI Platform', phone: '+1 (800) 555-0199', email: 'care@botly.ai' },
+        bot: { name: 'Botly', title: 'AI Assistant', greeting: "Hello! I am **Botly**, your 24/7 conversational digital assistant. How can I help you today?" },
+        theme: { primaryColor: '#18221c', accentColor: '#9be553', headerBg: '#18221c' },
+        currency: { code: 'USD', symbol: '$' }
       },
       medicare: {
         company: { name: 'VitalHealth Assurance', tagline: 'Your Health & Well-being, Guarded Every Second', phone: '+1 (888) 432-8482', email: 'care@vitalhealth.example.com' },
@@ -595,6 +786,97 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       a.click();
     }
 
+    let currentGoalKey = 'lead_generation';
+
+    const GOAL_PRESETS = {
+      lead_generation: {
+        tag: 'Lead Gen & Sales',
+        title: 'Sales & Solutions Concierge',
+        greeting: "Hello! I am **Botly**, your sales & solutions concierge. How can I help you find the perfect coverage or customized package today?",
+        namePrompt: "That's a fantastic inquiry regarding **{need}**! That is a specialized requirement, and our solutions team can prepare a custom quote for you.\n\nMay I please have your **full name**?",
+        phonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
+        confirmPrompt: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
+        followUpPrompt: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
+        followUpTone: 'sales',
+        checkoutEnabled: true
+      },
+      payment_checkout: {
+        tag: 'Instant Payments',
+        title: 'Instant Checkout & Billing Concierge',
+        greeting: "Welcome! I am **Botly**, ready to assist with instant policy activations, premium payments, and digital receipt generation. What would you like to activate or pay today?",
+        namePrompt: "While that specific package isn't in our instant checkout catalog yet, we can prepare a bespoke payment link and certificate. May I have your **full name** to start?",
+        phonePrompt: "Thank you, **{name}**! What **phone number** should receive your M-Pesa prompt or payment confirmation SMS?",
+        confirmPrompt: "🎉 **Payment request initiated, {name}!** Our billing desk has logged your order for **{need}**. You will receive an SMS confirmation at **{phone}**.",
+        followUpPrompt: "Would you like to complete an instant checkout right now, or view our active promo code discounts?",
+        followUpTone: 'sales',
+        checkoutEnabled: true
+      },
+      customer_support: {
+        tag: '24/7 Support',
+        title: '24/7 Customer Support Concierge',
+        greeting: "Hello! I am **Botly**, your 24/7 support assistant. Ask me anything about policies, claims, coverage rules, or account services.",
+        namePrompt: "I want to make sure you get the exact, accurate assistance for that! Let me connect you directly with a dedicated support specialist. Could you please share your **full name**?",
+        phonePrompt: "Thank you, **{name}**! What is the best **phone number** for our support agent to call you back?",
+        confirmPrompt: "📋 **Support ticket logged, {name}!** Your inquiry regarding **{need}** has been marked for immediate agent callback at **{phone}**.",
+        followUpPrompt: "Did that help resolve your current concern, or is there another account matter I can check for you?",
+        followUpTone: 'support',
+        checkoutEnabled: false
+      },
+      consultation_booking: {
+        tag: 'Consultation & Booking',
+        title: 'Consultation & Advisory Concierge',
+        greeting: "Welcome! I am **Botly**, your consultation advisor. I can help assess your requirements, answer questions, and schedule a 1-on-1 advisor session.",
+        namePrompt: "That sounds like a great topic to discuss during a dedicated consultation! Let's get your advisor session scheduled. May I have your **full name**?",
+        phonePrompt: "Thank you, **{name}**! What is your preferred **phone number** to confirm your consultation schedule?",
+        confirmPrompt: "📅 **Consultation booked, {name}!** An advisor will contact you at **{phone}** to finalize your consultation for **{need}**.",
+        followUpPrompt: "Would morning or afternoon work better for your consultation call?",
+        followUpTone: 'consultative',
+        checkoutEnabled: true
+      }
+    };
+
+    function selectCompanyGoal(goalKey) {
+      if (!GOAL_PRESETS[goalKey]) return;
+      currentGoalKey = goalKey;
+      const p = GOAL_PRESETS[goalKey];
+
+      // Update active card styling
+      document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('active'));
+      const activeCard = document.getElementById('goal-card-' + goalKey);
+      if (activeCard) activeCard.classList.add('active');
+
+      const tag = document.getElementById('active-goal-tag');
+      if (tag) tag.textContent = p.tag;
+
+      // Update form values
+      const titleInput = document.getElementById('cfg-bot-title');
+      if (titleInput) titleInput.value = p.title;
+
+      const greetingInput = document.getElementById('cfg-bot-greeting');
+      if (greetingInput) greetingInput.value = p.greeting;
+
+      const namePromptInput = document.getElementById('cfg-lead-name-prompt');
+      if (namePromptInput) namePromptInput.value = p.namePrompt;
+
+      const phonePromptInput = document.getElementById('cfg-lead-phone-prompt');
+      if (phonePromptInput) phonePromptInput.value = p.phonePrompt;
+
+      const confirmPromptInput = document.getElementById('cfg-lead-confirm-prompt');
+      if (confirmPromptInput) confirmPromptInput.value = p.confirmPrompt;
+
+      const followUpInput = document.getElementById('cfg-lead-followup-prompt');
+      if (followUpInput) followUpInput.value = p.followUpPrompt;
+
+      const toneSelect = document.getElementById('cfg-followup-tone');
+      if (toneSelect) toneSelect.value = p.followUpTone;
+
+      const checkoutCheck = document.getElementById('cfg-checkout-enabled');
+      if (checkoutCheck) checkoutCheck.checked = p.checkoutEnabled;
+
+      // Apply live update immediately
+      applyLiveChanges();
+    }
+
     function getFormConfig() {
       const apiEnabled = document.getElementById('cfg-api-enabled').checked;
       const apiEndpoint = document.getElementById('cfg-api-endpoint').value;
@@ -605,6 +887,25 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       const isMock = document.getElementById('cfg-api-mock').checked;
 
       return {
+        goal: currentGoalKey,
+        leadCapture: {
+          enabled: document.getElementById('cfg-lead-capture-enabled')?.checked ?? true,
+          askNamePrompt: document.getElementById('cfg-lead-name-prompt')?.value,
+          askPhonePrompt: document.getElementById('cfg-lead-phone-prompt')?.value,
+          confirmationMessage: document.getElementById('cfg-lead-confirm-prompt')?.value,
+          followUpQuestion: document.getElementById('cfg-lead-followup-prompt')?.value
+        },
+        checkout: {
+          enabled: document.getElementById('cfg-checkout-enabled')?.checked ?? true,
+          defaultItemName: document.getElementById('cfg-checkout-item')?.value || 'Comprehensive Policy Premium',
+          defaultAmount: parseFloat(document.getElementById('cfg-checkout-amount')?.value || '5000') || 5000,
+          promoCode: document.getElementById('cfg-checkout-promo')?.value || 'BOTLY20',
+          supportedMethods: ['mpesa', 'card', 'bank_transfer']
+        },
+        followUpDynamics: {
+          enabled: document.getElementById('cfg-followup-enabled')?.checked ?? true,
+          tone: document.getElementById('cfg-followup-tone')?.value || 'consultative'
+        },
         company: {
           name: document.getElementById('cfg-company-name').value,
           tagline: document.getElementById('cfg-company-tagline').value,
@@ -668,8 +969,8 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       uploadedLogoDataUrl = null;
       document.getElementById('cfg-logo-file').value = '';
       const thumb = document.getElementById('logo-preview-thumb');
-      thumb.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
-      document.getElementById('logo-status-text').textContent = 'Default Protection Shield';
+      thumb.innerHTML = `<svg width="28" height="30" viewBox="0 0 54 60" fill="none"><path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/><path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/><circle cx="28" cy="24" r="4.5" fill="#18221c"/><path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+      document.getElementById('logo-status-text').textContent = 'Default Botly Brand Mark';
       document.getElementById('btn-reset-logo').style.display = 'none';
       applyLiveChanges();
     }
@@ -692,8 +993,8 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       uploadedLogoDataUrl = null;
       document.getElementById('cfg-logo-file').value = '';
       const thumb = document.getElementById('logo-preview-thumb');
-      thumb.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${p.theme.primaryColor}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
-      document.getElementById('logo-status-text').textContent = 'Default Protection Shield';
+      thumb.innerHTML = `<svg width="28" height="30" viewBox="0 0 54 60" fill="none"><path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/><path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/><circle cx="28" cy="24" r="4.5" fill="#18221c"/><path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+      document.getElementById('logo-status-text').textContent = 'Default Botly Brand Mark';
       document.getElementById('btn-reset-logo').style.display = 'none';
 
       document.getElementById('cfg-company-name').value = p.company.name;
@@ -721,6 +1022,18 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
 
     function updateEmbedDisplay(cfg) {
       let extraConfig = '';
+      if (cfg.goal) {
+        extraConfig += `,\n    // 🎯 Company Goal Strategy\n    goal: "${cfg.goal}"`;
+      }
+      if (cfg.leadCapture) {
+        extraConfig += `,\n    // 📋 Lead Capture & Custom Inquiries\n    leadCapture: {\n      enabled: ${cfg.leadCapture.enabled}\n    }`;
+      }
+      if (cfg.checkout) {
+        extraConfig += `,\n    // 💳 In-Chat Payment & Checkout\n    checkout: {\n      enabled: ${cfg.checkout.enabled},\n      defaultAmount: ${cfg.checkout.defaultAmount}\n    }`;
+      }
+      if (cfg.followUpDynamics) {
+        extraConfig += `,\n    // 💬 Human Follow-up Dynamics\n    followUpDynamics: {\n      enabled: ${cfg.followUpDynamics.enabled},\n      tone: "${cfg.followUpDynamics.tone}"\n    }`;
+      }
       if (cfg.customKnowledge && cfg.customKnowledge.length > 0) {
         extraConfig += `,\n    // Custom Uploaded Training Knowledge (${cfg.customKnowledge.length} items)\n    customKnowledge: ${JSON.stringify(cfg.customKnowledge.slice(0, 3), null, 4)}${cfg.customKnowledge.length > 3 ? ' /* ...+' + (cfg.customKnowledge.length - 3) + ' more items */' : ''}`;
       }
@@ -729,14 +1042,20 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       }
 
       const snippet = `<!-- 1. Include Insurance Chatbot Stylesheet & Script -->\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n<!-- 2. Initialize with your company configuration -->\n<script>\n  InsuranceChatbot.init({\n    company: {\n      name: "${cfg.company.name}",\n      supportPhone: "${cfg.company.supportPhone}",\n      supportEmail: "${cfg.company.supportEmail}"\n    },\n    bot: {\n      name: "${cfg.bot.name}",\n      title: "${cfg.bot.title}"\n    },\n    theme: {\n      primaryColor: "${cfg.theme.primaryColor}",\n      accentColor: "${cfg.theme.accentColor}"\n    },\n    currency: {\n      code: "${cfg.currency.code}",\n      symbol: "${cfg.currency.symbol}"\n    }${extraConfig}\n  });\n<\/script>`;
-      document.getElementById('embed-code-display').textContent = snippet;
+      const embedDisplay = document.getElementById('embed-code-display');
+      if (embedDisplay) embedDisplay.textContent = snippet;
+      const devhubPreview = document.getElementById('devhub-code-preview');
+      if (devhubPreview && activeDevTab === 'embed') devhubPreview.textContent = snippet;
     }
 
     function copyEmbedSnippet() {
-      const text = document.getElementById('embed-code-display').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Embed code copied to clipboard!');
-      });
+      const text = document.getElementById('embed-code-display')?.textContent ||
+                   document.getElementById('devhub-code-preview')?.textContent || '';
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Embed code copied to clipboard!');
+        });
+      }
     }
 
     function downloadConfigJson() {
@@ -757,9 +1076,339 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
       return '#' + (0x1000000 + (r<255?r<1?0:r:255)*0x10000 + (g<255?g<1?0:g:255)*0x100 + (b<255?b<1?0:b:255)).toString(16).slice(1);
     }
 
+    // Developer & Integration Hub Functions
+    let activeDevTab = 'embed';
+    const DEV_SNIPPETS = {
+      python: `# FastAPI Webhook Server for Botly (examples/backend-api/server.py)
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI(title="Botly Insurance Webhook")
+
+class QueryRequest(BaseModel):
+    query: str
+    sessionId: str
+    userProfile: dict = {}
+
+@app.post("/api/insurance/query")
+async def handle_query(req: QueryRequest):
+    return {
+        "text": f"Quote calculated for session {req.sessionId}. Underwriting rules applied.",
+        "quickReplies": ["View Full Policy", "Contact Underwriting Desk"],
+        "confidence": 0.98
+    }`,
+
+      node: `// Node.js Express Webhook for Botly (examples/backend-api/server.js)
+import express from 'express';
+const app = express();
+app.use(express.json());
+
+app.post('/api/insurance/query', (req, res) => {
+  const { query, sessionId } = req.body;
+  res.json({
+    text: \`Quote calculated for session \${sessionId}. Verified under statutory rating tables.\`,
+    quickReplies: ['Calculate Full Quote', 'Contact Underwriting Desk'],
+    confidence: 0.99
+  });
+});
+
+app.listen(3000, () => console.log('Botly webhook live on :3000'));`
+    };
+
+    function selectDevHubTab(tabKey) {
+      activeDevTab = tabKey;
+      document.querySelectorAll('.devhub-pill-btn').forEach(btn => {
+        btn.style.background = '#ffffff';
+        btn.style.color = '#334155';
+        btn.style.borderColor = '#cbd5e1';
+      });
+      const activeBtn = document.getElementById('btn-devtab-' + tabKey);
+      if (activeBtn) {
+        activeBtn.style.background = '#2563eb';
+        activeBtn.style.color = '#ffffff';
+        activeBtn.style.borderColor = '#2563eb';
+      }
+
+      const preview = document.getElementById('devhub-code-preview');
+      if (tabKey === 'embed') {
+        preview.textContent = document.getElementById('embed-code-display')?.textContent || '';
+      } else {
+        preview.textContent = DEV_SNIPPETS[tabKey] || '';
+      }
+    }
+
+    function copyDevHubSnippet() {
+      const code = document.getElementById('devhub-code-preview').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-devhub');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    function openDevHubModal() {
+      document.getElementById('devhub-modal').style.display = 'flex';
+      switchModalDevTab('html');
+    }
+
+    function closeDevHubModal() {
+      document.getElementById('devhub-modal').style.display = 'none';
+    }
+
+    function switchModalDevTab(tab) {
+      document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+      const active = document.getElementById('modal-tab-' + tab);
+      if (active) active.classList.add('active');
+
+      const modalCode = document.getElementById('modal-code-display');
+      if (tab === 'html') {
+        modalCode.textContent = document.getElementById('embed-code-display')?.textContent || '';
+      } else if (tab === 'python') {
+        modalCode.textContent = DEV_SNIPPETS.python;
+      } else if (tab === 'node') {
+        modalCode.textContent = DEV_SNIPPETS.node;
+      }
+    }
+
+    function copyModalDevCode() {
+      const code = document.getElementById('modal-code-display').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-modal-dev');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy Code'; }, 2000);
+      });
+    }
+
+    // --- Captured Leads & Inquiries Manager ---
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getGoalBadge(goalKey) {
+      switch(goalKey) {
+        case 'payment_checkout':
+          return '<span style="background:#fef3c7; color:#92400e; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:12px; border:1px solid #fde68a;">💳 Payment</span>';
+        case 'customer_support':
+          return '<span style="background:#f3e8ff; color:#6b21a8; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:12px; border:1px solid #e9d5ff;">🎧 Support</span>';
+        case 'consultation_booking':
+          return '<span style="background:#e0e7ff; color:#3730a3; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:12px; border:1px solid #c7d2fe;">📅 Booking</span>';
+        default:
+          return '<span style="background:#ecfdf5; color:#065f46; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:12px; border:1px solid #a7f3d0;">🚀 Lead Gen</span>';
+      }
+    }
+
+    function getStoredLeadsList() {
+      try {
+        const raw = localStorage.getItem('botly_captured_leads');
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function updateLeadsBadge() {
+      const leads = getStoredLeadsList();
+      const count = leads.length;
+      const navBadge = document.getElementById('nav-leads-badge');
+      if (navBadge) navBadge.textContent = count;
+      const previewCount = document.getElementById('preview-leads-count');
+      if (previewCount) previewCount.textContent = count;
+      const panelCount = document.getElementById('btn-leads-panel-count');
+      if (panelCount) panelCount.textContent = count;
+    }
+
+    function openLeadsModal() {
+      document.getElementById('leads-manager-modal').style.display = 'flex';
+      renderLeadsTable();
+    }
+
+    function closeLeadsModal() {
+      document.getElementById('leads-manager-modal').style.display = 'none';
+    }
+
+    function renderLeadsTable() {
+      const leads = getStoredLeadsList();
+      const q = (document.getElementById('leads-search-input')?.value || '').toLowerCase().trim();
+      const goalFilter = document.getElementById('leads-goal-filter')?.value || 'all';
+      const tbody = document.getElementById('leads-table-body');
+      const emptyState = document.getElementById('leads-empty-state');
+      const totalCount = document.getElementById('leads-total-count');
+
+      const filtered = leads.filter(l => {
+        const matchGoal = (goalFilter === 'all') || (l.goal === goalFilter);
+        if (!matchGoal) return false;
+        if (!q) return true;
+        return (l.name || '').toLowerCase().includes(q) ||
+               (l.phone || '').toLowerCase().includes(q) ||
+               (l.need || '').toLowerCase().includes(q);
+      });
+
+      if (totalCount) totalCount.textContent = `${leads.length} Customer Inquir${leads.length === 1 ? 'y' : 'ies'} Recorded (${filtered.length} shown)`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      tbody.innerHTML = filtered.map((lead, idx) => `
+        <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+          <td style="padding: 12px 16px; font-weight: 700; color: #0f172a;">
+            ${escapeHtml(lead.name || 'Anonymous Customer')}
+          </td>
+          <td style="padding: 12px 16px; font-family: monospace; color: #2563eb; font-weight: 600;">
+            <a href="tel:${escapeHtml(lead.phone || '')}" style="color: inherit; text-decoration: none;">📞 ${escapeHtml(lead.phone || 'N/A')}</a>
+          </td>
+          <td style="padding: 12px 16px; color: #334155; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(lead.need || '')}">
+            ${escapeHtml(lead.need || 'Custom Inquiry')}
+          </td>
+          <td style="padding: 12px 16px;">
+            ${getGoalBadge(lead.goal)}
+          </td>
+          <td style="padding: 12px 16px; color: #64748b; font-size: 11.5px;">
+            ${escapeHtml(lead.createdAtFormatted || (lead.timestamp ? new Date(lead.timestamp).toLocaleString() : 'Just now'))}
+          </td>
+          <td style="padding: 12px 16px;">
+            <span style="background: ${lead.status === 'Contacted' ? '#e0f2fe' : '#ecfdf5'}; color: ${lead.status === 'Contacted' ? '#0369a1' : '#059669'}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; border: 1px solid ${lead.status === 'Contacted' ? '#bae6fd' : '#a7f3d0'};">
+              ● ${escapeHtml(lead.status || 'New')}
+            </span>
+          </td>
+          <td style="padding: 12px 16px; text-align: right;">
+            <button type="button" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #475569;" onclick="toggleLeadStatus('${lead.id}')">
+              ${lead.status === 'Contacted' ? 'Mark New' : 'Mark Done'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleLeadStatus(leadId) {
+      const leads = getStoredLeadsList();
+      const target = leads.find(l => l.id === leadId);
+      if (target) {
+        target.status = target.status === 'Contacted' ? 'New' : 'Contacted';
+        localStorage.setItem('botly_captured_leads', JSON.stringify(leads));
+        renderLeadsTable();
+        updateLeadsBadge();
+      }
+    }
+
+    function downloadLeadsCSV() {
+      const leads = getStoredLeadsList();
+      if (!leads || leads.length === 0) {
+        alert('No leads recorded yet to export.');
+        return;
+      }
+      let csv = 'ID,Customer Name,Phone Number,Inquired Need,Company Goal,Status,Recorded Date\n';
+      leads.forEach(l => {
+        csv += `"${(l.id||'').replace(/"/g, '""')}","${(l.name||'').replace(/"/g, '""')}","${(l.phone||'').replace(/"/g, '""')}","${(l.need||'').replace(/"/g, '""')}","${(l.goal||'lead_generation').replace(/"/g, '""')}","${(l.status||'').replace(/"/g, '""')}","${(l.createdAtFormatted||l.timestamp||'').replace(/"/g, '""')}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `botly_captured_leads_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function downloadLeadsJSON() {
+      const leads = getStoredLeadsList();
+      const blob = new Blob([JSON.stringify(leads, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `botly_captured_leads_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function clearAllLeads() {
+      if (confirm('Are you sure you want to clear all captured customer inquiries from storage?')) {
+        localStorage.removeItem('botly_captured_leads');
+        renderLeadsTable();
+        updateLeadsBadge();
+      }
+    }
+
+    function simulateUnlistedLeadTest() {
+      // Sends an unlisted inquiry into the live mounted chat to demonstrate lead capture
+      if (window.InsuranceChatbot) {
+        if (typeof window.InsuranceChatbot.simulateUnlistedInquiry === 'function') {
+          window.InsuranceChatbot.simulateUnlistedInquiry('Can you provide commercial drone delivery fleet protection?');
+        } else if (window.InsuranceChatbot.instance) {
+          const inst = window.InsuranceChatbot.instance;
+          if (typeof inst.simulateUnlistedInquiry === 'function') {
+            inst.simulateUnlistedInquiry('Can you provide commercial drone delivery fleet protection?');
+          } else if (typeof inst.processUserInput === 'function') {
+            inst.processUserInput('Can you provide commercial drone delivery fleet protection?');
+          } else if (typeof inst.handleUserInput === 'function') {
+            inst.handleUserInput('Can you provide commercial drone delivery fleet protection?');
+          }
+        }
+      }
+      closeLeadsModal();
+    }
+
+    // Listen for real-time lead capture events from the widget
+    window.addEventListener('botly:leadCaptured', () => {
+      updateLeadsBadge();
+      if (document.getElementById('leads-manager-modal').style.display === 'flex') {
+        renderLeadsTable();
+      }
+    });
+
     // Initialize on page load
-    loadPreset('aegisguard');
+    loadPreset('botly');
+    updateLeadsBadge();
+    setTimeout(() => { selectDevHubTab('embed'); }, 100);
   </script>
+
+  <!-- Fullscreen Developer & Integration Hub Modal -->
+  <div id="devhub-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; width: 90%; max-width: 760px; max-height: 88vh; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="botly-icon.svg" width="28" height="28" alt="Botly">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 800; margin: 0;">🔌 Developer & Integration Hub</h3>
+            <span style="font-size: 12px; color: #64748b;">Drop-in SDKs, Webhooks & REST Endpoints</span>
+          </div>
+        </div>
+        <button onclick="closeDevHubModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+      </div>
+
+      <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 8px;">
+          <button class="dev-tab-btn modal-tab-btn active" id="modal-tab-html" onclick="switchModalDevTab('html')">📄 Drop-in Embed</button>
+          <button class="dev-tab-btn modal-tab-btn" id="modal-tab-python" onclick="switchModalDevTab('python')">🐍 Python Webhook</button>
+          <button class="dev-tab-btn modal-tab-btn" id="modal-tab-node" onclick="switchModalDevTab('node')">🟢 Node.js Webhook</button>
+        </div>
+        <button class="terminal-copy-btn" id="btn-copy-modal-dev" onclick="copyModalDevCode()">📋 Copy Code</button>
+      </div>
+
+      <div style="padding: 20px 24px; overflow-y: auto; flex: 1; background: #0f172a;">
+        <pre id="modal-code-display" style="color: #38bdf8; font-family: monospace; font-size: 12.5px; margin: 0; line-height: 1.6; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+
+      <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; background: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #059669; font-weight: 700;">🟢 27/27 Unit Tests Passing • Zero External Dependencies</span>
+        <div style="display: flex; gap: 8px;">
+          <a href="../examples/backend-api/README.md" class="btn-secondary-hero" style="font-size: 12px; padding: 6px 14px; text-decoration: none;">📖 API Readme</a>
+          <button onclick="closeDevHubModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 14px;">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Modal: Inspect & Manage Trained Knowledge -->
   <div id="kb-inspector-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
     <div style="background: #ffffff; width: 90%; max-width: 680px; max-height: 85vh; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden;">
@@ -779,6 +1428,75 @@ A: Yes! Your newborn is automatically covered under the mother's inpatient polic
           <button onclick="downloadTrainedDataJson()" class="btn-secondary-hero" style="font-size: 12px; padding: 6px 14px;">💾 Export KB JSON</button>
           <button onclick="closeTrainedKnowledgeModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 14px;">Done</button>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: Captured Leads & Inquiries Manager -->
+  <div id="leads-manager-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; width: 92%; max-width: 860px; max-height: 88vh; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden;">
+      <!-- Header -->
+      <div style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #18221c; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="22" viewBox="0 0 54 60" fill="none"><path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/><path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: #0f172a;">📋 Captured Leads & Inquiries</h3>
+            <span style="font-size: 12px; color: #64748b;">Customer inquiries outside standard knowledge base, automatically qualified with name & phone.</span>
+          </div>
+        </div>
+        <button onclick="closeLeadsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+      </div>
+
+      <!-- Toolbar -->
+      <div style="padding: 12px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 8px; flex: 1; max-width: 480px;">
+          <input type="text" id="leads-search-input" placeholder="Search by name, phone, or need..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; flex: 1;" oninput="renderLeadsTable()">
+          <select id="leads-goal-filter" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 11.5px; background: #ffffff;" onchange="renderLeadsTable()">
+            <option value="all">🎯 All Company Goals</option>
+            <option value="lead_generation">🚀 Lead Gen & Sales</option>
+            <option value="payment_checkout">💳 In-Chat Payments</option>
+            <option value="customer_support">🎧 24/7 Support</option>
+            <option value="consultation_booking">📅 Consultation & Booking</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-secondary-hero" style="font-size: 12px; padding: 7px 12px;" onclick="downloadLeadsCSV()">📥 Export CSV (Excel/CRM)</button>
+          <button type="button" class="btn-secondary-hero" style="font-size: 12px; padding: 7px 12px;" onclick="downloadLeadsJSON()">📄 Export JSON</button>
+          <button type="button" class="btn-secondary-hero" style="font-size: 12px; padding: 7px 12px; color: #dc2626; border-color: #fecaca;" onclick="clearAllLeads()">🗑️ Clear All</button>
+        </div>
+      </div>
+
+      <!-- Table Body -->
+      <div style="padding: 0; overflow-y: auto; flex: 1; background: #ffffff;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+          <thead>
+            <tr style="background: #f1f5f9; border-bottom: 1px solid #e2e8f0; text-align: left; color: #475569; font-size: 11px; text-transform: uppercase;">
+              <th style="padding: 10px 16px;">Customer Name</th>
+              <th style="padding: 10px 16px;">Phone Number</th>
+              <th style="padding: 10px 16px;">Inquired Need / Topic</th>
+              <th style="padding: 10px 16px;">Goal / Strategy</th>
+              <th style="padding: 10px 16px;">Date & Time</th>
+              <th style="padding: 10px 16px;">Status</th>
+              <th style="padding: 10px 16px; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="leads-table-body">
+            <!-- Rows rendered via JS -->
+          </tbody>
+        </table>
+        <div id="leads-empty-state" style="display: none; padding: 40px 20px; text-align: center; color: #64748b;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📭</div>
+          <div style="font-weight: 700; color: #0f172a;">No captured inquiries yet</div>
+          <p style="font-size: 12px; max-width: 380px; margin: 6px auto 14px auto;">When a user asks about an unlisted service, Botly automatically prompts for their name and phone number and logs their request right here.</p>
+          <button type="button" class="btn-primary-hero" style="font-size: 12px; padding: 6px 14px; margin: 0 auto;" onclick="simulateUnlistedLeadTest()">💡 Simulate Sample Customer Inquiry</button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding: 12px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <span id="leads-total-count" style="font-size: 12px; font-weight: 700; color: #18221c;">0 Inquiries Recorded</span>
+        <button onclick="closeLeadsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
       </div>
     </div>
   </div>

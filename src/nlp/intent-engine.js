@@ -116,7 +116,7 @@ export class IntentEngine {
           intent: 'faq',
           confidence: faqMatch.score,
           matchedItem: faqMatch.item,
-          reply: faqMatch.item.answer
+          reply: faqMatch.item.answer + '\n\n' + this.generateFollowUpQuestion(faqMatch.item)
         };
       }
 
@@ -137,7 +137,7 @@ export class IntentEngine {
             intent: 'faq',
             confidence: faqMatch.score,
             matchedItem: faqMatch.item,
-            reply: faqMatch.item.answer
+            reply: faqMatch.item.answer + '\n\n' + this.generateFollowUpQuestion(faqMatch.item)
           };
         }
       }
@@ -178,40 +178,114 @@ export class IntentEngine {
     // 7. General Knowledge Base FAQ Search
     const bestFaq = this.matchKnowledgeBase(queryTokens);
     if (bestFaq && bestFaq.score >= 0.28) {
+      const followUp = this.generateFollowUpQuestion(bestFaq.item);
       return {
         intent: 'faq',
         confidence: bestFaq.score,
         matchedItem: bestFaq.item,
-        reply: bestFaq.item.answer
+        reply: `${bestFaq.item.answer}\n\n${followUp}`,
+        suggestedQuickReplies: [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '💳 Proceed to Payment', payload: 'intent_pay' },
+          { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+        ]
       };
     }
 
-    // 8. Fallback Smart Response
+    // 8. Lead Capture Flow for Undefined Queries / Custom Inquiries
+    let needTopic = raw.replace(/^(do you have|do you offer|can you do|can you provide|tell me about|how about|what about|i want|i need|i'm looking for|we need)\s+/i, '').trim();
+    if (!needTopic || needTopic.length < 3) needTopic = raw;
+
     return {
-      intent: 'fallback',
-      confidence: 0.1,
-      reply: `I want to make sure you get the exact information you need! Here are the most popular actions:\n\n• **Instant Quotes:** Get real-time pricing for Auto, Health, Home, Life, or Travel.\n• **Claims & Emergency:** Step-by-step incident reporting with instant triage.\n• **Policy Checkout:** Secure payment via Card, Mobile Money, or Digital Wallet.\n\nCould you clarify what you'd like to explore, or pick an option below?`,
-      suggestedQuickReplies: [
-        { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
-        { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-        { label: '📑 File a Claim', payload: 'intent_claim' },
-        { label: '💳 Pay Premium', payload: 'intent_pay' },
-        { label: '📞 Speak to Advisor', payload: 'intent_agent_handover' }
-      ]
+      intent: 'lead_capture_needed',
+      confidence: 0.2,
+      action: 'LEAD_CAPTURE',
+      inquiredNeed: needTopic,
+      reply: `That's a fantastic inquiry regarding **${needTopic}**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?`
     };
+  }
+
+  /**
+   * Generates a context-aware human follow-up question based on topic and company goal tone
+   */
+  generateFollowUpQuestion(item) {
+    const tone = this.config.followUpDynamics?.tone || (this.config.goal === 'customer_support' ? 'support' : (this.config.goal === 'payment_checkout' ? 'sales' : 'consultative'));
+
+    if (tone === 'direct') {
+      return '💬 Would you like to proceed with this or explore other options?';
+    }
+
+    if (!item) {
+      if (tone === 'sales') return '💬 Would you like me to connect you with an advisor to reserve this rate today?';
+      if (tone === 'support') return '💬 Did this completely solve your inquiry, or can I clarify anything else?';
+      return '💬 Does this answer your question, or would you like me to clarify anything specific?';
+    }
+
+    const cat = item.category || '';
+    const q = (item.question || '').toLowerCase();
+
+    if (tone === 'sales') {
+      if (cat === 'payments' || q.includes('pay')) {
+        return '💬 Shall we complete your activation and lock in your discount right now?';
+      }
+      if (cat === 'auto' || cat === 'health') {
+        return '💬 Would you like our underwriter to reserve this quote for you today?';
+      }
+    }
+
+    if (tone === 'support') {
+      if (cat === 'claims' || q.includes('claim')) {
+        return '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?';
+      }
+      return '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?';
+    }
+
+    if (cat === 'claims' || q.includes('claim')) {
+      return '💬 Would you like me to start an incident report and fast-track a claim for you right now?';
+    }
+    if (cat === 'auto' || q.includes('auto') || q.includes('car')) {
+      return '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?';
+    }
+    if (cat === 'health' || q.includes('health') || q.includes('medical')) {
+      return '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?';
+    }
+    if (cat === 'payments' || q.includes('pay') || q.includes('discount')) {
+      return '💬 Would you like to proceed with checkout and apply your active discount code now?';
+    }
+    if (q.includes('deductible')) {
+      return '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?';
+    }
+
+    return '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?';
   }
 
   /**
    * Search knowledge base for highest scoring match
    */
   matchKnowledgeBase(queryTokens, categoryFilter = null) {
+    const stopWords = new Set(['do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in', 'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have', 'insurance', 'policy']);
     let best = null;
     let highestScore = 0;
 
     for (const item of this.knowledgeBase) {
       if (categoryFilter && item.category !== categoryFilter) continue;
 
+      const qTokens = new Set([...this.tokenize(item.question), ...(item.keywords || []).flatMap(k => this.tokenize(k))]);
+      let keyMatches = 0;
+      for (const token of queryTokens) {
+        if (qTokens.has(token) && !stopWords.has(token)) {
+          keyMatches += 2.5;
+        }
+      }
+
       let score = this.computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords || []);
+      if (keyMatches > 0) {
+        score += keyMatches * 0.2;
+      } else {
+        // If NO domain keywords or question words matched at all, penalize
+        score *= 0.2;
+      }
+
       // Custom user-trained knowledge receives priority boost so company-specific answers win
       if (item.isCustomTrained) {
         score *= 1.35;

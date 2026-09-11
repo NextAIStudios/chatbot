@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Outer Shield-Bubble Contour -->
+  <path d="M32 4C47.464 4 60 16.536 60 32C60 44.697 51.55 55.413 39.958 58.8L39.14 62.4C38.94 63.2 38.08 63.63 37.4 63.2L27.78 57.12C13.84 55.18 3.73 42.36 3.73 27.11C3.73 11.646 16.272 4 32 4Z" fill="#18221c" />
+  
+  <!-- Inner Radiant Guard Shield -->
+  <path d="M32 14C32 14 45 18 45 30C45 42 32 49 32 49C32 49 19 42 19 30C19 18 32 14 32 14Z" fill="#9be553" />
+  
+  <!-- AI Core Sparkle -->
+  <circle cx="32" cy="29.5" r="5" fill="#18221c" />
+  <path d="M32 19V23.5M32 35.5V40M21.5 29.5H26M38 29.5H42.5" stroke="#18221c" stroke-width="2.2" stroke-linecap="round" />
+</svg>

@@ -4,16 +4,39 @@
  */
 
 export const BRAND_PRESETS = {
-  aegisguard: {
-    name: 'AegisGuard Insurance (Default)',
+  botly: {
+    name: 'Botly Insurance (Default)',
     company: {
-      name: 'AegisGuard Insurance',
-      tagline: 'Smart, Instant & Compassionate Protection',
-      supportEmail: 'care@aegisguard.example.com',
+      name: 'Botly Insurance',
+      tagline: 'Next-Gen Insurance AI Platform',
+      supportEmail: 'care@botly.ai',
       supportPhone: '+1 (800) 555-0199'
     },
     bot: {
-      name: 'Aegis AI',
+      name: 'Botly AI',
+      title: 'Certified Insurance Advisor'
+    },
+    theme: {
+      primaryColor: '#2563eb',
+      primaryGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+      primaryHover: '#1e40af',
+      accentColor: '#10b981',
+      headerBg: '#1e293b',
+      userBubbleBg: '#2563eb'
+    },
+    currency: { code: 'USD', symbol: '$', locale: 'en-US' }
+  },
+
+  aegisguard: {
+    name: 'Botly Insurance (Default)',
+    company: {
+      name: 'Botly Insurance',
+      tagline: 'Next-Gen Insurance AI Platform',
+      supportEmail: 'care@botly.ai',
+      supportPhone: '+1 (800) 555-0199'
+    },
+    bot: {
+      name: 'Botly AI',
       title: 'Certified Insurance Advisor'
     },
     theme: {

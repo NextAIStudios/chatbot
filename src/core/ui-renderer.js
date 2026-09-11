@@ -52,13 +52,18 @@ export class UIRenderer {
     const launcher = document.createElement('button');
     launcher.className = 'ins-chatbot-launcher';
     launcher.id = 'ins-widget-launcher';
-    launcher.setAttribute('aria-label', 'Open Insurance Assistant');
+    launcher.setAttribute('aria-label', 'Open Botly Assistant');
     launcher.innerHTML = `
-      <div class="ins-launcher-teaser">💬 Need a quick quote or help?</div>
+      <div class="ins-launcher-teaser">Need assistance? Chat with Botly</div>
       <div class="ins-launcher-icon">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <path d="M9 12l2 2 4-4"/>
+        <svg width="34" height="34" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer Shield-Bubble Contour -->
+          <path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>
+          <!-- Inner Radiant Guard Shield -->
+          <path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/>
+          <!-- AI Core Sparkle -->
+          <circle cx="28" cy="24" r="4.5" fill="#18221c"/>
+          <path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
       </div>
       <div class="ins-launcher-badge">1</div>
@@ -77,8 +82,8 @@ export class UIRenderer {
             <span class="ins-status-dot"></span>
           </div>
           <div class="ins-profile-info">
-            <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Insurance Assistant')}</span>
-            <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'Certified Advisor')}</span>
+            <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly')}</span>
+            <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'AI Assistant')}</span>
           </div>
         </div>
         <div class="ins-header-actions">
@@ -119,11 +124,11 @@ export class UIRenderer {
   renderLogoAvatar() {
     const bot = this.config.bot || {};
     const theme = this.config.theme || {};
-    const primary = theme.primaryColor || '#2563eb';
-    const accent = theme.accentColor || '#10b981';
+    const primary = theme.primaryColor || '#18221c';
+    const accent = theme.accentColor || '#9be553';
 
-    if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.startsWith('http') || bot.avatar.startsWith('/') || bot.avatar.startsWith('./'))) {
-      return `<img src="${bot.avatar}" alt="${this.escapeHtml(bot.name || 'Bot')}" class="ins-avatar-img" />`;
+    if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.startsWith('http') || bot.avatar.startsWith('/') || bot.avatar.startsWith('./') || bot.avatar.startsWith('data:'))) {
+      return `<img src="${bot.avatar}" alt="${this.escapeHtml(bot.name || 'Botly')}" class="ins-avatar-img" />`;
     }
 
     return `
@@ -131,18 +136,20 @@ export class UIRenderer {
         <defs>
           <linearGradient id="ins-avatar-bg-grad" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="${primary}"/>
-            <stop offset="100%" stop-color="#1e293b"/>
-          </linearGradient>
-          <linearGradient id="ins-shield-fill" x1="12" y1="9" x2="32" y2="35" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#ffffff"/>
-            <stop offset="100%" stop-color="#dbeafe"/>
+            <stop offset="100%" stop-color="#26352c"/>
           </linearGradient>
         </defs>
-        <rect width="44" height="44" rx="14" fill="url(#ins-avatar-bg-grad)"/>
-        <rect x="0.75" y="0.75" width="42.5" height="42.5" rx="13.25" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-        <path d="M22 8.5L11 13V20.5C11 28 15.7 34.8 22 36.8C28.3 34.8 33 28 33 20.5V13L22 8.5Z" fill="url(#ins-shield-fill)"/>
-        <path d="M17 21.5L20.5 25L27 18" stroke="${primary}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="22" cy="13.5" r="1.5" fill="${accent}"/>
+        <rect width="44" height="44" rx="13" fill="url(#ins-avatar-bg-grad)"/>
+        <rect x="0.75" y="0.75" width="42.5" height="42.5" rx="12.25" stroke="rgba(155, 229, 83, 0.3)" stroke-width="1.5"/>
+        <g transform="translate(9, 8) scale(0.48)">
+          <!-- Outer Shield-Bubble Contour -->
+          <path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>
+          <!-- Inner Radiant Guard Shield -->
+          <path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="${accent}"/>
+          <!-- AI Core Sparkle -->
+          <circle cx="28" cy="24" r="4.5" fill="#18221c"/>
+          <path d="M28 15V19M28 29V33M19 24H23M33 24H37" stroke="#18221c" stroke-width="2.2" stroke-linecap="round"/>
+        </g>
       </svg>
     `;
   }
@@ -161,8 +168,8 @@ export class UIRenderer {
               <span class="ins-status-dot"></span>
             </div>
             <div class="ins-profile-info">
-              <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Insurance Assistant')}</span>
-              <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'Certified Advisor')}</span>
+              <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly')}</span>
+              <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'AI Assistant')}</span>
             </div>
           </div>
           <div class="ins-header-actions">

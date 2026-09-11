@@ -2,13 +2,14 @@
  * Main Insurance Chatbot Widget Controller & Public SDK
  */
 
-import { DEFAULT_CONFIG } from '../config/default-config.js';
+import { DEFAULT_CONFIG, COMPANY_GOALS } from '../config/default-config.js';
 import { IntentEngine } from '../nlp/intent-engine.js';
 import { DataTrainingEngine } from '../nlp/data-training-engine.js';
 import { BackendConnector } from '../api/backend-connector.js';
 import { QuoteFlow } from '../flows/quote-flow.js';
 import { ClaimsFlow } from '../flows/claims-flow.js';
 import { PolicyLookupFlow } from '../flows/policy-lookup-flow.js';
+import { LeadCaptureFlow } from '../flows/lead-capture-flow.js';
 import { CheckoutFlow } from '../payments/checkout-flow.js';
 import { ReceiptGenerator } from '../payments/receipt-generator.js';
 import { UIRenderer } from './ui-renderer.js';
@@ -28,6 +29,9 @@ export class InsuranceChatbotWidget {
     this.quoteFlow = new QuoteFlow(this.config);
     this.claimsFlow = new ClaimsFlow(this.config);
     this.policyLookupFlow = new PolicyLookupFlow(this.config);
+    this.leadCaptureFlow = new LeadCaptureFlow(this.config, (lead) => {
+      this.handleLeadCaptured(lead);
+    });
 
     this.checkoutFlow = new CheckoutFlow(this.config, (receipt) => {
       this.handlePaymentSuccess(receipt);
@@ -135,6 +139,15 @@ export class InsuranceChatbotWidget {
     this.ui.appendUserMessage(text);
     this.ui.showTypingIndicator();
 
+    // 0. Check if Lead Capture Flow is active
+    if (this.leadCaptureFlow && this.leadCaptureFlow.state.active) {
+      const flowResult = this.leadCaptureFlow.handleInput(text);
+      if (flowResult) {
+        this.ui.appendBotMessage(flowResult.message, flowResult);
+        return;
+      }
+    }
+
     // 1. Check if Quote Flow is active
     if (this.quoteFlow.state.active) {
       const flowResult = this.quoteFlow.handleInput(text);
@@ -200,6 +213,12 @@ export class InsuranceChatbotWidget {
     const delay = this.config.bot?.typingDelayMs || 300;
     setTimeout(() => {
       const res = this.intentEngine.classify(text);
+
+      if (res.action === 'LEAD_CAPTURE') {
+        const leadRes = this.leadCaptureFlow.start(res.inquiredNeed || text);
+        this.ui.appendBotMessage(leadRes.message, leadRes);
+        return;
+      }
 
       if (res.action === 'OPEN_QUOTE_WIZARD') {
         this.startQuote(res.productType || 'auto');
@@ -274,10 +293,39 @@ export class InsuranceChatbotWidget {
     }
   }
 
+  handleLeadCaptured(lead) {
+    if (this.config.webhooks?.onLeadCaptured) {
+      try {
+        if (typeof this.config.webhooks.onLeadCaptured === 'function') {
+          this.config.webhooks.onLeadCaptured(lead);
+        }
+      } catch (err) {
+        console.warn('Webhook execution error for onLeadCaptured:', err);
+      }
+    }
+  }
+
+  getCapturedLeads() {
+    return LeadCaptureFlow.getLeads();
+  }
+
+  saveLead(lead) {
+    return LeadCaptureFlow.saveLeadToStorage(lead);
+  }
+
+  clearCapturedLeads() {
+    return LeadCaptureFlow.clearLeads();
+  }
+
+  exportLeadsCSV() {
+    return LeadCaptureFlow.exportCSV();
+  }
+
   reset() {
     this.quoteFlow.reset();
     this.claimsFlow.reset();
     this.policyLookupFlow.active = false;
+    if (this.leadCaptureFlow) this.leadCaptureFlow.reset();
     this.ui.clearMessages();
     this.sendGreeting();
   }
@@ -340,11 +388,41 @@ export class InsuranceChatbotWidget {
   triggerAction(payload) {
     this.processQuickReply(payload);
   }
+
+  setCompanyGoal(goalKey) {
+    if (!COMPANY_GOALS[goalKey]) return false;
+    const goalPreset = COMPANY_GOALS[goalKey];
+    this.config.goal = goalKey;
+    if (this.leadCaptureFlow) {
+      this.leadCaptureFlow.config.goal = goalKey;
+      this.leadCaptureFlow.config.leadCapture = {
+        ...this.leadCaptureFlow.config.leadCapture,
+        askNamePrompt: goalPreset.askNamePrompt,
+        askPhonePrompt: goalPreset.askPhonePrompt,
+        confirmationMessage: goalPreset.confirmationMessage,
+        followUpQuestion: goalPreset.followUpQuestion
+      };
+    }
+    if (this.intentEngine) {
+      this.intentEngine.config.goal = goalKey;
+      this.intentEngine.config.followUpDynamics = {
+        ...this.intentEngine.config.followUpDynamics,
+        tone: goalPreset.followUpTone
+      };
+    }
+    return true;
+  }
+
+  simulateUnlistedInquiry(queryText = 'Can you provide commercial drone delivery fleet protection?') {
+    this.open();
+    this.processUserInput(queryText);
+  }
 }
 
 // Global Browser SDK Expose
 if (typeof window !== 'undefined') {
   window.InsuranceChatbotWidget = InsuranceChatbotWidget;
+  window.COMPANY_GOALS = COMPANY_GOALS;
   window.InsuranceChatbot = {
     instance: null,
     init: function(config = {}, selector = null) {
@@ -359,13 +437,21 @@ if (typeof window !== 'undefined') {
     open: function() { this.instance?.open(); },
     close: function() { this.instance?.close(); },
     toggle: function() { this.instance?.toggle(); },
+    reset: function() { this.instance?.reset(); },
     triggerAction: function(payload) { this.instance?.triggerAction(payload); },
     updateConfig: function(cfg) { this.instance?.updateConfig(cfg); },
+    setCompanyGoal: function(goalKey) { return this.instance?.setCompanyGoal(goalKey); },
+    simulateUnlistedInquiry: function(query) { return this.instance?.simulateUnlistedInquiry(query); },
     trainData: function(content, format) { return this.instance?.trainData(content, format); },
     getTrainedData: function() { return this.instance?.getTrainedData() || []; },
     clearTrainedData: function() { this.instance?.clearTrainedData(); },
     testApiConnection: function() { return this.instance?.testApiConnection(); },
     setApiConfig: function(cfg) { this.instance?.setApiConfig(cfg); },
+    getCapturedLeads: function() { return this.instance?.getCapturedLeads() || LeadCaptureFlow.getLeads(); },
+    saveLead: function(lead) { return this.instance?.saveLead(lead) || LeadCaptureFlow.saveLeadToStorage(lead); },
+    clearCapturedLeads: function() { return this.instance?.clearCapturedLeads() || LeadCaptureFlow.clearLeads(); },
+    exportLeadsCSV: function() { return this.instance?.exportLeadsCSV() || LeadCaptureFlow.exportCSV(); },
+    startCheckout: function() { this.instance?.startPayment(); },
     printCertificate: function(receipt) {
       const targetReceipt = receipt || window.__lastIssuedReceipt;
       if (targetReceipt) {
