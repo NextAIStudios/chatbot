@@ -3,60 +3,1291 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minimal Plug & Play Embed Example | Insurance Chatbot</title>
-  <!-- 1. CSS Stylesheet -->
+  <title>Quick Embed Guide & Integration Playground | Botly</title>
+  <meta name="description" content="Comprehensive quick embed guide and interactive integration playground for Botly Conversational AI. Add Botly to HTML, React, Next.js, Vue, WordPress, Shopify, Python, and Node.js in 60 seconds.">
+  <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
   <link rel="stylesheet" href="../dist/insurance-chatbot.css">
+  <link rel="stylesheet" href="demo.css">
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
+    /* Embed Guide Page Dedicated Styles */
+    .guide-page {
+      background-color: #faf9f7;
+      color: #18221c;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .guide-hero {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 60px 24px 40px 24px;
+      text-align: center;
+    }
+
+    .guide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid #dcdad4;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .guide-badge .dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .guide-title {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 52px;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      color: #18221c;
+      margin-bottom: 18px;
+    }
+
+    .guide-title em {
+      font-style: italic;
+      color: #18221c;
+    }
+
+    .guide-sub {
+      font-size: 18px;
+      color: #525f69;
+      max-width: 700px;
+      margin: 0 auto 36px auto;
+      line-height: 1.55;
+    }
+
+    .guide-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 80px 24px;
+    }
+
+    /* Grid Layout: Controls & Code Viewer */
+    .embed-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .embed-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Sidebar Controls Card */
+    .guide-sidebar {
+      background: #ffffff;
+      border: 1px solid #e5e3dc;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+      position: sticky;
+      top: 90px;
+    }
+
+    .sidebar-section {
+      margin-bottom: 26px;
+    }
+
+    .sidebar-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .sidebar-heading {
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Goal Selector Chips */
+    .goal-selector-list {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-      padding: 20px;
+      gap: 8px;
     }
-    .card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 40px;
-      max-width: 600px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+
+    .goal-chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #e5e7eb;
+      background: #fdfdfc;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.18s ease;
     }
-    h1 { font-size: 24px; margin-bottom: 12px; }
-    p { color: #64748b; font-size: 15px; margin-bottom: 24px; }
-    .btn {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 12px 24px;
+
+    .goal-chip:hover {
+      border-color: #9be553;
+      background: #f8faf5;
+    }
+
+    .goal-chip.active {
+      border-color: #18221c;
+      background: #18221c;
+      color: #ffffff;
+    }
+
+    .goal-chip.active .goal-chip-title {
+      color: #ffffff;
+    }
+
+    .goal-chip.active .goal-chip-desc {
+      color: #cbd5e1;
+    }
+
+    .goal-chip-icon {
+      font-size: 20px;
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .goal-chip-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #18221c;
+      margin-bottom: 2px;
+    }
+
+    .goal-chip-desc {
+      font-size: 11.5px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    /* Live Bot Actions Card */
+    .live-actions-box {
+      background: #f7f6f2;
+      border: 1px dashed #d5d3cb;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .live-actions-box h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .live-action-btn {
+      width: 100%;
+      padding: 9px 12px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #1f2937;
+      transition: all 0.15s ease;
+    }
+
+    .live-action-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .live-action-btn.btn-lime {
+      background: #9be553;
+      border-color: #88cf42;
+      color: #18221c;
+      font-weight: 700;
+    }
+
+    .live-action-btn.btn-lime:hover {
+      background: #8cd445;
+    }
+
+    /* Main Code Viewer Panel */
+    .code-panel {
+      background: #18221c;
+      border-radius: 18px;
+      border: 1px solid #28372d;
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    /* Framework Navigation Bar */
+    .framework-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #111814;
+      border-bottom: 1px solid #28372d;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .framework-tab {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .framework-tab:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .framework-tab.active {
+      color: #18221c;
+      background: #9be553;
+      font-weight: 750;
+    }
+
+    /* Code Header with Filename & Copy */
+    .code-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: #141c17;
+      border-bottom: 1px solid #233127;
+      font-size: 12.5px;
+    }
+
+    .file-pill {
+      color: #cbd5e1;
+      font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+    }
+
+    .copy-code-btn {
+      background: #27362d;
+      color: #f1f5f9;
+      border: 1px solid #3b4e42;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .copy-code-btn:hover {
+      background: #35473d;
+      color: #ffffff;
+    }
+
+    .copy-code-btn.copied {
+      background: #10b981;
+      border-color: #059669;
+      color: #ffffff;
+    }
+
+    /* Code Block Display */
+    .code-display {
+      margin: 0;
+      padding: 24px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #e2e8f0;
+      overflow-x: auto;
+      max-height: 600px;
+    }
+
+    /* Explanatory Cards below Code */
+    .code-explanation {
+      padding: 20px 24px;
+      background: #141c17;
+      border-top: 1px solid #233127;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .code-explanation strong {
+      color: #9be553;
+    }
+
+    /* Framework Details Grid */
+    .framework-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 48px;
+    }
+
+    .framework-card {
+      background: #ffffff;
+      border: 1px solid #e5e3dc;
+      border-radius: 16px;
+      padding: 22px;
+      transition: all 0.2s ease;
+    }
+
+    .framework-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border-color: #cbd5e1;
+    }
+
+    .framework-card h3 {
+      font-size: 16px;
+      font-weight: 750;
+      color: #18221c;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .framework-card p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .framework-card-btn {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #18221c;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .framework-card-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* SDK Reference Table Section */
+    .sdk-ref-section {
+      margin-top: 60px;
+      background: #ffffff;
+      border: 1px solid #e5e3dc;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    .sdk-ref-section h2 {
+      font-size: 24px;
+      font-weight: 750;
+      letter-spacing: -0.5px;
+      color: #18221c;
+      margin-bottom: 8px;
+    }
+
+    .sdk-ref-section p.sub {
+      color: #64748b;
+      font-size: 14.5px;
+      margin-bottom: 24px;
+    }
+
+    .sdk-table-wrap {
+      overflow-x: auto;
+    }
+
+    .sdk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .sdk-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .sdk-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+
+    .sdk-table code {
+      font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .sdk-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .sdk-badge.core { background: #dbeafe; color: #1e40af; }
+    .sdk-badge.leads { background: #dcfce7; color: #166534; }
+    .sdk-badge.pay { background: #fef3c7; color: #92400e; }
+
+    /* Syntax Highlighting Tokens */
+    .token-kw { color: #f472b6; font-weight: 600; }
+    .token-str { color: #a7f3d0; }
+    .token-fn { color: #60a5fa; }
+    .token-prop { color: #93c5fd; }
+    .token-comment { color: #64748b; font-style: italic; }
+    .token-tag { color: #f87171; }
+    .token-attr { color: #facc15; }
+    .token-punct { color: #94a3b8; }
   </style>
+</head>
+<body class="guide-page">
+
+  <!-- Grainy Film-Noise Texture Overlay -->
+  <div class="botly-grain-overlay" aria-hidden="true"></div>
+
+  <!-- Navigation Bar -->
+  <header>
+    <nav class="botly-navbar">
+      <a href="../index.html" class="botly-logo-wrap">
+        <img src="botly-logo.svg" alt="Botly" height="34" style="display: block;" />
+      </a>
+
+      <div class="botly-nav-menu">
+        <a href="../index.html" class="botly-nav-item">Home</a>
+        <a href="../index.html#capabilities" class="botly-nav-item">Platform Features</a>
+        <a href="customizer.html" class="botly-nav-item">Studio Sandbox</a>
+        <a href="embed-example.html" class="botly-nav-item" style="color: #18221c; font-weight: 750;">Embed Guide</a>
+        <a href="../QUICK_EMBED_GUIDE.md" target="_blank" class="botly-nav-item">Markdown Spec ↗</a>
+      </div>
+
+      <div class="botly-nav-actions">
+        <a href="customizer.html" class="pill-btn-dark">
+          <span>Launch Customizer</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <button type="button" class="pill-btn-lime" onclick="InsuranceChatbot.open()">💬 Test Live Bot</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Header -->
+  <section class="guide-hero">
+    <div class="guide-badge">
+      <span class="dot"></span>
+      Zero Dependencies &middot; 60-Second Drop-in &middot; Vanilla JS &middot; React &middot; Next.js &middot; Vue
+    </div>
+    <h1 class="guide-title">
+      Quick Embed Guide &amp; <em>Integration Playground</em>
+    </h1>
+    <p class="guide-sub">
+      Select your primary company goal and target frontend framework to generate ready-to-paste production embed snippets. Test the live bot in real time on this very page.
+    </p>
+  </section>
+
+  <!-- Main Interactive Guide Container -->
+  <main class="guide-container">
+    <div class="embed-grid">
+      
+      <!-- Sidebar Controls: Goal Selector & Live Action Tests -->
+      <aside class="guide-sidebar">
+        
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span>1. Select Company Goal</span>
+            <span style="font-size: 11px; color: #10b981; font-weight: 700;">Live Sync</span>
+          </div>
+
+          <div class="goal-selector-list" id="goalSelectorList">
+            
+            <div class="goal-chip active" data-goal="lead_generation" onclick="switchGoal('lead_generation')">
+              <span class="goal-chip-icon">🎯</span>
+              <div>
+                <div class="goal-chip-title">Lead Generation &amp; Sales</div>
+                <div class="goal-chip-desc">Proactively collects name, phone, and unlisted requests into local CRM storage.</div>
+              </div>
+            </div>
+
+            <div class="goal-chip" data-goal="payment_checkout" onclick="switchGoal('payment_checkout')">
+              <span class="goal-chip-icon">💳</span>
+              <div>
+                <div class="goal-chip-title">Instant In-Chat Payments</div>
+                <div class="goal-chip-desc">PCI-compliant Card, M-Pesa, &amp; Apple Pay with instant certificates &amp; receipts.</div>
+              </div>
+            </div>
+
+            <div class="goal-chip" data-goal="customer_support" onclick="switchGoal('customer_support')">
+              <span class="goal-chip-icon">🛟</span>
+              <div>
+                <div class="goal-chip-title">24/7 Support &amp; Human Triage</div>
+                <div class="goal-chip-desc">Resolves common FAQs and triages unanswered queries to human specialists.</div>
+              </div>
+            </div>
+
+            <div class="goal-chip" data-goal="consultation_booking" onclick="switchGoal('consultation_booking')">
+              <span class="goal-chip-icon">📅</span>
+              <div>
+                <div class="goal-chip-title">Consultation &amp; Booking</div>
+                <div class="goal-chip-desc">Books 1-on-1 advisor consultations and sends callback notifications.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Live Widget Testing Stack -->
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span>2. Test Live Widget</span>
+          </div>
+
+          <div class="live-actions-box">
+            <h4>Trigger In-Chat Flows</h4>
+            <div class="live-btn-stack">
+              <button type="button" class="live-action-btn btn-lime" onclick="InsuranceChatbot.open()">
+                <span>Open Botly Assistant</span>
+                <span>💬</span>
+              </button>
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.simulateUnlistedInquiry('Do you offer custom enterprise pricing and API SLA?')">
+                <span>Simulate Lead Capture</span>
+                <span>🎯</span>
+              </button>
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.startCheckout({ quoteRef: 'DEMO-PREM-2026', totalAmount: 49.00 })">
+                <span>Trigger In-Chat Checkout</span>
+                <span>💳</span>
+              </button>
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.exportLeadsCSV()">
+                <span>Export Captured Leads (CSV)</span>
+                <span>📊</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section" style="margin-bottom: 0;">
+          <div style="display: flex; gap: 10px;">
+            <a href="customizer.html" class="pill-btn-dark" style="flex: 1; font-size: 12.5px; padding: 8px 12px;">
+              Visual Studio Sandbox
+            </a>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Main Code Viewer Area -->
+      <section class="code-panel">
+        
+        <!-- Framework Tabs Bar -->
+        <div class="framework-nav" id="frameworkNav">
+          <button class="framework-tab active" data-framework="html" onclick="switchFramework('html')">
+            HTML / CDN
+          </button>
+          <button class="framework-tab" data-framework="react" onclick="switchFramework('react')">
+            React (Vite/CRA)
+          </button>
+          <button class="framework-tab" data-framework="nextjs" onclick="switchFramework('nextjs')">
+            Next.js (App Router)
+          </button>
+          <button class="framework-tab" data-framework="vue" onclick="switchFramework('vue')">
+            Vue 3 / Nuxt
+          </button>
+          <button class="framework-tab" data-framework="wordpress" onclick="switchFramework('wordpress')">
+            WordPress
+          </button>
+          <button class="framework-tab" data-framework="shopify" onclick="switchFramework('shopify')">
+            Shopify
+          </button>
+          <button class="framework-tab" data-framework="webflow" onclick="switchFramework('webflow')">
+            Webflow / Wix
+          </button>
+          <button class="framework-tab" data-framework="python" onclick="switchFramework('python')">
+            Python (FastAPI)
+          </button>
+          <button class="framework-tab" data-framework="node" onclick="switchFramework('node')">
+            Node.js (Express)
+          </button>
+        </div>
+
+        <!-- Code Filename & Copy Button Bar -->
+        <div class="code-meta-bar">
+          <div class="file-pill">
+            <span class="dot"></span>
+            <span id="codeFilename">index.html</span>
+          </div>
+          <button class="copy-code-btn" id="copyCodeBtn" onclick="copyActiveCode()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span id="copyBtnText">Copy Snippet</span>
+          </button>
+        </div>
+
+        <!-- Syntax-highlighted code container -->
+        <pre class="code-display"><code id="codeViewer"></code></pre>
+
+        <!-- Dynamic Explanation Bar -->
+        <div class="code-explanation" id="codeExplanation">
+          <!-- Populated by JavaScript -->
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- Framework Cards Overview Grid -->
+    <section class="framework-cards-grid">
+      
+      <div class="framework-card">
+        <h3><span>⚡</span> HTML / Drop-in CDN</h3>
+        <p>Zero build tools required. Add two lines of code to your HTML template before the closing body tag.</p>
+        <a href="javascript:void(0)" onclick="switchFramework('html')" class="framework-card-btn">View HTML snippet &rarr;</a>
+      </div>
+
+      <div class="framework-card">
+        <h3><span>⚛️</span> React &amp; Next.js</h3>
+        <p>Clean hook-based mounting with <code>next/script</code> and <code>useEffect</code> lifecycle safety for SPA/SSR applications.</p>
+        <a href="javascript:void(0)" onclick="switchFramework('nextjs')" class="framework-card-btn">View Next.js snippet &rarr;</a>
+      </div>
+
+      <div class="framework-card">
+        <h3><span>🛒</span> Shopify &amp; WooCommerce</h3>
+        <p>Collect cart abandoned orders, answer product inquiries, and initiate instant checkout with seamless mobile optimization.</p>
+        <a href="javascript:void(0)" onclick="switchFramework('shopify')" class="framework-card-btn">View Shopify snippet &rarr;</a>
+      </div>
+
+      <div class="framework-card">
+        <h3><span>🐍</span> Python &amp; Node.js</h3>
+        <p>Serve Botly directly from FastAPI, Flask, Django, or Express with optional secure backend webhook lead forwarding.</p>
+        <a href="javascript:void(0)" onclick="switchFramework('python')" class="framework-card-btn">View Python snippet &rarr;</a>
+      </div>
+
+    </section>
+
+    <!-- Complete SDK Quick Reference Table -->
+    <section class="sdk-ref-section">
+      <h2>Public JavaScript SDK Reference (<code>window.InsuranceChatbot</code>)</h2>
+      <p class="sub">Control the chatbot programmatically from any button, page event, marketing workflow, or CRM link.</p>
+
+      <div class="sdk-table-wrap">
+        <table class="sdk-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Example Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>InsuranceChatbot.init(options)</code></td>
+              <td><span class="sdk-badge core">Core</span></td>
+              <td>Initializes and renders the chatbot widget with custom config schema.</td>
+              <td><code>InsuranceChatbot.init({ goal: 'lead_generation' })</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.open()</code></td>
+              <td><span class="sdk-badge core">Core</span></td>
+              <td>Expands the chat window and scrolls conversation into focus.</td>
+              <td><code>InsuranceChatbot.open()</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.close()</code></td>
+              <td><span class="sdk-badge core">Core</span></td>
+              <td>Collapses the chat window back into the floating launcher icon.</td>
+              <td><code>InsuranceChatbot.close()</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.toggle()</code></td>
+              <td><span class="sdk-badge core">Core</span></td>
+              <td>Toggles the open/closed state of the chat window.</td>
+              <td><code>InsuranceChatbot.toggle()</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.setCompanyGoal(goal)</code></td>
+              <td><span class="sdk-badge leads">Goal</span></td>
+              <td>Dynamically reconfigures the company goal, lead prompts, and triage logic.</td>
+              <td><code>InsuranceChatbot.setCompanyGoal('payment_checkout')</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.simulateUnlistedInquiry(q)</code></td>
+              <td><span class="sdk-badge leads">Leads</span></td>
+              <td>Injects an unlisted question to trigger proactive lead capture triage.</td>
+              <td><code>InsuranceChatbot.simulateUnlistedInquiry('Custom enterprise pricing')</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.startCheckout(quote)</code></td>
+              <td><span class="sdk-badge pay">Payment</span></td>
+              <td>Opens chat and launches interactive in-chat payment checkout card.</td>
+              <td><code>InsuranceChatbot.startCheckout({ quoteRef: 'Q-100', totalAmount: 79 })</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.getCapturedLeads()</code></td>
+              <td><span class="sdk-badge leads">Leads</span></td>
+              <td>Returns array of all captured leads with names, phones, queries, and goals.</td>
+              <td><code>const leads = InsuranceChatbot.getCapturedLeads()</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.exportLeadsCSV()</code></td>
+              <td><span class="sdk-badge leads">Leads</span></td>
+              <td>Downloads formatted CSV file of all captured customer inquiries.</td>
+              <td><code>InsuranceChatbot.exportLeadsCSV()</code></td>
+            </tr>
+            <tr>
+              <td><code>InsuranceChatbot.reset()</code></td>
+              <td><span class="sdk-badge core">Core</span></td>
+              <td>Clears chat history and re-renders fresh welcome state.</td>
+              <td><code>InsuranceChatbot.reset()</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Multi-Column Rich Footer -->
+  <footer style="background: #111814; border-top: 1px solid #233127; padding: 60px 24px 30px 24px; color: #94a3b8; font-size: 13.5px;">
+    <div style="max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+          <img src="botly-logo.svg" alt="Botly" height="28" style="filter: brightness(0) invert(1);" />
+        </div>
+        <p style="color: #64748b; line-height: 1.6; max-width: 320px;">
+          The universal conversational AI platform for every company. Lead capture, in-chat payments, and intelligent triage in under 60 seconds.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color: #ffffff; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">Quick Links</h4>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+          <li><a href="../index.html" style="color: #94a3b8; text-decoration: none;">Botly Home</a></li>
+          <li><a href="customizer.html" style="color: #94a3b8; text-decoration: none;">Studio Sandbox</a></li>
+          <li><a href="embed-example.html" style="color: #9be553; text-decoration: none;">Quick Embed Guide</a></li>
+          <li><a href="../QUICK_EMBED_GUIDE.md" target="_blank" style="color: #94a3b8; text-decoration: none;">Markdown Reference</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="color: #ffffff; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">Goals</h4>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+          <li><a href="javascript:void(0)" onclick="switchGoal('lead_generation')" style="color: #94a3b8; text-decoration: none;">Lead Capture</a></li>
+          <li><a href="javascript:void(0)" onclick="switchGoal('payment_checkout')" style="color: #94a3b8; text-decoration: none;">In-Chat Payment</a></li>
+          <li><a href="javascript:void(0)" onclick="switchGoal('customer_support')" style="color: #94a3b8; text-decoration: none;">Support &amp; Triage</a></li>
+          <li><a href="javascript:void(0)" onclick="switchGoal('consultation_booking')" style="color: #94a3b8; text-decoration: none;">Consultations</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="color: #ffffff; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">Support</h4>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+          <li><a href="mailto:hello@botly.example.com" style="color: #94a3b8; text-decoration: none;">hello@botly.example.com</a></li>
+          <li><a href="tel:+18005550199" style="color: #94a3b8; text-decoration: none;">+1 (800) 555-0199</a></li>
+          <li><a href="https://github.com/NextAIStudios/chatbot" target="_blank" style="color: #94a3b8; text-decoration: none;">GitHub Repository &rarr;</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="max-width: 1160px; margin: 0 auto; border-top: 1px solid #1f2a22; padding-top: 24px; text-align: center; color: #4b5563; font-size: 12px;">
+      &copy; 2026 Botly &middot; NextAI Studios &middot; Open Source MIT License
+    </div>
+  </footer>
+
+  <!-- 2. Chatbot JavaScript Bundle (Zero Dependencies) -->
+  <script src="../dist/insurance-chatbot.js"></script>
+
+  <!-- 3. Interactive Code Generator & Dynamic Live Sync Script -->
+  <script>
+    // Safe script tag generators to prevent HTML parser premature script closing
+    const S_OPEN = '<' + 'script>';
+    const S_CLOSE = '<' + '/script>';
+    const S_BUNDLE = '<' + 'script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><' + '/script>';
+
+    // State
+    let currentGoal = 'lead_generation';
+    let currentFramework = 'html';
+
+    // Framework code generators
+    const snippets = {
+      html: (goal) => {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Company Website</title>
+
+  <!-- 1. Botly Design System Stylesheet -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
 </head>
 <body>
 
-  <div class="card">
-    <h1>Your Existing Insurance Website</h1>
-    <p>This minimal example shows how effortlessly the chatbot widget mounts onto ANY existing webpage with zero build tools or configuration hurdles.</p>
-    <button class="btn" onclick="InsuranceChatbot.open()">💬 Open Insurance Assistant</button>
-  </div>
+  <!-- Your existing website content here -->
+  <main>
+    <h1>Welcome to Our Platform</h1>
+    <button onclick="InsuranceChatbot.open()">💬 Chat with Us</button>
+  </main>
 
-  <!-- 2. Chatbot JavaScript Bundle -->
-  <script src="../dist/insurance-chatbot.js"></script>
+  <!-- 2. Botly Standalone Bundle (Zero Dependencies) -->
+  ` + S_BUNDLE + `
 
   <!-- 3. One-line Initialization -->
-  <script>
+  ` + S_OPEN + `
     InsuranceChatbot.init({
       company: {
-        name: 'Botly Insurance'
+        name: "Acme Corporation",
+        supportPhone: "+1 (800) 555-0199",
+        supportEmail: "care@acmeco.example.com"
+      },
+      goal: "${goal}", // '${goal}'
+      bot: {
+        name: "Botly",
+        title: "AI Specialist"
+      },
+      theme: {
+        primaryColor: "#18221c",
+        accentColor: "#9be553"
+      }
+    });
+  ` + S_CLOSE + `
+</body>
+</html>`;
+      },
+
+      react: (goal) => {
+        return `// src/components/BotlyChatbot.jsx
+import React, { useEffect } from 'react';
+
+export default function BotlyChatbot() {
+  useEffect(() => {
+    // 1. Inject Stylesheet
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css';
+    document.head.appendChild(link);
+
+    // 2. Inject Standalone Script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js';
+    script.async = true;
+    script.onload = () => {
+      if (window.InsuranceChatbot) {
+        window.InsuranceChatbot.init({
+          company: { name: 'Acme Corporation' },
+          goal: '${goal}',
+          bot: { name: 'Botly' },
+          theme: { primaryColor: '#18221c', accentColor: '#9be553' }
+        });
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      // Optional cleanup on unmount
+      const existing = document.getElementById('insurance-chatbot-container');
+      if (existing) existing.remove();
+    };
+  }, []);
+
+  return null; // Widget renders its own floating launcher into the DOM
+}`;
+      },
+
+      nextjs: (goal) => {
+        return `// app/layout.jsx (Next.js 13/14/15 App Router)
+import Script from 'next/script';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <head>
+        <!-- 1. Botly Core CSS -->
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"
+        />
+      </head>
+      <body>
+        {children}
+
+        <!-- 2. Next.js Lazy-loaded Script Bundle -->
+        <Script
+          src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"
+          strategy="lazyOnload"
+          onLoad={() => {
+            if (window.InsuranceChatbot) {
+              window.InsuranceChatbot.init({
+                company: { name: 'Acme Corporation' },
+                goal: '${goal}',
+                bot: { name: 'Botly' },
+                theme: { primaryColor: '#18221c', accentColor: '#9be553' }
+              });
+            }
+          }}
+        />
+      </body>
+    </html>
+  );
+}`;
+      },
+
+      vue: (goal) => {
+        return `<!-- components/BotlyChatbot.vue (Vue 3 / Nuxt 3) -->
+<template>
+  <!-- Mounts zero template markup; widget renders floating launcher -->
+</template>
+
+` + S_OPEN + ` setup
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  // 1. Load CSS
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css';
+  document.head.appendChild(link);
+
+  // 2. Load JS Bundle
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js';
+  script.async = true;
+  script.onload = () => {
+    if (window.InsuranceChatbot) {
+      window.InsuranceChatbot.init({
+        company: { name: 'Acme Corporation' },
+        goal: '${goal}',
+        bot: { name: 'Botly' },
+        theme: { primaryColor: '#18221c', accentColor: '#9be553' }
+      });
+    }
+  };
+  document.body.appendChild(script);
+});
+` + S_CLOSE;
+      },
+
+      wordpress: (goal) => {
+        return `<?php
+/**
+ * Add this to your active theme's functions.php or a custom plugin.
+ */
+function botly_enqueue_chatbot() {
+    // 1. Enqueue Botly CSS
+    wp_enqueue_style(
+        'botly-chatbot-css',
+        'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css',
+        array(),
+        '1.0.0'
+    );
+
+    // 2. Enqueue Botly JS Bundle
+    wp_enqueue_script(
+        'botly-chatbot-js',
+        'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js',
+        array(),
+        '1.0.0',
+        true // In footer
+    );
+
+    // 3. Inject Initialization Script
+    $inline_init = "
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.InsuranceChatbot) {
+                window.InsuranceChatbot.init({
+                    company: { name: '" . esc_js(get_bloginfo('name')) . "' },
+                    goal: '${goal}',
+                    bot: { name: 'Botly' },
+                    theme: { primaryColor: '#18221c', accentColor: '#9be553' }
+                });
+            }
+        });
+    ";
+    wp_add_inline_script('botly-chatbot-js', $inline_init);
+}
+add_action('wp_enqueue_scripts', 'botly_enqueue_chatbot');`;
+      },
+
+      shopify: (goal) => {
+        return `<!-- layout/theme.liquid (Shopify Online Store) -->
+<!-- 1. Paste in <head> tag -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
+
+<!-- 2. Paste right before </body> tag -->
+` + S_BUNDLE + `
+` + S_OPEN + `
+  window.addEventListener('DOMContentLoaded', function() {
+    InsuranceChatbot.init({
+      company: {
+        name: "{{ shop.name | escape }}",
+        supportEmail: "{{ shop.email }}"
+      },
+      goal: "${goal}",
+      bot: {
+        name: "Botly",
+        title: "Shopping & Support Assistant"
+      },
+      theme: {
+        primaryColor: "#18221c",
+        accentColor: "#9be553"
+      }
+    });
+  });
+` + S_CLOSE;
+      },
+
+      webflow: (goal) => {
+        return `<!-- Webflow / Squarespace / Wix Custom Code -->
+<!-- In "Footer Code" (Before </body> tag): -->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
+` + S_BUNDLE + `
+
+` + S_OPEN + `
+  InsuranceChatbot.init({
+    company: {
+      name: "Your Brand Name",
+      supportPhone: "+1 (800) 555-0199",
+      supportEmail: "hello@yourbrand.com"
+    },
+    goal: "${goal}",
+    bot: {
+      name: "Botly",
+      title: "Solutions Advisor"
+    },
+    theme: {
+      primaryColor: "#18221c",
+      accentColor: "#9be553"
+    }
+  });
+` + S_CLOSE;
+      },
+
+      python: (goal) => {
+        return `# main.py (FastAPI / Jinja2 Example)
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "botly_goal": "${goal}",
+        "company_name": "Acme SaaS"
+    })
+
+# In templates/index.html:
+# <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
+# ` + S_BUNDLE + `
+# ` + S_OPEN + `
+#   InsuranceChatbot.init({
+#     company: { name: "{{ company_name }}" },
+#     goal: "{{ botly_goal }}"
+#   });
+# ` + S_CLOSE;
+      },
+
+      node: (goal) => {
+        return `// server.js (Node.js Express + EJS / Pug / Handlebars)
+const express = require('express');
+const app = express();
+
+app.set('view engine', 'ejs');
+
+app.get('/', (req, res) => {
+  res.render('index', {
+    companyName: 'Acme Cloud Platform',
+    botlyGoal: '${goal}'
+  });
+});
+
+app.listen(3000, () => {
+  console.log('App running on http://localhost:3000');
+});
+
+<!-- In views/index.ejs: -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"> -->
+<!-- ` + S_BUNDLE + ` -->
+<!-- ` + S_OPEN + ` -->
+<!--   InsuranceChatbot.init({ -->
+<!--     company: { name: '<%= companyName %>' }, -->
+<!--     goal: '<%= botlyGoal %>' -->
+<!--   }); -->
+<!-- ` + S_CLOSE + ` -->`;
+      }
+    };
+
+    const filenames = {
+      html: 'index.html',
+      react: 'src/components/BotlyChatbot.jsx',
+      nextjs: 'app/layout.jsx',
+      vue: 'components/BotlyChatbot.vue',
+      wordpress: 'functions.php',
+      shopify: 'layout/theme.liquid',
+      webflow: 'Custom Code (Footer)',
+      python: 'main.py / templates/index.html',
+      node: 'server.js / views/index.ejs'
+    };
+
+    const explanations = {
+      lead_generation: '<strong>Goal: Lead Generation &amp; Sales</strong> &mdash; Configured to capture prospective customer details (Full Name, Phone Number, and inquiry notes) and store them in the local leads database whenever a user asks about services, custom quotes, or unlisted options.',
+      payment_checkout: '<strong>Goal: Instant In-Chat Payments</strong> &mdash; Prioritizes instant quote calculation and PCI-compliant checkout. Customers can pay via Card, M-Pesa, or Apple Pay directly in the chat and instantly receive their verifiable digital policy certificate.',
+      customer_support: '<strong>Goal: 24/7 Customer Support &amp; Human Triage</strong> &mdash; Answers everyday questions autonomously via the built-in natural language engine, and automatically initiates human triage callbacks when questions require human agent review.',
+      consultation_booking: '<strong>Goal: Consultation &amp; Appointment Booking</strong> &mdash; Directs conversation towards scheduling 1-on-1 advisor consultations, gathering phone numbers and availability preferences.'
+    };
+
+    // Render active code snippet
+    function renderCode() {
+      const codeGen = snippets[currentFramework] || snippets.html;
+      const rawCode = codeGen(currentGoal);
+      
+      // Update DOM
+      const viewer = document.getElementById('codeViewer');
+      const filename = document.getElementById('codeFilename');
+      const explanation = document.getElementById('codeExplanation');
+      
+      if (viewer) viewer.textContent = rawCode;
+      if (filename) filename.textContent = filenames[currentFramework] || 'snippet.html';
+      if (explanation) explanation.innerHTML = explanations[currentGoal];
+    }
+
+    // Switch Goal
+    function switchGoal(goalKey) {
+      currentGoal = goalKey;
+
+      // Update chip active states
+      document.querySelectorAll('.goal-chip').forEach(chip => {
+        if (chip.getAttribute('data-goal') === goalKey) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+
+      // Update displayed code
+      renderCode();
+
+      // Dynamically update the live mounted chatbot on this page!
+      if (window.InsuranceChatbot && typeof window.InsuranceChatbot.setCompanyGoal === 'function') {
+        window.InsuranceChatbot.setCompanyGoal(goalKey);
+      }
+    }
+
+    // Switch Framework Tab
+    function switchFramework(frameworkKey) {
+      currentFramework = frameworkKey;
+
+      // Update tab active states
+      document.querySelectorAll('.framework-tab').forEach(tab => {
+        if (tab.getAttribute('data-framework') === frameworkKey) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+
+      renderCode();
+    }
+
+    // 1-Click Copy Code
+    function copyActiveCode() {
+      const codeGen = snippets[currentFramework] || snippets.html;
+      const textToCopy = codeGen(currentGoal);
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = document.getElementById('copyCodeBtn');
+        const btnText = document.getElementById('copyBtnText');
+        if (btn) btn.classList.add('copied');
+        if (btnText) btnText.textContent = 'Copied!';
+
+        setTimeout(() => {
+          if (btn) btn.classList.remove('copied');
+          if (btnText) btnText.textContent = 'Copy Snippet';
+        }, 2200);
+      }).catch(err => {
+        console.error('Clipboard copy failed:', err);
+      });
+    }
+
+    // Initialize Botly on this page
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCode();
+
+      if (window.InsuranceChatbot) {
+        window.InsuranceChatbot.init({
+          company: {
+            name: "Botly Integration Studio",
+            supportPhone: "+1 (800) 555-0199",
+            supportEmail: "support@botly.example.com"
+          },
+          goal: "lead_generation",
+          bot: {
+            name: "Botly",
+            title: "Integration & Sales Specialist",
+            greeting: "Hello! 👋 Welcome to the Botly Integration Studio. I'm live on this page—feel free to test our company goals, simulate lead capture, or run an in-chat checkout right now!"
+          },
+          theme: {
+            primaryColor: "#18221c",
+            accentColor: "#9be553",
+            headerBg: "#18221c"
+          }
+        });
       }
     });
   </script>
