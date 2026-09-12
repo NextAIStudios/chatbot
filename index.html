@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Botly | Conversational AI Platform for Every Company</title>
-  <meta name="description" content="Deploy autonomous conversational AI chatbots for any company. Answer customer questions, capture qualified leads, calculate real-time quotes, and complete in-chat checkout.">
-  <link rel="icon" type="image/svg+xml" href="demo/botly-icon.svg">
+  <title>Botly | Conversational AI Platform for Every Company — $10/Chatbot</title>
+  <meta name="description" content="Deploy autonomous conversational AI chatbots for any company at $10 per chatbot. Answer customer questions, capture qualified leads, calculate real-time quotes, and complete in-chat checkout.">
+  <meta name="keywords" content="AI chatbot, conversational AI, customer service chatbot, lead capture bot, in-chat payments, chatbot for business">
+  <meta property="og:title" content="Botly — AI Chatbot for Every Company at $10">
+  <meta property="og:description" content="Deploy your company's AI chatbot in minutes. $10 per chatbot, per company. No hidden fees.">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="alternate icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
   <link rel="stylesheet" href="dist/insurance-chatbot.css">
   <link rel="stylesheet" href="demo/demo.css">
 </head>
@@ -33,6 +39,7 @@
           Products
           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
+        <a href="#pricing" class="botly-nav-item" style="color: #15803d; font-weight: 700;">Pricing</a>
         <a href="#developer-hub" class="botly-nav-item">Docs</a>
         <a href="#about" class="botly-nav-item">
           About us
@@ -85,9 +92,9 @@
 
           <!-- Interactive Testing Chips (Zero Emojis) -->
           <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">
-            <button class="prompt-chip" onclick="openChatWithPrompt('Show me your product catalog and pricing')">Product Catalog</button>
-            <button class="prompt-chip" onclick="openChatWithPrompt('Calculate a pricing quote for my business')">Instant Quote</button>
-            <button class="prompt-chip" onclick="openChatWithPrompt('I want to complete payment checkout')">In-Chat Payment</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('How much does Botly cost? What are the pricing plans?')">View Pricing</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('I want to get a chatbot for my company — how do I get started?')">Get Started</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('I want to complete payment checkout')">Buy Now — $10</button>
             <button class="prompt-chip" onclick="openChatWithPrompt('How does your onboarding and integration work?')">Integration FAQ</button>
             <button class="prompt-chip" onclick="openChatWithPrompt('Connect me with a product specialist')">Talk to Specialist</button>
           </div>
@@ -282,7 +289,7 @@
             </svg>
           </div>
           <h4>Healthcare & Wellness</h4>
-          <p>Patient appointment scheduling, clinical service FAQs, insurance eligibility verification, and automated appointment reminders.</p>
+          <p>Patient appointment scheduling, clinical service FAQs, coverage verification, and automated appointment reminders.</p>
         </div>
 
         <!-- Real Estate & Property -->
@@ -307,6 +314,112 @@
           </div>
           <h4>Professional Services & Agencies</h4>
           <p>Automate client intake, scope estimations, retainer deposit collection, and 24/7 lead capture across time zones.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================
+         PRICING SECTION — $10 per chatbot per company
+         ==================================================== -->
+    <section class="botly-section" id="pricing" style="border-top: 1px solid #f1f5f9; padding-top: 80px;">
+      <div class="botly-section-header">
+        <span class="botly-section-tag">Simple, Transparent Pricing</span>
+        <h2 class="botly-section-title">One chatbot. One company. $10.</h2>
+        <p class="botly-section-desc">
+          No per-message fees. No subscriptions. Deploy a fully customizable AI chatbot for any company at a flat $10 per bot.
+        </p>
+      </div>
+
+      <!-- Pricing Cards -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 56px;" class="botly-pricing-grid">
+
+        <!-- Starter -->
+        <div class="botly-pricing-card" id="pricing-starter">
+          <div class="pricing-tier-badge">Starter</div>
+          <div class="pricing-price-row">
+            <span class="pricing-dollar">$</span>
+            <span class="pricing-amount">10</span>
+            <span class="pricing-per">per bot</span>
+          </div>
+          <p class="pricing-desc">Perfect for any business deploying their first AI chatbot. Flat fee, no monthly charges.</p>
+          <ul class="pricing-features">
+            <li><span class="pricing-check">✓</span> 1 company chatbot</li>
+            <li><span class="pricing-check">✓</span> Unlimited conversations</li>
+            <li><span class="pricing-check">✓</span> Lead capture &amp; qualification</li>
+            <li><span class="pricing-check">✓</span> White-label branding</li>
+            <li><span class="pricing-check">✓</span> In-chat payment checkout</li>
+            <li><span class="pricing-check">✓</span> Email &amp; SMS receipts</li>
+            <li><span class="pricing-check">✓</span> Standard support</li>
+          </ul>
+          <button class="pricing-cta-btn" onclick="openChatWithPrompt('I want to deploy a Botly chatbot for my company, how do I get started?')">
+            Deploy Your Bot — $10
+          </button>
+        </div>
+
+        <!-- Growth (Popular) -->
+        <div class="botly-pricing-card botly-pricing-popular" id="pricing-growth">
+          <div class="pricing-popular-badge">Most Popular</div>
+          <div class="pricing-tier-badge" style="color: #9be553;">Growth</div>
+          <div class="pricing-price-row">
+            <span class="pricing-dollar" style="color: #9be553;">$</span>
+            <span class="pricing-amount" style="color: #ffffff;">10</span>
+            <span class="pricing-per" style="color: rgba(255,255,255,0.6);">per bot</span>
+          </div>
+          <p class="pricing-desc" style="color: rgba(255,255,255,0.7);">Scale across companies — $10 flat per bot, no matter how many you deploy.</p>
+          <ul class="pricing-features" style="color: rgba(255,255,255,0.85);">
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> Multiple company bots</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> $10 flat per chatbot</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> Unlimited conversations</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> Advanced NLP &amp; intent engine</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> Custom knowledge ingestion</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> Priority support</li>
+            <li><span class="pricing-check" style="color: #9be553;">✓</span> API &amp; webhook access</li>
+          </ul>
+          <button class="pricing-cta-btn pricing-cta-btn-lime" onclick="openChatWithPrompt('I want to deploy multiple company chatbots, can you help me get set up?')">
+            Deploy Multiple Bots — $10 each
+          </button>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="botly-pricing-card" id="pricing-enterprise">
+          <div class="pricing-tier-badge">Enterprise</div>
+          <div class="pricing-price-row">
+            <span class="pricing-dollar">$</span>
+            <span class="pricing-amount">Custom</span>
+          </div>
+          <p class="pricing-desc">For large deployments, white-label resellers, and high-volume enterprise clients.</p>
+          <ul class="pricing-features">
+            <li><span class="pricing-check">✓</span> Volume discount on bots</li>
+            <li><span class="pricing-check">✓</span> Dedicated account manager</li>
+            <li><span class="pricing-check">✓</span> Custom SLA &amp; uptime guarantee</li>
+            <li><span class="pricing-check">✓</span> White-label reseller rights</li>
+            <li><span class="pricing-check">✓</span> On-premise / private cloud</li>
+            <li><span class="pricing-check">✓</span> SSO &amp; advanced security</li>
+            <li><span class="pricing-check">✓</span> 24/7 dedicated support</li>
+          </ul>
+          <button class="pricing-cta-btn" onclick="openChatWithPrompt('I am interested in Botly Enterprise for a large-scale deployment — can we discuss pricing?')">
+            Contact Sales
+          </button>
+        </div>
+      </div>
+
+      <!-- Pricing FAQ strip -->
+      <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 20px; padding: 40px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;" class="botly-pricing-faq">
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; color: #18221c; margin-bottom: 8px;">Is it really just $10?</h4>
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">Yes. One flat $10 per chatbot per company. No recurring charges, no per-message fees, no hidden costs. You pay $10, you get a bot.</p>
+        </div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; color: #18221c; margin-bottom: 8px;">What counts as one "company bot"?</h4>
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">Each unique company or brand you deploy a Botly chatbot for is one bot. Deploy for 5 companies = $50 total.</p>
+        </div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; color: #18221c; margin-bottom: 8px;">No subscription?</h4>
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">Correct. $10 is a flat deployment fee per bot, not a monthly subscription. Enterprise clients can discuss custom volume pricing.</p>
+        </div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; color: #18221c; margin-bottom: 8px;">How do I pay for multiple bots?</h4>
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">Simple math: 1 bot = $10, 5 bots = $50, 10 bots = $100. Need more at volume? Enterprise pricing available.</p>
         </div>
       </div>
     </section>
@@ -413,20 +526,21 @@
       </div>
     </section>
 
-    <!-- Bottom CTA Banner (Insurely Minimalist Dark Style) -->
+    <!-- Bottom CTA Banner -->
     <section class="botly-cta-banner" id="about">
-      <h3>Ready to create open conversational experiences?</h3>
+      <!-- Accent decorative circles -->
+      <div style="position: absolute; top: -60px; right: -60px; width: 280px; height: 280px; background: #9be553; opacity: 0.07; border-radius: 50%; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: -80px; left: -40px; width: 200px; height: 200px; background: #9be553; opacity: 0.05; border-radius: 50%; pointer-events: none;"></div>
+      <div style="display: inline-block; background: rgba(155,229,83,0.18); border: 1px solid rgba(155,229,83,0.35); color: #9be553; font-size: 13px; font-weight: 700; padding: 5px 16px; border-radius: 8px; margin-bottom: 20px; letter-spacing: 0.3px;">$10 flat — per bot, per company</div>
+      <h3>Deploy your AI chatbot today.</h3>
       <p>
-        Explore the Botly Customizer Studio sandbox, configure your company assistant, and integrate in-chat checkout into your product today.
+        One flat price. Unlimited conversations. Full white-label customization. Your bot live in under 5 minutes.
       </p>
       <div class="hero-cta-group">
-        <a href="demo/customizer.html" class="pill-btn-lime" style="padding: 12px 28px; font-size: 15px;">
-          <span>Sandbox access</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
-        <button type="button" class="pill-btn-dark" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); padding: 12px 28px; font-size: 15px;" onclick="openChatWithPrompt('Tell me about Botly and how it works')">
-          Chat with Botly AI
+        <button type="button" class="pill-btn-lime" style="padding: 14px 32px; font-size: 15px; font-weight: 800;" onclick="openChatWithPrompt('I want to deploy a Botly chatbot for my company, how do I get started?')">
+          Deploy Your Bot — $10
         </button>
+        <button type="button" class="pill-btn-dark" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); padding: 14px 32px; font-size: 15px;" onclick="openChatWithPrompt('Tell me about Botly and how much it costs')">Chat with Botly</button>
       </div>
     </section>
   </main>
@@ -470,10 +584,10 @@
       <div>
         <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Developers & Sandbox</h5>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
-          <li style="margin-bottom: 10px;"><a href="demo/customizer.html" style="color: #15803d; font-weight: 700; text-decoration: none;">Botly Customizer Studio</a></li>
+          <li style="margin-bottom: 10px;"><a href="#pricing" style="color: #15803d; font-weight: 700; text-decoration: none;">Pricing — $10/bot</a></li>
+          <li style="margin-bottom: 10px;"><a href="demo/customizer.html" style="color: #6b7280; text-decoration: none;">Botly Customizer Studio</a></li>
           <li style="margin-bottom: 10px;"><a href="demo/embed-example.html" style="color: #6b7280; text-decoration: none;">Embed Guide</a></li>
           <li style="margin-bottom: 10px;"><a href="examples/backend-api/README.md" style="color: #6b7280; text-decoration: none;">Webhook APIs</a></li>
-          <li style="margin-bottom: 10px;"><a href="tests/widget.test.js" style="color: #6b7280; text-decoration: none;">Unit Tests (27 of 27 Passing)</a></li>
           <li style="margin-bottom: 10px;"><a href="https://github.com/NextAIStudios/chatbot" target="_blank" rel="noopener" style="color: #6b7280; text-decoration: none;">GitHub</a></li>
         </ul>
       </div>
@@ -490,18 +604,27 @@
 
   <!-- Botly Initialization & Helpers -->
   <script>
-    // Initialize Botly with universal configuration
+    // Initialize Botly with SaaS pricing-aware configuration
     InsuranceChatbot.init({
+      mode: 'saas',
+      goal: 'lead_generation',
       company: {
         name: 'Botly',
         supportPhone: '+1 (800) 555-0199',
-        supportEmail: 'care@botly.ai'
+        supportEmail: 'care@botly.ai',
+        websiteUrl: 'https://botly.ai'
       },
       bot: {
         name: 'Botly',
         title: 'AI Assistant',
         avatar: 'demo/botly-icon.svg',
-        greeting: "Hello! I am Botly, your company's conversational AI assistant. How can I help you today? You can explore our product catalog, request a quote, or complete payment checkout."
+        greeting: "Hey! I'm Botly. We build AI chatbots for any company — $10 per bot, flat. What can I help you with?",
+        initialQuickReplies: [
+          { label: 'How much does it cost?', payload: 'How much does a Botly chatbot cost?' },
+          { label: 'Get started', payload: 'I want to get a chatbot for my company, how do I start?' },
+          { label: 'See how it works', payload: 'Can you show me how Botly works?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from the Botly team' }
+        ]
       },
       theme: {
         primaryColor: '#18221c',
@@ -513,6 +636,44 @@
       currency: {
         code: 'USD',
         symbol: '$'
+      },
+      customFaqs: [
+        {
+          keywords: ['price', 'pricing', 'cost', 'how much', 'charge', '$10', 'per bot', 'fee', 'plan', 'pay', 'money'],
+          answer: '$10 per chatbot, flat. \n\nYou pay once to deploy a bot for a company — no ongoing subscription, no per-message fees, no hidden charges. \n\nDeploy 1 bot for 1 company — $10. Deploy 5 bots for 5 companies — $50 total. Need something bigger? We do custom Enterprise pricing too. \n\nWant to get started?'
+        },
+        {
+          keywords: ['get started', 'start', 'buy', 'purchase', 'sign up', 'signup', 'subscribe', 'activate', 'deploy', 'setup', 'set up'],
+          answer: "Getting started is simple: \n\n1. Pick your company — $10 per bot \n2. Customize the look and feel in our sandbox \n3. Drop 2 lines of HTML into your site \n4. Done. Your bot is live. \n\nWant me to collect your details so our team can get you set up?"
+        },
+        {
+          keywords: ['what is botly', 'about botly', 'what do you do', 'how does botly work', 'explain', 'tell me about', 'how it works'],
+          answer: "Botly is an AI chatbot platform that any company can deploy in minutes. \n\nEach chatbot can: answer customer questions 24/7, capture and qualify leads, take payments in-chat, and send digital receipts. \n\nIt costs $10 per bot to deploy. Zero external dependencies. Works on any website."
+        },
+        {
+          keywords: ['enterprise', 'custom plan', 'bulk', 'volume', 'reseller', 'white label', 'agency', 'large scale', 'multiple companies', 'many bots'],
+          answer: "For agencies and large deployments we do custom pricing. \n\nYou get: volume discounts, a dedicated account manager, white-label reseller rights, custom SLA, and 24/7 priority support. \n\nWant me to connect you with our sales team?"
+        },
+        {
+          keywords: ['integration', 'embed', 'install', 'add to website', 'wordpress', 'shopify', 'webflow', 'react', 'html', 'javascript'],
+          answer: "Adding Botly to your site takes under 5 minutes. \n\nDrop in one CSS link and one script tag, then call InsuranceChatbot.init() with your company config. That's it. \n\nWorks with HTML, React, Next.js, Vue, WordPress, Shopify, Webflow — anything."
+        },
+        {
+          keywords: ['human', 'agent', 'representative', 'person', 'speak', 'talk', 'someone', 'contact', 'call', 'support', 'team', 'sales team'],
+          answer: "You can reach the Botly team directly at **+1 (800) 555-0199** or by email at **care@botly.ai**.\n\nPrefer a callback? Leave your name and phone number below and someone from our team will reach out within 15 minutes!"
+        }
+      ]
+    });
+
+    // Override intent handling for pricing-specific intents
+    window.addEventListener('botly:intent', function(e) {
+      var intent = e.detail && e.detail.intent;
+      if (intent === 'intent_pricing') {
+        openChatWithPrompt('How much does Botly cost? What are the pricing plans?');
+      } else if (intent === 'intent_get_started') {
+        openChatWithPrompt('I want to get started with Botly for my company');
+      } else if (intent === 'intent_demo') {
+        openChatWithPrompt('Can you show me how Botly works with a live demo?');
       }
     });
 
@@ -566,7 +727,7 @@ class QueryRequest(BaseModel):
     sessionId: str
     userProfile: dict = {}
 
-@app.post("/api/insurance/query")
+@app.post("/api/botly/query")
 async def handle_query(req: QueryRequest):
     return {
         "text": f"Response calculated for session {req.sessionId}.",
@@ -579,7 +740,7 @@ import express from 'express';
 const app = express();
 app.use(express.json());
 
-app.post('/api/insurance/query', (req, res) => {
+app.post('/api/botly/query', (req, res) => {
   const { query, sessionId } = req.body;
   res.json({
     text: \`Response processed for session \${sessionId}.\`,

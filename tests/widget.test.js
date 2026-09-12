@@ -223,6 +223,167 @@ const supportEngine = new IntentEngine({
 const supportFaq = supportEngine.classify('How long does a collision claim take to process?');
 assert(supportFaq.reply.includes('support specialist') || supportFaq.reply.includes('file this claim'), 'Follow-up question adapts tone to customer support goal');
 
+console.log('\n--- 🚀 9. Testing SaaS Mode & Universal Language ($10 Pricing) ---');
+const saasEngine = new IntentEngine({
+  mode: 'saas',
+  company: { name: 'Botly', supportPhone: '+1 (800) 555-0199', supportEmail: 'care@botly.ai' },
+  bot: { name: 'Botly', title: 'AI Assistant', greeting: "Hey! I'm Botly." }
+});
+
+// Test 9.1: SaaS greeting contains no insurance references
+const saasGreet = saasEngine.classify('Hello there');
+assert(!saasGreet.reply.toLowerCase().includes('insurance') && !saasGreet.reply.toLowerCase().includes('claim'), 'SaaS greeting contains zero insurance references');
+
+// Test 9.2: Pricing query returns $10 flat per bot
+const saasPrice = saasEngine.classify('How much does it cost?');
+assert(saasPrice.intent === 'faq' && saasPrice.reply.includes('$10 per chatbot'), 'SaaS pricing query returns $10 flat per chatbot');
+
+// Test 9.3: Cost query does not open auto quote wizard
+const saasQuoteCheck = saasEngine.classify('Can I get a quote on pricing?');
+assert(saasQuoteCheck.action !== 'OPEN_QUOTE_WIZARD', 'SaaS quote inquiry does not trigger auto quote wizard');
+
+// Test 9.4: Human escalation uses team language without underwriter
+const saasHuman = saasEngine.classify('I want to speak with a human agent');
+assert(!saasHuman.reply.toLowerCase().includes('underwriter') && saasHuman.reply.includes('care@botly.ai'), 'SaaS human escalation uses team language without underwriter');
+
+console.log('\n--- 🧠 10. Testing Multi-Function Goals & Multi-Format Bot Memory ---');
+const memoryEngine = new IntentEngine({
+  mode: 'saas',
+  goals: ['lead_generation', 'customer_support', 'payment_checkout'],
+  company: { name: 'Acme Studio' },
+  customKnowledge: [
+    {
+      question: 'Acme Studio Overview',
+      answer: 'We provide branding, web development, and 24/7 custom AI support with a 48 hour turnaround.',
+      source: 'document',
+      keywords: ['branding', 'turnaround', 'services', 'development']
+    },
+    {
+      question: 'Pricing & Packages on Acme.com',
+      answer: 'On Acme.com, chatbots are $10 flat with no monthly subscription and unlimited chats.',
+      source: 'website',
+      sourceUrl: 'https://acme.com/pricing',
+      keywords: ['pricing', 'rate', 'cost', 'subscription', 'package']
+    }
+  ]
+});
+
+// Test 10.1: Document memory answers with document citation prefix
+const docQuery = memoryEngine.classify('What is your turnaround time for services?');
+assert(docQuery.reply.includes('From Company Records') && docQuery.reply.includes('48 hour turnaround'), 'Bot uses document memory with company records citation');
+
+// Test 10.2: Website memory answers with website citation prefix and host
+const webQuery = memoryEngine.classify('Tell me about pricing on acme.com');
+assert(webQuery.reply.includes('From Website Knowledge') && webQuery.reply.includes('acme.com') && webQuery.reply.includes('$10 flat'), 'Bot uses website memory with website citation and URL host');
+
+// Test 10.3: Multi-goals quick replies include actions for active goals
+assert(docQuery.suggestedQuickReplies.some(q => q.payload.includes('start') || q.label.includes('started')), 'Quick replies support lead generation goal');
+assert(docQuery.suggestedQuickReplies.some(q => q.label.includes('someone') || q.label.includes('team')), 'Quick replies support customer support goal');
+
+console.log('\n--- 🇰🇪 11. Testing NextGen Kenya Customization & Morphological Stemming ---');
+const nextGenEngine = new IntentEngine({
+  mode: 'saas',
+  company: { name: 'NextGen Kenya', supportEmail: 'info@kenyanextgen.co.ke' },
+  bot: { name: 'NextGen Assistant', title: 'AI Placement Advisor' },
+  customKnowledge: [
+    {
+      id: 'nextgen_home',
+      question: 'NextGen Kenya - About & Youth Employment Mission',
+      answer: 'NextGen.Ke is an initiative accelerating youth employment in Kenya, developed in partnership with UNDP, the Government of Kenya, and KEPSA to connect youth with internships across all 47 counties.',
+      source: 'website',
+      sourceUrl: 'https://kenyanextgen.co.ke/',
+      category: 'website',
+      keywords: ['kenyanextgen', 'about', 'undp', 'kepsa', 'employment', 'youth', 'internship', 'counties']
+    },
+    {
+      id: 'nextgen_automation',
+      question: 'NextGen Kenya - Workplace Automation, Digital Skills & Training',
+      answer: 'Yes! NextGen Kenya provides youth with cutting-edge training in workplace automation, modern digital tools, AI technologies, and software workflows.',
+      source: 'website',
+      sourceUrl: 'https://kenyanextgen.co.ke/skills',
+      category: 'website',
+      keywords: ['automation', 'automated', 'skills', 'training', 'digital', 'tech', 'workflows']
+    },
+    {
+      id: 'nextgen_pricing',
+      question: 'NextGen Kenya - Application & Program Cost',
+      answer: 'Applications to NextGen Kenya are 100% free with zero fees! Any young Kenyan graduate can register online in under 3 minutes.',
+      source: 'website',
+      sourceUrl: 'https://kenyanextgen.co.ke/apply',
+      category: 'website',
+      keywords: ['pricing', 'cost', 'fee', 'free', 'price', 'rate', 'apply', 'application']
+    }
+  ]
+});
+
+// Test 11.1: Morphological Stemming matches "do you have automation?" to "automated" / "automation"
+const autoQuery = nextGenEngine.classify('do you have automation?');
+assert(autoQuery.intent === 'faq', 'Matches automation query to FAQ via stemming');
+assert(autoQuery.reply.includes('workplace automation') && autoQuery.reply.includes('From Website Knowledge'), 'Returns NextGen automation training answer from memory');
+
+// Test 11.2: Pricing on NextGen Kenya returns free application from memory, NOT Botly $10
+const nextGenPrice = nextGenEngine.classify('How much does it cost?');
+assert(nextGenPrice.reply.includes('100% free') && !nextGenPrice.reply.includes('$10 per chatbot'), 'Returns NextGen Kenya free program pricing, not Botly $10 pitch');
+
+// Test 11.3: Unlisted query routes to NextGen Kenya team without "exact quote" language
+const unlistedNextGen = nextGenEngine.classify('do you have catering?');
+assert(unlistedNextGen.action === 'LEAD_CAPTURE', 'Unlisted topic triggers lead capture');
+assert(unlistedNextGen.reply.includes('NextGen Kenya') && !unlistedNextGen.reply.includes('exact quote'), 'Lead capture prompt references NextGen Kenya and avoids quote language');
+
+console.log('\n--- 📱 12. Testing Checkout Page Linking, Direct M-Pesa & Confirmation Code Leads ---');
+
+function extractMpesaCode(str) {
+  if (!str) return null;
+  var trimmed = str.trim();
+  if (/^[A-Z0-9]{8,12}$/i.test(trimmed) && /[A-Z]/i.test(trimmed) && /[0-9]/.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+  var match = str.match(/(?:code|mpesa|m-pesa|ref|reference|id|txn|paid|lipa)?\s*[:#-]?\s*\b([A-Z0-9]{8,12})\b/i);
+  if (match && match[1] && /[A-Z]/i.test(match[1]) && /[0-9]/.test(match[1])) {
+    return match[1].toUpperCase();
+  }
+  return null;
+}
+
+// Test 12.1: M-Pesa Code format detection
+assert(extractMpesaCode('UIC8E69GLQ') === 'UIC8E69GLQ', 'Recognizes standard Safaricom M-Pesa code UIC8E69GLQ');
+assert(extractMpesaCode('uic8e69glq') === 'UIC8E69GLQ', 'Auto-uppercases lowercase M-Pesa code');
+assert(extractMpesaCode('I have paid, mpesa code is UIC8E69GLQ') === 'UIC8E69GLQ', 'Extracts M-Pesa code from conversational user sentence');
+assert(extractMpesaCode('hello world') === null, 'Rejects plain text words without digits');
+assert(extractMpesaCode('12345678') === null, 'Rejects pure numeric input without letters');
+
+// Test 12.2: Recording M-Pesa transaction lead
+const mpesaLead = {
+  id: 'PAY-TEST-999',
+  name: 'Kevin Otieno',
+  phone: '+254 712 999 888',
+  need: 'NextGen Digital Career Accelerator',
+  goal: 'payment_checkout',
+  status: 'Paid (M-Pesa: UIC8E69GLQ)',
+  paymentMethod: 'M-Pesa: Buy Goods (Till: 123456)',
+  mpesaCode: 'UIC8E69GLQ',
+  amount: 'KES 1,000',
+  destination: 'Till 123456',
+  businessName: 'NextGen Kenya',
+  timestamp: new Date().toISOString(),
+  createdAtFormatted: new Date().toLocaleString(),
+  company: 'NextGen Kenya'
+};
+
+LeadCaptureFlow.saveLeadToStorage(mpesaLead);
+const storedMpesaLeads = LeadCaptureFlow.getLeads();
+const foundLead = storedMpesaLeads.find(l => l.mpesaCode === 'UIC8E69GLQ');
+assert(foundLead !== undefined, 'Persists M-Pesa transaction code in lead storage');
+assert(foundLead.paymentMethod.includes('Buy Goods'), 'Stores M-Pesa payment method in lead record');
+assert(foundLead.amount === 'KES 1,000', 'Stores paid amount in lead record');
+assert(foundLead.status.includes('Paid (M-Pesa: UIC8E69GLQ)'), 'Stores status with confirmation code');
+
+// Test 12.3: CSV Export includes Payment Method, M-Pesa Code, and Amount
+const mpesaCsv = LeadCaptureFlow.exportCSV();
+assert(mpesaCsv.includes('Payment Method') && mpesaCsv.includes('M-Pesa Code') && mpesaCsv.includes('Amount'), 'CSV headers include Payment Method, M-Pesa Code, and Amount');
+assert(mpesaCsv.includes('UIC8E69GLQ'), 'CSV export rows contain customer M-Pesa code');
+assert(mpesaCsv.includes('Kevin Otieno'), 'CSV export rows contain customer name');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);
@@ -232,3 +393,4 @@ if (failed > 0) {
 } else {
   process.exit(0);
 }
+

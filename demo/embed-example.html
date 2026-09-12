@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quick Embed Guide & Integration Playground | Botly</title>
-  <meta name="description" content="Comprehensive quick embed guide and interactive integration playground for Botly Conversational AI. Add Botly to HTML, React, Next.js, Vue, WordPress, Shopify, Python, and Node.js in 60 seconds.">
+  <title>Embed Guide &amp; Integration Playground | Botly</title>
+  <meta name="description" content="Drop Botly into any website in under 2 minutes. HTML, React, Next.js, Vue, WordPress, Shopify, Webflow, Python, Node.js — ready-to-paste code snippets for every framework.">
   <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
   <link rel="stylesheet" href="../dist/insurance-chatbot.css">
   <link rel="stylesheet" href="demo.css">
@@ -511,18 +511,17 @@
 
       <div class="botly-nav-menu">
         <a href="../index.html" class="botly-nav-item">Home</a>
-        <a href="../index.html#capabilities" class="botly-nav-item">Platform Features</a>
-        <a href="customizer.html" class="botly-nav-item">Studio Sandbox</a>
+        <a href="../index.html#pricing" class="botly-nav-item">Pricing — $10/bot</a>
+        <a href="customizer.html" class="botly-nav-item">Customizer Studio</a>
         <a href="embed-example.html" class="botly-nav-item" style="color: #18221c; font-weight: 750;">Embed Guide</a>
-        <a href="../QUICK_EMBED_GUIDE.md" target="_blank" class="botly-nav-item">Markdown Spec ↗</a>
       </div>
 
       <div class="botly-nav-actions">
         <a href="customizer.html" class="pill-btn-dark">
-          <span>Launch Customizer</span>
+          <span>Open Customizer</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <button type="button" class="pill-btn-lime" onclick="InsuranceChatbot.open()">💬 Test Live Bot</button>
+        <button type="button" class="pill-btn-lime" onclick="InsuranceChatbot.open()">Test Live Bot</button>
       </div>
     </nav>
   </header>
@@ -531,13 +530,13 @@
   <section class="guide-hero">
     <div class="guide-badge">
       <span class="dot"></span>
-      Zero Dependencies &middot; 60-Second Drop-in &middot; Vanilla JS &middot; React &middot; Next.js &middot; Vue
+      Zero Dependencies &middot; Under 2 Minutes &middot; HTML &middot; React &middot; Next.js &middot; Vue &middot; Shopify
     </div>
     <h1 class="guide-title">
-      Quick Embed Guide &amp; <em>Integration Playground</em>
+      Embed Botly on <em>any website</em> in minutes.
     </h1>
     <p class="guide-sub">
-      Select your primary company goal and target frontend framework to generate ready-to-paste production embed snippets. Test the live bot in real time on this very page.
+      Pick your framework, copy the snippet, and your AI chatbot is live. $10 per bot, zero ongoing fees. Works on everything.
     </p>
   </section>
 
@@ -557,34 +556,34 @@
           <div class="goal-selector-list" id="goalSelectorList">
             
             <div class="goal-chip active" data-goal="lead_generation" onclick="switchGoal('lead_generation')">
-              <span class="goal-chip-icon">🎯</span>
+              <span class="goal-chip-icon">&#127919;</span>
               <div>
                 <div class="goal-chip-title">Lead Generation &amp; Sales</div>
-                <div class="goal-chip-desc">Proactively collects name, phone, and unlisted requests into local CRM storage.</div>
+                <div class="goal-chip-desc">Captures name, phone, and inquiry details into local storage for your sales team.</div>
               </div>
             </div>
 
             <div class="goal-chip" data-goal="payment_checkout" onclick="switchGoal('payment_checkout')">
-              <span class="goal-chip-icon">💳</span>
+              <span class="goal-chip-icon">&#128179;</span>
               <div>
-                <div class="goal-chip-title">Instant In-Chat Payments</div>
-                <div class="goal-chip-desc">PCI-compliant Card, M-Pesa, &amp; Apple Pay with instant certificates &amp; receipts.</div>
+                <div class="goal-chip-title">In-Chat Payments</div>
+                <div class="goal-chip-desc">PCI-compliant card, mobile money, and Apple Pay with instant digital receipts.</div>
               </div>
             </div>
 
             <div class="goal-chip" data-goal="customer_support" onclick="switchGoal('customer_support')">
-              <span class="goal-chip-icon">🛟</span>
+              <span class="goal-chip-icon">&#128247;</span>
               <div>
-                <div class="goal-chip-title">24/7 Support &amp; Human Triage</div>
-                <div class="goal-chip-desc">Resolves common FAQs and triages unanswered queries to human specialists.</div>
+                <div class="goal-chip-title">24/7 Customer Support</div>
+                <div class="goal-chip-desc">Resolves FAQs instantly and routes unanswered queries to a human agent.</div>
               </div>
             </div>
 
             <div class="goal-chip" data-goal="consultation_booking" onclick="switchGoal('consultation_booking')">
-              <span class="goal-chip-icon">📅</span>
+              <span class="goal-chip-icon">&#128197;</span>
               <div>
-                <div class="goal-chip-title">Consultation &amp; Booking</div>
-                <div class="goal-chip-desc">Books 1-on-1 advisor consultations and sends callback notifications.</div>
+                <div class="goal-chip-title">Booking &amp; Consultation</div>
+                <div class="goal-chip-desc">Books advisor calls and collects pre-qualification details before the meeting.</div>
               </div>
             </div>
 
@@ -594,27 +593,31 @@
         <!-- Live Widget Testing Stack -->
         <div class="sidebar-section">
           <div class="sidebar-heading">
-            <span>2. Test Live Widget</span>
+            <span>2. Test the Live Bot</span>
           </div>
 
           <div class="live-actions-box">
-            <h4>Trigger In-Chat Flows</h4>
+            <h4>Try These Actions</h4>
             <div class="live-btn-stack">
               <button type="button" class="live-action-btn btn-lime" onclick="InsuranceChatbot.open()">
-                <span>Open Botly Assistant</span>
-                <span>💬</span>
+                <span>Open Chat</span>
+                <span>&#128172;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.simulateUnlistedInquiry('Do you offer custom enterprise pricing and API SLA?')">
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.triggerAction('How much does a Botly chatbot cost?')">
+                <span>Ask About Pricing</span>
+                <span>&#128176;</span>
+              </button>
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.simulateUnlistedInquiry('I want to deploy chatbots for 10 companies')">
                 <span>Simulate Lead Capture</span>
-                <span>🎯</span>
+                <span>&#127919;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.startCheckout({ quoteRef: 'DEMO-PREM-2026', totalAmount: 49.00 })">
-                <span>Trigger In-Chat Checkout</span>
-                <span>💳</span>
+              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.startCheckout({ quoteRef: 'BOT-001', totalAmount: 10 })">
+                <span>Trigger $10 Checkout</span>
+                <span>&#128179;</span>
               </button>
               <button type="button" class="live-action-btn" onclick="InsuranceChatbot.exportLeadsCSV()">
-                <span>Export Captured Leads (CSV)</span>
-                <span>📊</span>
+                <span>Export Leads (CSV)</span>
+                <span>&#128202;</span>
               </button>
             </div>
           </div>
@@ -623,7 +626,7 @@
         <div class="sidebar-section" style="margin-bottom: 0;">
           <div style="display: flex; gap: 10px;">
             <a href="customizer.html" class="pill-btn-dark" style="flex: 1; font-size: 12.5px; padding: 8px 12px;">
-              Visual Studio Sandbox
+              Open Customizer Studio
             </a>
           </div>
         </div>
@@ -1271,22 +1274,34 @@ app.listen(3000, () => {
 
       if (window.InsuranceChatbot) {
         window.InsuranceChatbot.init({
+          mode: 'saas',
           company: {
-            name: "Botly Integration Studio",
+            name: "Botly",
             supportPhone: "+1 (800) 555-0199",
-            supportEmail: "support@botly.example.com"
+            supportEmail: "care@botly.ai"
           },
           goal: "lead_generation",
           bot: {
             name: "Botly",
-            title: "Integration & Sales Specialist",
-            greeting: "Hello! 👋 Welcome to the Botly Integration Studio. I'm live on this page—feel free to test our company goals, simulate lead capture, or run an in-chat checkout right now!"
+            title: "AI Assistant",
+            greeting: "Hey! I'm Botly. You're on the embed guide — try the buttons on the left to test different flows. Or just ask me anything.",
+            initialQuickReplies: [
+              { label: 'How much does it cost?', payload: 'How much does a Botly chatbot cost?' },
+              { label: 'Get started', payload: 'I want to get a chatbot for my company, how do I start?' },
+              { label: 'Talk to someone', payload: 'I want to speak with someone from the Botly team' }
+            ]
           },
           theme: {
             primaryColor: "#18221c",
             accentColor: "#9be553",
             headerBg: "#18221c"
-          }
+          },
+          customFaqs: [
+            {
+              keywords: ['price', 'pricing', 'cost', 'how much', '$10', 'per bot', 'fee'],
+              answer: '$10 per chatbot, flat. No subscription, no per-message fees. You pay once per bot you deploy.'
+            }
+          ]
         });
       }
     });

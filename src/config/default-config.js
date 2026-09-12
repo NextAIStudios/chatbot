@@ -18,7 +18,7 @@ export const COMPANY_GOALS = {
       { label: '📞 Talk to Specialist', payload: 'intent_human_handover' },
       { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
     ],
-    askNamePrompt: "That's a fantastic inquiry{needTopic}! That is a specialized requirement, and our solutions team can prepare a custom quote for you.\n\nMay I please have your **full name**?",
+    askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all those details right here in my instant memory, our team can help you with exactly what you need.\n\nMay I please have your **full name**?",
     askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
     confirmationMessage: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
     followUpQuestion: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
@@ -106,7 +106,7 @@ export const DEFAULT_CONFIG = {
   leadCapture: {
     enabled: true,
     triggerOnUnlisted: true,
-    askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?",
+    askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?",
     askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?",
     confirmationMessage: "🎉 **Thank you, {name}!**\n\nYour request for **{need}** has been saved and routed directly to our specialist team. An advisor will reach out to you at **{phone}** shortly.",
     followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?",

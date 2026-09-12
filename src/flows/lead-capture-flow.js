@@ -32,11 +32,16 @@ export class LeadCaptureFlow {
 
     const needTopicDisplay = cleanNeed ? ` regarding "**${this.escapeHtml(cleanNeed)}**"` : '';
     let startMsg = '';
+    const compName = this.config.company?.name || 'our';
+    const isSaas = this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0);
 
     if (this.config.leadCapture?.askNamePrompt) {
       startMsg = this.config.leadCapture.askNamePrompt
         .replace(/\{need\}/g, cleanNeed || 'your custom request')
-        .replace(/\{needTopic\}/g, needTopicDisplay);
+        .replace(/\{needTopic\}/g, needTopicDisplay)
+        .replace(/\{companyName\}/g, compName);
+    } else if (isSaas) {
+      startMsg = `That's a great question${needTopicDisplay}! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **${compName}** team so someone can assist you directly.\n\nMay I please have your **full name**?`;
     } else {
       startMsg = `That's a fantastic inquiry${needTopicDisplay}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?`;
     }
@@ -58,6 +63,18 @@ export class LeadCaptureFlow {
     // Check cancellation
     if (/^(cancel|nevermind|stop|exit|main menu|back)\b/i.test(text) || text === 'intent_cancel_lead') {
       this.reset();
+      const compName = this.config.company?.name;
+      const isSaas = this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0);
+      if (isSaas) {
+        return {
+          message: `No problem at all! What else can I help you with today?`,
+          quickReplies: [
+            { label: 'Our Services', payload: 'What services do you offer?' },
+            { label: 'Get started', payload: 'How do I get started?' },
+            { label: 'Talk to someone', payload: `I want to speak with someone from ${compName ? 'the ' + compName + ' team' : 'the team'}` }
+          ]
+        };
+      }
       return {
         message: `No problem at all! We can explore other options anytime.\n\nWhat would you like to check next? You can ask about our standard catalog, get an instant quote, or file a claim.`,
         quickReplies: [
@@ -153,17 +170,26 @@ export class LeadCaptureFlow {
       }
 
       // Human follow-up question
+      const isSaas = this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0);
       const followUp = this.config.leadCapture?.followUpQuestion ||
-        `💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?`;
+        (isSaas
+          ? `💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services.`
+          : `💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?`);
+
+      const postQuickReplies = isSaas ? [
+        { label: 'Our Services', payload: 'What services do you offer?' },
+        { label: 'Get started', payload: 'How do I get started?' },
+        { label: 'Talk to someone', payload: `I want to speak with someone from ${this.config.company?.name ? 'the ' + this.config.company.name + ' team' : 'the team'}` }
+      ] : [
+        { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+        { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
+        { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+      ];
 
       return {
         message: `${confirmationMsg}\n\n${followUp}`,
         leadCaptured: leadRecord,
-        quickReplies: [
-          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
-          { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
-          { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
-        ]
+        quickReplies: postQuickReplies
       };
     }
 
@@ -239,10 +265,10 @@ export class LeadCaptureFlow {
   static exportCSV() {
     const leads = LeadCaptureFlow.getLeads();
     if (!leads || leads.length === 0) {
-      return 'ID,Name,Phone,Need,Goal,Status,Date\n';
+      return 'ID,Name,Phone,Need,Goal,Status,Payment Method,M-Pesa Code,Amount,Date\n';
     }
 
-    const headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Date'];
+    const headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Payment Method', 'M-Pesa Code', 'Amount', 'Date'];
     const rows = leads.map(l => [
       `"${(l.id || '').replace(/"/g, '""')}"`,
       `"${(l.name || '').replace(/"/g, '""')}"`,
@@ -250,6 +276,9 @@ export class LeadCaptureFlow {
       `"${(l.need || '').replace(/"/g, '""')}"`,
       `"${(l.goal || 'lead_generation').replace(/"/g, '""')}"`,
       `"${(l.status || '').replace(/"/g, '""')}"`,
+      `"${(l.paymentMethod || '').replace(/"/g, '""')}"`,
+      `"${(l.mpesaCode || '').replace(/"/g, '""')}"`,
+      `"${(l.amount || '').replace(/"/g, '""')}"`,
       `"${(l.createdAtFormatted || l.timestamp || '').replace(/"/g, '""')}"`
     ]);
 

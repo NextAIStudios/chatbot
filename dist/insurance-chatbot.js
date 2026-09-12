@@ -6,7 +6,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.InsuranceChatbot = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.InsuranceChatbot = global.Botly = factory());
 })(this, (function () { 'use strict';
 
   // 1. COMPANY GOALS CATALOG
@@ -24,7 +24,7 @@
         { label: '📞 Talk to Specialist', payload: 'intent_human_handover' },
         { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
       ],
-      askNamePrompt: "That's a fantastic inquiry{needTopic}! That is a specialized requirement, and our solutions team can prepare a custom quote for you.\n\nMay I please have your **full name**?",
+      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all those details right here in my instant memory, our team can help you with exactly what you need.\n\nMay I please have your **full name**?",
       askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
       confirmationMessage: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
       followUpQuestion: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
@@ -99,7 +99,7 @@
     leadCapture: {
       enabled: true,
       triggerOnUnlisted: true,
-      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?",
+      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?",
       askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?",
       confirmationMessage: "🎉 **Thank you, {name}!**\n\nYour request for **{need}** has been saved and routed directly to our specialist team. An advisor will reach out to you at **{phone}** shortly.",
       followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?",
@@ -329,6 +329,32 @@
     return text.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 1; });
   }
 
+  function getStem(word) {
+    if (!word || word.length < 4) return word || '';
+    return word
+      .toLowerCase()
+      .replace(/(ing|tions?|tionals?|ated|ates?|ating|ed|es|s|ments?|ables?|ity|al|ive|izes?|ises?)$/, '');
+  }
+
+  function wordsMatch(w1, w2) {
+    if (!w1 || !w2) return false;
+    if (w1 === w2) return true;
+    if (w1.length >= 4 && w2.length >= 4) {
+      if (w1.indexOf(w2) !== -1 || w2.indexOf(w1) !== -1) return true;
+      var s1 = getStem(w1);
+      var s2 = getStem(w2);
+      if (s1.length >= 3 && s2.length >= 3) {
+        if (s1 === s2 || s1.indexOf(s2) === 0 || s2.indexOf(s1) === 0) return true;
+      }
+      var minLen = Math.min(w1.length, w2.length);
+      if (minLen >= 5) {
+        var prefixLen = Math.min(5, minLen);
+        if (w1.slice(0, prefixLen) === w2.slice(0, prefixLen)) return true;
+      }
+    }
+    return false;
+  }
+
   function computeScore(queryTokens, targetText, targetKeywords) {
     var allTargetTokens = tokenize(targetText);
     if (targetKeywords) {
@@ -348,8 +374,8 @@
         matches += 1.5;
       } else {
         for (var t in targetSet) {
-          if (t.indexOf(token) !== -1 || token.indexOf(t) !== -1) {
-            matches += 0.8;
+          if (wordsMatch(token, t)) {
+            matches += 1.0;
             break;
           }
         }
@@ -652,68 +678,105 @@
     var raw = (text || '').trim();
     var queryTokens = tokenize(raw);
     var lower = raw.toLowerCase();
+    var isSaasMode = !!(config.mode === 'saas' || (config.customFaqs && config.customFaqs.length > 0));
 
+    // 1. Direct Greetings
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
+      var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly';
+      var greetMsg = (config.bot && config.bot.greeting)
+        ? config.bot.greeting
+        : (isSaasMode
+            ? "Hey! 👋 I'm **" + greetName + "**. How can I help you today? Feel free to ask about pricing, features, or getting started."
+            : "Hello! 👋 I'm **" + greetName + "**, your 24/7 assistant. How can I help you today?");
       return {
         intent: 'greeting',
-        reply: "Hello! 👋 I'm **" + (config.bot?.name || 'Botly AI') + "**, your 24/7 insurance concierge. How can I protect you today? You can calculate instant quotes, report a claim, or ask any coverage question."
+        reply: greetMsg
       };
     }
 
+    // 2. Thanks / Appreciation
     if (/^(thank\s*you|thanks|thx|awesome|great|perfect)\b/i.test(lower)) {
       return {
         intent: 'thanks',
-        reply: "You're very welcome! Protecting what matters most to you is what we do best. 😊 What else can I help you with?"
+        reply: isSaasMode
+          ? "You're very welcome! 😊 Let me know if you need anything else or have questions."
+          : "You're very welcome! 😊 What else can I help you with?"
       };
     }
 
-    if (/human|agent|representative|speak\s*to|advisor|person/i.test(lower)) {
+    // 3. Human Representative Escalation
+    if (/human|agent|representative|speak\s*to|advisor|person|talk\s*to\s*someone|call\s*me/i.test(lower)) {
+      var supportPhone = config.company?.supportPhone || '+1 (800) 555-0199';
+      var supportEmail = config.company?.supportEmail || (isSaasMode ? 'care@botly.ai' : 'care@insurance.example.com');
+      var handoverReply = isSaasMode
+        ? "I'd be glad to connect you with our team! You can reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your contact details below and someone will reach out shortly."
+        : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your phone or email below and we'll call you right back!";
       return {
         intent: 'human_handover',
-        reply: "I'd be glad to connect you with a licensed advisor! Call us directly at **" + (config.company?.supportPhone || '+1 (800) 555-0199') + "** or email **" + (config.company?.supportEmail || 'care@insurance.example.com') + "**.\n\nLeave your phone or email below and we'll call you right back!"
+        reply: handoverReply
       };
     }
 
-    if (/claim|accident|stolen|theft|damage|crashed|file\s*a\s*claim/i.test(lower)) {
-      if (/difference|how\s*long|timeline/i.test(lower)) {
-        // fall through to FAQ
-      } else {
-        return { intent: 'start_claim_flow', action: 'OPEN_CLAIMS_WIZARD' };
-      }
-    }
-
-    if (/\b(pay|payment|checkout|buy\s*policy|renew\s*policy|premium)\b/i.test(lower)) {
-      if (/methods?|accept|how\s*can\s*i\s*pay|installment/i.test(lower)) {
-        // fall through to FAQ
-      } else {
+    // 4. In insurance mode or when payment_checkout goal is active, route to checkout wizard
+    var hasPaymentGoal = (goals && goals.indexOf('payment_checkout') !== -1) || (config && config.checkout && config.checkout.enabled);
+    if (!isSaasMode || hasPaymentGoal) {
+      if (/\b(pay|payment|checkout|buy|lipa|order|purchase)\b/i.test(lower)) {
         return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD' };
       }
     }
 
-    if (/\b(quote|price|cost|estimate|rate|how\s*much|calculate)\b/i.test(lower)) {
-      var prod = 'auto';
-      if (/health|medical|doctor/i.test(lower)) prod = 'health';
-      else if (/home|house|property|renter/i.test(lower)) prod = 'home';
-      else if (/life|death/i.test(lower)) prod = 'life';
-      else if (/travel|trip|flight/i.test(lower)) prod = 'travel';
-      return { intent: 'start_quote_flow', productType: prod, action: 'OPEN_QUOTE_WIZARD' };
+    if (!isSaasMode) {
+      if (/claim|accident|stolen|theft|damage|crashed|file\s*a\s*claim/i.test(lower)) {
+        if (!/difference|how\s*long|timeline/i.test(lower)) {
+          return { intent: 'start_claim_flow', action: 'OPEN_CLAIMS_WIZARD' };
+        }
+      }
+
+      if (/\b(quote|price|cost|estimate|rate|how\s*much|calculate)\b/i.test(lower)) {
+        var prod = 'auto';
+        if (/health|medical|doctor/i.test(lower)) prod = 'health';
+        else if (/home|house|property|renter/i.test(lower)) prod = 'home';
+        else if (/life|death/i.test(lower)) prod = 'life';
+        else if (/travel|trip|flight/i.test(lower)) prod = 'travel';
+        return { intent: 'start_quote_flow', productType: prod, action: 'OPEN_QUOTE_WIZARD' };
+      }
     }
 
-    // Knowledge Base Search (Custom Trained Knowledge has priority boost)
-    var allFaqs = (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
+    // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
+    var allFaqs = isSaasMode
+      ? (customKnowledge || []).concat(customFaqs || [])
+      : (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
+
     var stopWords = { 'do': 1, 'you': 1, 'we': 1, 'i': 1, 'the': 1, 'a': 1, 'an': 1, 'and': 1, 'or': 1, 'of': 1, 'for': 1, 'in': 1, 'on': 1, 'to': 1, 'is': 1, 'are': 1, 'it': 1, 'can': 1, 'how': 1, 'what': 1, 'offer': 1, 'have': 1, 'insurance': 1, 'policy': 1 };
     var best = null;
     var highest = 0;
     allFaqs.forEach(function(item) {
       var qTokens = tokenize(item.question).concat((item.keywords || []).flatMap(function(k) { return tokenize(k); }));
+      var isDocOrWeb = item.source === 'document' || item.source === 'website' || item.category === 'document' || item.category === 'website';
+      var aTokens = isDocOrWeb ? tokenize(item.answer || '') : null;
       var keyMatches = 0;
       queryTokens.forEach(function(t) {
-        if (qTokens.indexOf(t) !== -1 && !stopWords[t]) {
-          keyMatches += 2.5;
+        if (!stopWords[t]) {
+          var matched = false;
+          for (var qi = 0; qi < qTokens.length; qi++) {
+            if (wordsMatch(t, qTokens[qi])) {
+              keyMatches += (t === qTokens[qi] ? 2.5 : 2.0);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched && aTokens) {
+            for (var ai = 0; ai < aTokens.length; ai++) {
+              if (wordsMatch(t, aTokens[ai])) {
+                keyMatches += (t === aTokens[ai] ? 1.5 : 1.2);
+                break;
+              }
+            }
+          }
         }
       });
 
-      var score = computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords);
+      var score = computeScore(queryTokens, (item.question || '') + ' ' + (item.answer || ''), item.keywords || []);
       if (keyMatches > 0) {
         score += keyMatches * 0.2;
       } else {
@@ -728,6 +791,20 @@
     });
 
     function generateFollowUpQuestion(item) {
+      if (isSaasMode) {
+        var goals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
+        if (goals.indexOf('payment_checkout') !== -1) {
+          return '💬 Would you like to complete an order or checkout, or do you have any other questions?';
+        }
+        if (goals.indexOf('consultation_booking') !== -1) {
+          return '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team?';
+        }
+        if (goals.indexOf('lead_generation') !== -1) {
+          return '💬 Would you like our team to follow up with you directly, or can I help with anything else?';
+        }
+        return '💬 Does this help, or would you like more details?';
+      }
+
       var tone = (config && config.followUpDynamics && config.followUpDynamics.tone) || (config && config.goal === 'customer_support' ? 'support' : (config && config.goal === 'payment_checkout' ? 'sales' : 'consultative'));
 
       if (tone === 'direct') {
@@ -777,29 +854,103 @@
       return '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?';
     }
 
-    if (best && highest >= 0.28) {
+    if (best && highest >= 0.25) {
       var followUp = generateFollowUpQuestion(best);
-      return {
-        intent: 'faq',
-        reply: best.answer + '\n\n' + followUp,
-        suggestedQuickReplies: [
+      var replyPrefix = '';
+      if (best.source === 'document' || best.category === 'document') {
+        replyPrefix = '**From Company Records:**\n\n';
+      } else if (best.source === 'website' || best.category === 'website') {
+        var host = best.sourceUrl ? best.sourceUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'Website';
+        replyPrefix = '**From Website Knowledge (' + host + '):**\n\n';
+      }
+
+      var faqQuickReplies = [];
+      var compName = (config && config.company && config.company.name) ? config.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+
+      if (isSaasMode) {
+        var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
+        if (activeGoals.indexOf('lead_generation') !== -1) {
+          faqQuickReplies.push({ label: 'Get started', payload: 'How do I get started?' });
+        }
+        if (activeGoals.indexOf('payment_checkout') !== -1) {
+          faqQuickReplies.push({ label: 'Pricing & Plans', payload: 'What are your pricing and plans?' });
+        }
+        if (activeGoals.indexOf('consultation_booking') !== -1) {
+          faqQuickReplies.push({ label: 'Book a Call', payload: 'I want to book a consultation session' });
+        }
+        if (activeGoals.indexOf('customer_support') !== -1 || faqQuickReplies.length < 2) {
+          faqQuickReplies.push({ label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel });
+        }
+        faqQuickReplies.unshift({ label: 'Our Services', payload: 'What services do you offer?' });
+      } else {
+        faqQuickReplies = [
           { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
           { label: '💳 Proceed to Payment', payload: 'intent_pay' },
           { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
-        ]
+        ];
+      }
+
+      return {
+        intent: 'faq',
+        reply: replyPrefix + best.answer + '\n\n' + followUp,
+        suggestedQuickReplies: faqQuickReplies
       };
     }
 
-    // Lead Capture Fallback for Unlisted / Custom Queries
+    // 6. In SaaS mode, handle pricing/cost/plan queries if not caught by custom FAQ
+    if (isSaasMode && /\b(price|pricing|cost|how\s*much|fee|rate|\$10|ten\s*dollars|plan|plans|charge|pay|purchase|buy)\b/i.test(lower)) {
+      var compName = (config && config.company && config.company.name) ? config.company.name : '';
+      var isBotlySelf = !compName || compName.toLowerCase() === 'botly' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
+
+      if (isBotlySelf) {
+        return {
+          intent: 'faq',
+          reply: "$10 per chatbot per company, flat.\n\nNo monthly subscription, no per-message fees, no hidden charges. You pay $10 once to deploy a bot for a company with unlimited conversations.\n\nNeed high-volume multi-brand or agency deployment? Custom Enterprise pricing is also available.\n\n💬 Would you like help getting started?",
+          suggestedQuickReplies: [
+            { label: 'Get started', payload: 'I want to get a chatbot for my company, how do I start?' },
+            { label: 'Custom Enterprise', payload: 'Tell me about custom Enterprise pricing' },
+            { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
+          ]
+        };
+      } else {
+        var supportEmail = (config && config.company && config.company.supportEmail) ? config.company.supportEmail : 'our team';
+        return {
+          intent: 'faq',
+          reply: "For pricing details, available packages, or custom requirements for **" + compName + "**, please reach out to our team at **" + supportEmail + "** or leave your contact details in this chat.\n\n💬 Would you like our team to get in touch with you?",
+          suggestedQuickReplies: [
+            { label: 'Talk to someone', payload: 'I want to speak with someone from the ' + compName + ' team' }
+          ]
+        };
+      }
+    }
+
+    // 7. Lead Capture Fallback for Unlisted / Custom Queries
     var needTopic = raw.replace(/^(do you have|do you offer|can you do|can you provide|tell me about|how about|what about|i want|i need|i'm looking for|we need)\s+/i, '').trim();
     if (!needTopic || needTopic.length < 3) needTopic = raw;
+
+    if (isSaasMode) {
+      var compName = (config && config.company && config.company.name) ? config.company.name : 'our';
+      return {
+        intent: 'lead_capture_needed',
+        confidence: 0.2,
+        action: 'LEAD_CAPTURE',
+        inquiredNeed: needTopic,
+        reply: "Great inquiry regarding **" + needTopic + "**! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nCould you please share your **full name**?",
+        suggestedQuickReplies: [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from the ' + compName + ' team' }
+        ]
+      };
+    }
 
     return {
       intent: 'lead_capture_needed',
       confidence: 0.2,
       action: 'LEAD_CAPTURE',
       inquiredNeed: needTopic,
-      reply: "That's a fantastic inquiry regarding **" + needTopic + "**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?"
+      reply: "Good question about **" + needTopic + "**. I don't have that specific answer right now, but our team can help. Can I grab your name?"
     };
   }
 
@@ -840,8 +991,8 @@
   }
   function exportLeadsToCsv() {
     var leads = getStoredLeads();
-    if (!leads || leads.length === 0) return 'ID,Name,Phone,Need,Goal,Status,Date\n';
-    var headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Date'];
+    if (!leads || leads.length === 0) return 'ID,Name,Phone,Need,Goal,Status,Payment Method,M-Pesa Code,Amount,Date\n';
+    var headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Payment Method', 'M-Pesa Code', 'Amount', 'Date'];
     var rows = leads.map(function(l) {
       return [
         '"' + (l.id || '').replace(/"/g, '""') + '"',
@@ -850,10 +1001,26 @@
         '"' + (l.need || '').replace(/"/g, '""') + '"',
         '"' + (l.goal || 'lead_generation').replace(/"/g, '""') + '"',
         '"' + (l.status || '').replace(/"/g, '""') + '"',
+        '"' + (l.paymentMethod || '').replace(/"/g, '""') + '"',
+        '"' + (l.mpesaCode || '').replace(/"/g, '""') + '"',
+        '"' + (l.amount || '').replace(/"/g, '""') + '"',
         '"' + (l.createdAtFormatted || l.timestamp || '').replace(/"/g, '""') + '"'
       ].join(',');
     });
     return headers.join(',') + '\n' + rows.join('\n');
+  }
+
+  function extractMpesaCode(str) {
+    if (!str) return null;
+    var trimmed = str.trim();
+    if (/^[A-Z0-9]{8,12}$/i.test(trimmed) && /[A-Z]/i.test(trimmed) && /[0-9]/.test(trimmed)) {
+      return trimmed.toUpperCase();
+    }
+    var match = str.match(/(?:code|mpesa|m-pesa|ref|reference|id|txn|paid|lipa)?\s*[:#-]?\s*\b([A-Z0-9]{8,12})\b/i);
+    if (match && match[1] && /[A-Z]/i.test(match[1]) && /[0-9]/.test(match[1])) {
+      return match[1].toUpperCase();
+    }
+    return null;
   }
 
   // 4. MAIN CHATBOT WIDGET CONTROLLER
@@ -941,7 +1108,7 @@
     '<div class="ins-footer">' +
       '<form class="ins-input-wrapper" id="ins-chat-form">' +
         '<button type="button" class="ins-btn-mic" id="ins-mic-btn">🎙️</button>' +
-        '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="Ask about coverage, quotes, claims..." autocomplete="off">' +
+        '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="Ask me anything..." autocomplete="off">' +
         '<button type="submit" class="ins-btn-send" id="ins-send-btn">' +
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
         '</button>' +
@@ -1002,6 +1169,10 @@
     var bot = this.config.bot || {};
     var company = this.config.company || {};
 
+    var placeholderText = (this.config.mode === 'saas' || !this.config.goal)
+      ? (bot.placeholder || "Ask me anything...")
+      : (bot.placeholder || "Ask a question...");
+
     target.innerHTML = '<div class="ins-chatbot-container open" style="position:relative; bottom:auto; right:auto; width:100%; height:620px;">' +
       '<div class="ins-header">' +
         '<div class="ins-header-profile">' +
@@ -1014,7 +1185,7 @@
       '<div class="ins-footer">' +
         '<form class="ins-input-wrapper" id="ins-chat-form">' +
           '<button type="button" class="ins-btn-mic" id="ins-mic-btn">🎙️</button>' +
-          '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="Ask about coverage, quotes, claims..." autocomplete="off">' +
+          '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="' + this.escape(placeholderText) + '" autocomplete="off">' +
           '<button type="submit" class="ins-btn-send" id="ins-send-btn">' +
             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
           '</button>' +
@@ -1151,6 +1322,15 @@
     this.appendUser(text);
     this.showTyping();
 
+    // Check if input contains an M-Pesa confirmation code (e.g. UIC8E69GLQ)
+    var detectedMpesa = extractMpesaCode(text);
+    if (detectedMpesa) {
+      setTimeout(function() {
+        self.verifyAndRecordMpesaPayment(detectedMpesa);
+      }, self.config.bot?.typingDelayMs || 400);
+      return;
+    }
+
     // 0. Lead Capture Flow Active?
     if (self.leadState && self.leadState.active) {
       setTimeout(function() { self.processLeadCaptureStep(text); }, self.config.bot?.typingDelayMs || 400);
@@ -1237,14 +1417,19 @@
       name: '',
       phone: ''
     };
+    var compName = (this.config.company && this.config.company.name) ? this.config.company.name : 'our';
+    var isSaas = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
     var needDisplay = cleanNeed ? ' regarding "**' + this.escape(cleanNeed) + '**"' : '';
     var startMsg = '';
     if (this.config.leadCapture && this.config.leadCapture.askNamePrompt) {
       startMsg = this.config.leadCapture.askNamePrompt
         .replace(/\{need\}/g, cleanNeed || 'your custom request')
-        .replace(/\{needTopic\}/g, needDisplay);
+        .replace(/\{needTopic\}/g, needDisplay)
+        .replace(/\{companyName\}/g, compName);
+    } else if (isSaas) {
+      startMsg = "That's a great question" + needDisplay + "! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nMay I please have your **full name**?";
     } else {
-      startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and exact quote for you.\n\nMay I please have your **full name**?";
+      startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?";
     }
     this.appendBot(startMsg, {
       quickReplies: [
@@ -1258,8 +1443,15 @@
     if (/^(cancel|nevermind|stop|exit|main menu|back)\b/i.test(input) || input === 'intent_cancel_lead') {
       this.leadState.active = false;
       this.leadState.step = 'idle';
-      this.appendBot("No problem at all! We can explore other options anytime.\n\nWhat would you like to check next?", {
-        quickReplies: [
+      var compName = (this.config.company && this.config.company.name) ? this.config.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      var isSaasCancel = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
+      this.appendBot("No problem! What else can I help with?", {
+        quickReplies: isSaasCancel ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
+        ] : [
           { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
           { label: '🏥 Health Plans', payload: 'intent_quote_health' },
           { label: '💳 Make a Payment', payload: 'intent_pay' },
@@ -1282,7 +1474,7 @@
       if (this.config.leadCapture && this.config.leadCapture.askPhonePrompt) {
         phonePrompt = this.config.leadCapture.askPhonePrompt.replace(/\{name\}/g, this.escape(name));
       } else {
-        phonePrompt = "Wonderful to meet you, **" + this.escape(name) + "**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?";
+        phonePrompt = "Nice to meet you, **" + this.escape(name) + "**! What's the best number to reach you?";
       }
       this.appendBot(phonePrompt);
       return;
@@ -1326,14 +1518,23 @@
           .replace(/\{need\}/g, this.escape(this.leadState.inquiredNeed))
           .replace(/\{phone\}/g, this.escape(this.leadState.phone));
       } else {
-        confirmMsg = "🎉 **Thank you, " + this.escape(this.leadState.name) + "!**\n\nYour request for **" + this.escape(this.leadState.inquiredNeed) + "** has been saved and routed directly to our specialist team. An advisor will reach out to you at **" + this.escape(this.leadState.phone) + "** shortly.";
+        confirmMsg = "Got it, **" + this.escape(this.leadState.name) + "**! Your details are saved. Someone from our team will reach out to **" + this.escape(this.leadState.phone) + "** shortly.";
       }
 
+      var isSaasConfirmMode = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
+      var compName = (this.config.company && this.config.company.name) ? this.config.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
       var followUp = (this.config.leadCapture && this.config.leadCapture.followUpQuestion) ||
-        "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?";
+        (isSaasConfirmMode
+          ? "💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services."
+          : "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?");
 
       this.appendBot(confirmMsg + "\n\n" + followUp, {
-        quickReplies: [
+        quickReplies: isSaasConfirmMode ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
+        ] : [
           { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
           { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
           { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
@@ -1482,7 +1683,144 @@
     }
   };
 
-  InsuranceChatbotController.prototype.startInChatCheckout = function() {
+  InsuranceChatbotController.prototype.startInChatCheckout = function(customItem) {
+    var self = this;
+    var chk = this.config.checkout || {};
+    var mpesa = chk.mpesa || {};
+    var isCustomCheckout = (this.config.mode === 'saas') || (chk && (chk.externalUrl || mpesa.number || mpesa.type || chk.enabled));
+
+    if (isCustomCheckout) {
+      var sym = (mpesa.currency === 'USD' || this.config.currency?.code === 'USD') ? '$' : 'KES ';
+      var amount = mpesa.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
+      var itemName = customItem || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
+      var cardId = 'chk-' + Math.random().toString(36).substring(2, 7);
+
+      var externalUrl = chk.externalUrl || '';
+      var mpesaType = mpesa.type || 'buy_goods';
+      var mpesaNumber = mpesa.number || '123456';
+      var mpesaAccount = mpesa.account || '';
+      var businessName = mpesa.businessName || this.config.company?.name || 'NextGen Ke';
+
+      var mpesaTypeTitle = 'Buy Goods and Services (Till)';
+      var stepInstructions = '';
+      if (mpesaType === 'buy_goods') {
+        mpesaTypeTitle = 'Buy Goods (Till Number)';
+        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via M-Pesa Till:</div>' +
+          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+            '<li>Select <strong>Buy Goods and Services</strong></li>' +
+            '<li>Enter Till Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+            '<li>Enter your M-Pesa PIN and send</li>' +
+          '</ol>';
+      } else if (mpesaType === 'paybill') {
+        mpesaTypeTitle = 'Paybill Number';
+        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Paybill:</div>' +
+          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+            '<li>Select <strong>Paybill</strong></li>' +
+            '<li>Enter Business No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+            (mpesaAccount ? '<li>Enter Account No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaAccount) + '</strong></li>' : '<li>Enter Account No: <strong>' + self.escape(itemName) + '</strong></li>') +
+            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+            '<li>Enter your M-Pesa PIN and send</li>' +
+          '</ol>';
+      } else {
+        mpesaTypeTitle = 'Send Money (Phone)';
+        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Send Money:</div>' +
+          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Send Money</strong></li>' +
+            '<li>Enter Phone Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+            '<li>Enter your M-Pesa PIN and send</li>' +
+          '</ol>';
+      }
+
+      var externalLinkHtml = '';
+      if (externalUrl) {
+        externalLinkHtml = '<div style="margin-bottom:12px; padding:10px 12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">' +
+          '<div>' +
+            '<div style="font-size:11.5px; font-weight:700; color:#166534;">Web Checkout Page</div>' +
+            '<div style="font-size:11px; color:#15803d;">You can complete payment directly on our checkout page:</div>' +
+          '</div>' +
+          '<a href="' + self.escape(externalUrl) + '" target="_blank" rel="noopener noreferrer" style="background:#059669; color:#ffffff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">' +
+            'Proceed to Checkout ↗' +
+          '</a>' +
+        '</div>';
+      }
+
+      var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
+        '<div class="checkout-header">' +
+          '<div class="checkout-title"><span class="lock-icon">🔒</span><strong>Secure Order Checkout</strong></div>' +
+          '<span class="pci-badge">Verified Merchant</span>' +
+        '</div>' +
+        '<div class="checkout-summary-bar">' +
+          '<div class="plan-info"><span class="plan-name">' + self.escape(itemName) + '</span><span class="plan-sub">' + self.escape(businessName) + ' • Instant Verification</span></div>' +
+          '<div class="plan-price" id="' + cardId + '-price">' + sym + Number(amount).toLocaleString() + '</div>' +
+        '</div>' +
+        externalLinkHtml +
+        '<div style="background:#ffffff; border:1.5px solid #059669; border-radius:12px; padding:12px; margin-bottom:10px;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+              '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:2px 5px; border-radius:4px;">M-PESA</span>' +
+              '<strong style="font-size:12px; color:#0f172a;">Lipa na M-Pesa Instructions</strong>' +
+            '</div>' +
+            '<span style="font-size:11px; font-weight:700; color:#059669;">' + mpesaTypeTitle + '</span>' +
+          '</div>' +
+          stepInstructions +
+          '<div style="margin-top:10px; background:#f0fdf4; border:1px dashed #86efac; border-radius:8px; padding:10px;">' +
+            '<label style="display:block; font-size:11.5px; font-weight:800; color:#166534; margin-bottom:4px;">Enter M-Pesa Confirmation Code (e.g. UIC8E69GLQ):</label>' +
+            '<div style="display:flex; gap:6px; margin-bottom:6px;">' +
+              '<input type="text" id="' + cardId + '-mpesa-code" class="input-field" placeholder="e.g. UIC8E69GLQ" style="flex:1; text-transform:uppercase; font-family:monospace; font-weight:800; letter-spacing:1px; font-size:13px; padding:7px 10px;" maxlength="12" />' +
+              '<button type="button" class="btn-submit-payment" id="' + cardId + '-verify-btn" style="width:auto; margin:0; padding:7px 14px; font-size:12px; background:#059669;">Verify Code</button>' +
+            '</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">' +
+              '<input type="text" id="' + cardId + '-cust-name" class="input-field" placeholder="Your Name (Optional)" style="font-size:11px; padding:5px 8px;" />' +
+              '<input type="tel" id="' + cardId + '-cust-phone" class="input-field" placeholder="Your Phone (Optional)" style="font-size:11px; padding:5px 8px;" />' +
+            '</div>' +
+            '<div id="' + cardId + '-err-msg" style="display:none; color:#dc2626; font-size:11px; margin-top:4px; font-weight:600;"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+      this.appendBot("💳 **Review payment details below to complete your checkout:**", {
+        html: checkoutHtml
+      });
+
+      setTimeout(function() {
+        var cardEl = document.getElementById(cardId);
+        if (!cardEl) return;
+        var verifyBtn = cardEl.querySelector('#' + cardId + '-verify-btn');
+        var codeInput = cardEl.querySelector('#' + cardId + '-mpesa-code');
+        var errMsg = cardEl.querySelector('#' + cardId + '-err-msg');
+        var nameInput = cardEl.querySelector('#' + cardId + '-cust-name');
+        var phoneInput = cardEl.querySelector('#' + cardId + '-cust-phone');
+
+        if (verifyBtn && codeInput) {
+          verifyBtn.addEventListener('click', function() {
+            var raw = (codeInput.value || '').trim();
+            var validCode = extractMpesaCode(raw);
+            if (!validCode) {
+              if (errMsg) {
+                errMsg.textContent = 'Please enter a valid 8-12 character M-Pesa code (e.g. UIC8E69GLQ).';
+                errMsg.style.display = 'block';
+              }
+              return;
+            }
+            if (errMsg) errMsg.style.display = 'none';
+            self.verifyAndRecordMpesaPayment(validCode, {
+              name: (nameInput && nameInput.value) || '',
+              phone: (phoneInput && phoneInput.value) || '',
+              item: itemName,
+              amount: amount,
+              currency: sym,
+              mpesaDetails: { type: mpesaType, number: mpesaNumber, account: mpesaAccount, businessName: businessName }
+            });
+          });
+        }
+      }, 100);
+      return;
+    }
+
     var quote = this.activeQuote || {
       quoteId: 'QT-DIRECT',
       productName: 'Comprehensive Shield Policy',
@@ -1572,6 +1910,86 @@
 
       if (payBtn) payBtn.addEventListener('click', executePayment);
     }, 100);
+  };
+
+  InsuranceChatbotController.prototype.verifyAndRecordMpesaPayment = function(mpesaCode, details) {
+    details = details || {};
+    var cleanCode = (mpesaCode || '').trim().toUpperCase();
+    var chk = this.config.checkout || {};
+    var mpesa = (chk && chk.mpesa) || {};
+
+    var compName = (this.config.company && this.config.company.name) || 'Botly AI';
+    var custName = (details.name || (this.leadState && this.leadState.name) || 'Customer').trim();
+    var custPhone = (details.phone || (this.leadState && this.leadState.phone) || 'M-Pesa Verified').trim();
+    var itemName = details.item || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Product & Service Order');
+
+    var currency = details.currency || mpesa.currency || this.config.currency?.code || 'KES';
+    var sym = (currency === 'USD' ? '$' : (currency + ' '));
+    var amountVal = details.amount || mpesa.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
+    var amountFormatted = sym + Number(amountVal).toLocaleString();
+
+    var mType = (details.mpesaDetails && details.mpesaDetails.type) || mpesa.type || 'buy_goods';
+    var mNum = (details.mpesaDetails && details.mpesaDetails.number) || mpesa.number || '123456';
+    var mAcc = (details.mpesaDetails && details.mpesaDetails.account) || mpesa.account || '';
+    var mBiz = (details.mpesaDetails && details.mpesaDetails.businessName) || mpesa.businessName || compName;
+
+    var typeLabels = {
+      buy_goods: 'Buy Goods (Till: ' + mNum + ')',
+      paybill: 'Paybill (' + mNum + (mAcc ? ' / Acc: ' + mAcc : '') + ')',
+      send_money: 'Send Money (' + mNum + ')'
+    };
+    var methodLabel = typeLabels[mType] || ('M-Pesa ' + mNum);
+
+    var leadRecord = {
+      id: 'PAY-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
+      name: custName,
+      phone: custPhone,
+      need: itemName,
+      goal: 'payment_checkout',
+      status: 'Paid (M-Pesa: ' + cleanCode + ')',
+      paymentMethod: 'M-Pesa: ' + methodLabel,
+      mpesaCode: cleanCode,
+      amount: amountFormatted,
+      destination: mNum + (mAcc ? ' / ' + mAcc : ''),
+      businessName: mBiz,
+      timestamp: new Date().toISOString(),
+      createdAtFormatted: new Date().toLocaleString(),
+      company: compName
+    };
+
+    saveStoredLead(leadRecord);
+
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      try {
+        window.dispatchEvent(new CustomEvent('botly:leadCaptured', { detail: leadRecord }));
+      } catch(e) {}
+    }
+
+    var receiptHtml = '<div class="insurance-receipt-card" style="border-left: 4px solid #059669;">' +
+      '<div class="receipt-header">' +
+        '<div class="receipt-status-badge" style="background:#ecfdf5; color:#059669; border:1px solid #10b981;"><span class="status-dot" style="background:#059669;"></span> M-PESA PAYMENT VERIFIED</div>' +
+        '<div class="receipt-policy-no"><span class="label">M-Pesa Code</span><strong style="font-family:monospace; color:#059669; font-size:14px;">' + cleanCode + '</strong></div>' +
+      '</div>' +
+      '<div class="receipt-body">' +
+        '<div class="receipt-row"><span>Item / Service:</span> <strong>' + this.escape(itemName) + '</strong></div>' +
+        '<div class="receipt-row"><span>Amount Paid:</span> <strong class="receipt-amount" style="color:#059669;">' + amountFormatted + '</strong></div>' +
+        '<div class="receipt-row"><span>Paid To:</span> <strong>' + this.escape(mBiz) + ' (' + methodLabel + ')</strong></div>' +
+        '<div class="receipt-row"><span>Customer:</span> <strong>' + this.escape(custName) + (custPhone && custPhone !== 'M-Pesa Verified' ? ' (' + this.escape(custPhone) + ')' : '') + '</strong></div>' +
+        '<div class="receipt-row"><span>Status:</span> <strong style="color:#059669;">Confirmed &amp; Logged</strong></div>' +
+        '<div class="receipt-row"><span>Date &amp; Time:</span> <span>' + leadRecord.createdAtFormatted + '</span></div>' +
+      '</div>' +
+    '</div>';
+
+    var successMsg = "🎉 **Payment Confirmed & Verified!**\n\nThank you, **" + this.escape(custName) + "**! Your M-Pesa payment with confirmation code **" + cleanCode + "** has been recorded. Our team has received your order details and is processing your request.";
+
+    this.appendBot(successMsg, {
+      html: receiptHtml,
+      quickReplies: [
+        { label: 'Talk to Team', payload: 'I want to speak with someone from ' + (compName ? 'the ' + compName + ' team' : 'the team') },
+        { label: 'Our Services', payload: 'What services do you offer?' },
+        { label: 'Main Menu', payload: 'Hello' }
+      ]
+    });
   };
 
   InsuranceChatbotController.prototype.renderPolicyCertificate = function(quote, amountPaid) {

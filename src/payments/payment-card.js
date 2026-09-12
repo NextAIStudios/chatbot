@@ -61,6 +61,12 @@ export class PaymentCard {
           </div>
         </div>
 
+        ${this.config.checkout?.externalUrl ? `
+        <div class="external-checkout-banner" style="margin-bottom: 12px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span style="font-size: 11.5px; color: #166534; font-weight: 600;">Prefer web store? Complete on our checkout page:</span>
+          <a href="${this.config.checkout.externalUrl}" target="_blank" rel="noopener noreferrer" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; white-space: nowrap;">Checkout ↗</a>
+        </div>` : ''}
+
         <!-- Payment Method Tabs -->
         <div class="payment-tabs">
           <button type="button" class="tab-btn active" data-method="mpesa">📱 M-Pesa</button>
@@ -72,7 +78,12 @@ export class PaymentCard {
           <div class="form-group">
             <label>M-Pesa Mobile Number</label>
             <input type="tel" class="input-field field-phone" placeholder="0712 345 678" value="+254 712 345 678" />
-            <small class="helper-text">You will receive an instant STK prompt on your phone to enter your M-Pesa PIN.</small>
+            <small class="helper-text">You will receive an instant prompt on your phone or send to our Till/Paybill.</small>
+          </div>
+          <div class="form-group">
+            <label>M-Pesa Confirmation Code (e.g. UIC8E69GLQ)</label>
+            <input type="text" class="input-field field-mpesa-code" placeholder="e.g. UIC8E69GLQ" maxlength="12" style="text-transform: uppercase; font-family: monospace; font-weight: 700;" value="UIC8E69GLQ" />
+            <small class="helper-text">Enter the M-Pesa code received via SMS after completing payment.</small>
           </div>
         </div>
 
@@ -212,9 +223,13 @@ export class PaymentCard {
     setTimeout(() => {
       if (overlay) overlay.classList.add('hidden');
 
+      const mpesaCodeInput = cardEl.querySelector('.field-mpesa-code');
+      const mpesaCode = mpesaCodeInput ? (mpesaCodeInput.value || '').trim().toUpperCase() : 'UIC8E69GLQ';
+
       const paymentDetails = {
         totalAmount: this.calculateTotal(),
-        paymentMethod: this.currentMethod,
+        paymentMethod: this.currentMethod === 'mpesa' ? 'M-Pesa' : 'Card',
+        mpesaCode: this.currentMethod === 'mpesa' ? mpesaCode : null,
         cardholderName: nameInput ? nameInput.value : 'Sarah Jenkins',
         cardNumber: numberInput ? numberInput.value : '4000 1234 5678 9010',
         phone: phoneInput ? phoneInput.value : '+1 555-0199',
