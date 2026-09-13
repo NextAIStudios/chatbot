@@ -1322,9 +1322,18 @@
     this.appendUser(text);
     this.showTyping();
 
+    // Safety net: if nothing responds within 5s, fall back to local NLP
+    var safetyTimer = setTimeout(function() {
+      self.removeTyping();
+      self.resolveLocalQuery(text);
+    }, 5000);
+
+    var done = function() { clearTimeout(safetyTimer); };
+
     // Check if input contains an M-Pesa confirmation code (e.g. UIC8E69GLQ)
     var detectedMpesa = extractMpesaCode(text);
     if (detectedMpesa) {
+      done();
       setTimeout(function() {
         self.verifyAndRecordMpesaPayment(detectedMpesa);
       }, self.config.bot?.typingDelayMs || 400);
@@ -1333,18 +1342,21 @@
 
     // 0. Lead Capture Flow Active?
     if (self.leadState && self.leadState.active) {
+      done();
       setTimeout(function() { self.processLeadCaptureStep(text); }, self.config.bot?.typingDelayMs || 400);
       return;
     }
 
     // 1. Quote Flow Active?
     if (self.quoteState.active) {
+      done();
       setTimeout(function() { self.processQuoteStep(text); }, self.config.bot?.typingDelayMs || 400);
       return;
     }
 
     // 2. Claims Flow Active?
     if (self.claimState.active) {
+      done();
       setTimeout(function() { self.processClaimStep(text); }, self.config.bot?.typingDelayMs || 400);
       return;
     }
@@ -1361,6 +1373,7 @@
         };
 
         queryBackendApi(api, text, context, function(apiRes) {
+          done();
           if (apiRes.success && apiRes.reply) {
             self.appendBot(apiRes.reply, { quickReplies: apiRes.quickReplies });
             if (apiRes.action === 'OPEN_QUOTE_WIZARD') self.startQuoteWizard('auto');
@@ -1382,6 +1395,7 @@
     }
 
     // Default Local NLP + Custom Trained Knowledge
+    done();
     setTimeout(function() {
       self.resolveLocalQuery(text);
     }, self.config.bot?.typingDelayMs || 400);
