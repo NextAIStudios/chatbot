@@ -1082,15 +1082,20 @@ footer {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
+/* Hero area — dot pattern spans navbar + hero */
+.botly-hero-area {
+  background-color: rgba(255, 255, 255, 0.97);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ccircle cx='1' cy='1' r='1' fill='%2318221c' fill-opacity='0.12'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
 /* Top Navbar */
 .botly-navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 48px;
-  background-color: rgba(255, 255, 255, 0.97);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ccircle cx='1' cy='1' r='1' fill='%2318221c' fill-opacity='0.12'/%3E%3C/svg%3E");
-  background-repeat: repeat;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
