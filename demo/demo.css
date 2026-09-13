@@ -1639,4 +1639,171 @@ footer {
   .pricing-amount { font-size: 52px; }
 }
 
+/* ==========================================================
+   MOBILE RESPONSIVE — FULL OVERHAUL
+   ========================================================== */
 
+/* ── Hamburger Button ── */
+.botly-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1100;
+  flex-shrink: 0;
+}
+.botly-hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #18221c;
+  border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
+}
+.botly-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.botly-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.botly-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile Nav Drawer ── */
+.botly-mobile-nav {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px 28px;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 999;
+  box-shadow: 0 16px 40px -8px rgba(0,0,0,0.12);
+}
+.botly-mobile-nav.open { display: flex; }
+.botly-mobile-nav-link {
+  color: #374151;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+  display: block;
+  transition: color 0.15s;
+}
+.botly-mobile-nav-link:hover { color: #18221c; }
+.botly-mobile-nav-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ── Tablet: 768px – 900px ── */
+@media (max-width: 900px) {
+  /* Navbar */
+  .botly-navbar { padding: 14px 20px; }
+  .botly-nav-menu { display: none; }
+  .botly-nav-actions { display: none; }
+  .botly-hamburger { display: flex; }
+  .botly-header-wrap { position: sticky; top: 0; z-index: 1000; }
+
+  /* Hero */
+  .botly-hero { padding: 60px 20px 40px; }
+  .hero-editorial-headline { font-size: 42px; letter-spacing: -0.8px; }
+  .hero-editorial-sub { font-size: 16px; }
+  .hero-cta-group { flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+  /* Sandbox preview */
+  .sandbox-frame { grid-template-columns: 1fr; gap: 32px; }
+  .sandbox-hero-preview { padding: 40px 20px; }
+  .sandbox-frame-right { display: flex; justify-content: center; }
+
+  /* Features / Use-cases cards */
+  .botly-cards-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .botly-section { padding: 60px 20px; }
+  .botly-section-title { font-size: 32px; }
+
+  /* Pricing */
+  .botly-pricing-grid { grid-template-columns: 1fr; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .botly-pricing-faq { grid-template-columns: 1fr; padding: 28px 20px; }
+  .pricing-amount { font-size: 52px; }
+
+  /* CTA Banner */
+  .botly-cta-banner { padding: 48px 24px; margin: 60px 20px; border-radius: 20px; }
+  .botly-cta-banner h3 { font-size: 32px; }
+  .botly-cta-banner p { font-size: 15px; }
+
+  /* Footer */
+  footer { padding: 48px 24px 24px !important; }
+  footer > div:first-of-type { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+}
+
+/* ── Mobile: ≤640px ── */
+@media (max-width: 640px) {
+  /* Hero */
+  .botly-hero { padding: 48px 16px 32px; }
+  .hero-tag-pill { font-size: 12px; }
+  .hero-editorial-headline { font-size: 32px; line-height: 1.18; letter-spacing: -0.5px; }
+  .hero-editorial-sub { font-size: 15px; padding: 0 4px; }
+  .hero-cta-group { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hero-cta-group .pill-btn-dark,
+  .hero-cta-group .pill-btn-lime { width: 100%; justify-content: center; text-align: center; }
+
+  /* Sandbox card */
+  .sandbox-hero-preview { padding: 24px 16px 32px; }
+  .sandbox-frame-left h3 { font-size: 24px; }
+  .sandbox-frame-left p { font-size: 14px; }
+  .prompt-chip { font-size: 12px; padding: 6px 12px; }
+  .sandbox-frame-right > div { max-width: 100% !important; }
+
+  /* Feature/use-case cards */
+  .botly-cards-grid { grid-template-columns: 1fr; }
+  .botly-section { padding: 48px 16px; }
+  .botly-section-header { margin-bottom: 28px; }
+  .botly-section-tag { font-size: 11px; }
+  .botly-section-title { font-size: 26px; line-height: 1.22; }
+  .botly-section-desc { font-size: 14px; }
+
+  /* Pricing cards */
+  .botly-pricing-grid { max-width: 100%; padding: 0 4px; }
+  .botly-pricing-card { padding: 28px 20px; }
+  .pricing-amount { font-size: 56px; }
+  .botly-pricing-faq { padding: 20px 16px; }
+
+  /* Developer hub */
+  .dev-tab-btn { font-size: 12px; padding: 6px 12px; }
+  .terminal-block { font-size: 12px; padding: 16px; border-radius: 12px; }
+  .payment-banner-box { flex-direction: column; gap: 16px; align-items: flex-start; }
+
+  /* CTA Banner */
+  .botly-cta-banner { padding: 40px 16px; margin: 40px 12px; border-radius: 16px; }
+  .botly-cta-banner h3 { font-size: 26px; }
+  .botly-cta-banner .hero-cta-group { flex-direction: column; align-items: stretch; }
+  .botly-cta-banner .pill-btn-lime,
+  .botly-cta-banner .pill-btn-dark { width: 100%; justify-content: center; }
+
+  /* Footer */
+  footer { padding: 40px 16px 20px !important; }
+  footer > div:first-of-type { grid-template-columns: 1fr !important; gap: 28px !important; }
+  footer > div:last-of-type { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 11.5px; }
+
+  /* Utility */
+  .pill-btn-dark, .pill-btn-lime { padding: 11px 20px; font-size: 13.5px; }
+}
+
+/* ── Small phones: ≤380px ── */
+@media (max-width: 380px) {
+  .hero-editorial-headline { font-size: 28px; }
+  .botly-section-title { font-size: 23px; }
+  .botly-cta-banner h3 { font-size: 22px; }
+}

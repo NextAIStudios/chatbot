@@ -58,7 +58,26 @@
         </a>
         <button type="button" class="pill-btn-lime" onclick="openChatWithPrompt('Hello, I would like to explore Botly for my company')">Contact us</button>
       </div>
+
+      <!-- Hamburger (mobile only) -->
+      <button class="botly-hamburger" id="botly-hamburger" aria-label="Open menu" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
     </nav>
+
+    <!-- Mobile Nav Drawer -->
+    <div class="botly-mobile-nav" id="botly-mobile-nav">
+      <a href="#capabilities" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Building with AI</a>
+      <a href="#use-cases" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Use cases</a>
+      <a href="#products" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Products</a>
+      <a href="#pricing" class="botly-mobile-nav-link" onclick="closeMobileMenu()" style="color: #15803d; font-weight: 700;">Pricing</a>
+      <a href="#developer-hub" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Docs</a>
+      <a href="#about" class="botly-mobile-nav-link" onclick="closeMobileMenu()">About us</a>
+      <div class="botly-mobile-nav-actions">
+        <a href="demo/customizer.html" class="pill-btn-dark" style="width:100%; justify-content:center;">Sandbox access</a>
+        <button type="button" class="pill-btn-lime" style="width:100%;" onclick="openChatWithPrompt('Hello, I would like to explore Botly for my company'); closeMobileMenu()">Contact us</button>
+      </div>
+    </div>
   </header>
 
   <!-- Hero Section (Editorial Serif Style with Grainy Texture) -->
@@ -778,6 +797,23 @@ app.listen(3000, () => console.log('Botly webhook live on port 3000'));`
         btn.textContent = 'Copied';
         setTimeout(() => { btn.textContent = 'Copy Snippet'; }, 2000);
       });
+    }
+  </script>
+
+  <script>
+    function toggleMobileMenu() {
+      const nav = document.getElementById('botly-mobile-nav');
+      const btn = document.getElementById('botly-hamburger');
+      const open = nav.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+    function closeMobileMenu() {
+      const nav = document.getElementById('botly-mobile-nav');
+      const btn = document.getElementById('botly-hamburger');
+      nav.classList.remove('open');
+      btn.classList.remove('open');
+      document.body.style.overflow = '';
     }
   </script>
 </body>
