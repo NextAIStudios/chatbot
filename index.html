@@ -21,7 +21,16 @@
   <div class="botly-grain-overlay" aria-hidden="true"></div>
 
   <!-- Top Navigation (Insurely Minimalist Reference Style) -->
-  <header>
+  <header class="botly-header-wrap">
+    <!-- Dot Pattern Background -->
+    <svg class="botly-dot-pattern" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <pattern id="botly-dots" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="1" fill="#18221c" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#botly-dots)" />
+    </svg>
     <nav class="botly-navbar">
       <!-- Logo -->
       <a href="index.html" class="botly-logo-wrap">
