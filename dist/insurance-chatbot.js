@@ -718,7 +718,8 @@
     }
 
     // 4. In insurance mode or when payment_checkout goal is active, route to checkout wizard
-    var hasPaymentGoal = (goals && goals.indexOf('payment_checkout') !== -1) || (config && config.checkout && config.checkout.enabled);
+    var configGoals = config.goals || (config.goal ? [config.goal] : []);
+    var hasPaymentGoal = (configGoals.indexOf('payment_checkout') !== -1) || (config && config.checkout && config.checkout.enabled);
     if (!isSaasMode || hasPaymentGoal) {
       if (/\b(pay|payment|checkout|buy|lipa|order|purchase)\b/i.test(lower)) {
         return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD' };

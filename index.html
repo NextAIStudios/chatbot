@@ -43,7 +43,7 @@
           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <a href="#pricing" class="botly-nav-item" style="color: #15803d; font-weight: 700;">Pricing</a>
-        <a href="#developer-hub" class="botly-nav-item">Docs</a>
+        <a href="docs.html" class="botly-nav-item">Docs</a>
         <a href="#about" class="botly-nav-item">
           About us
           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="margin-left: 2px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -71,7 +71,7 @@
       <a href="#use-cases" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Use cases</a>
       <a href="#products" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Products</a>
       <a href="#pricing" class="botly-mobile-nav-link" onclick="closeMobileMenu()" style="color: #15803d; font-weight: 700;">Pricing</a>
-      <a href="#developer-hub" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Docs</a>
+      <a href="docs.html" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Docs</a>
       <a href="#about" class="botly-mobile-nav-link" onclick="closeMobileMenu()">About us</a>
       <div class="botly-mobile-nav-actions">
         <a href="demo/customizer.html" class="pill-btn-dark" style="width:100%; justify-content:center;">Sandbox access</a>
@@ -98,7 +98,7 @@
           <span>Sandbox access</span>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a href="#developer-hub" class="pill-btn-lime">For developers</a>
+        <a href="docs.html" class="pill-btn-lime">For developers</a>
       </div>
     </section>
 
@@ -444,108 +444,6 @@
         <div>
           <h4 style="font-size: 16px; font-weight: 700; color: #18221c; margin-bottom: 8px;">How do I pay for multiple bots?</h4>
           <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">Simple math: 1 bot = $10, 5 bots = $50, 10 bots = $100. Need more at volume? Enterprise pricing available.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Developer & Integration Hub Section -->
-    <section class="botly-section" id="developer-hub" style="border-top: 1px solid #f1f5f9; padding-top: 80px;">
-      <div class="botly-section-header">
-        <span class="botly-section-tag">Developer & Integration Hub</span>
-        <h2 class="botly-section-title">Built for developers. Ready in two lines of code.</h2>
-        <p class="botly-section-desc">
-          Zero external dependencies. Pure lightweight JavaScript bundle compatible with React, Vue, Next.js, Webflow, Shopify, WordPress, or static HTML.
-        </p>
-      </div>
-
-      <div class="dev-hub-card" style="box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);">
-        <div class="dev-nav-tabs">
-          <button class="dev-tab-btn active" onclick="switchDevTab('html')">HTML Drop-in Snippet</button>
-          <button class="dev-tab-btn" onclick="switchDevTab('python')">Python FastAPI Webhook (server.py)</button>
-          <button class="dev-tab-btn" onclick="switchDevTab('node')">Node.js Express API (server.js)</button>
-        </div>
-
-        <div class="code-terminal">
-          <div class="code-terminal-header">
-            <div class="terminal-dots">
-              <span class="terminal-dot dot-red"></span>
-              <span class="terminal-dot dot-yellow"></span>
-              <span class="terminal-dot dot-green"></span>
-            </div>
-            <span class="terminal-title" id="terminal-file-title">index.html (Drop-in Embed)</span>
-            <button class="terminal-copy-btn" onclick="copyDevSnippet()">Copy Snippet</button>
-          </div>
-          <pre class="code-terminal-body" id="dev-code-display"><!-- 1. Include Botly Stylesheet & JavaScript Bundle -->
-&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"&gt;
-&lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
-
-<!-- 2. Initialize Botly for your company -->
-&lt;script&gt;
-  InsuranceChatbot.init({
-    company: {
-      name: "Your Company Name",
-      supportPhone: "+1 (800) 555-0199",
-      supportEmail: "support@yourcompany.com"
-    },
-    bot: {
-      name: "Botly",
-      title: "AI Assistant",
-      avatar: "demo/botly-icon.svg"
-    },
-    theme: {
-      primaryColor: "#18221c",
-      primaryGradient: "linear-gradient(135deg, #18221c 0%, #26352c 100%)",
-      accentColor: "#9be553"
-    },
-    currency: {
-      code: "USD",
-      symbol: "$"
-    }
-  });
-&lt;/script&gt;</pre>
-        </div>
-
-        <!-- Integration Resources -->
-        <div class="integration-links-grid">
-          <a href="demo/customizer.html" class="integration-link-card">
-            <div class="int-icon" style="color: #18221c;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div>
-              <div class="int-title">Botly Customizer Studio</div>
-              <div class="int-sub">Interactive sandbox, presets and live editor</div>
-            </div>
-          </a>
-
-          <a href="demo/embed-example.html" class="integration-link-card">
-            <div class="int-icon" style="color: #18221c;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div>
-              <div class="int-title">Minimal Embed Demo</div>
-              <div class="int-sub">Five-line static integration test page</div>
-            </div>
-          </a>
-
-          <a href="examples/backend-api/README.md" class="integration-link-card">
-            <div class="int-icon" style="color: #18221c;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            </div>
-            <div>
-              <div class="int-title">Backend API Webhooks</div>
-              <div class="int-sub">Node.js Express & Python FastAPI guides</div>
-            </div>
-          </a>
-
-          <a href="tests/widget.test.js" class="integration-link-card">
-            <div class="int-icon" style="color: #18221c;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <div>
-              <div class="int-title">Automated Test Suite</div>
-              <div class="int-sub">27 of 27 Tests Passing (NLP, Quotes, Payments)</div>
-            </div>
-          </a>
         </div>
       </div>
     </section>
