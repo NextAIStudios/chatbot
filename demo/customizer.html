@@ -753,10 +753,10 @@
 
       <!-- Actions -->
       <div style="display: flex; align-items: center; gap: 10px;">
-        <button type="button" onclick="openDocsModal()" id="btn-top-docs" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
+        <a href="docs.html" target="_blank" id="btn-top-docs" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Docs
-        </button>
+        </a>
 
         <button type="button" onclick="openLeadsModal()" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px;">
           Leads
@@ -1392,10 +1392,10 @@
           </div>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" onclick="openDocsModal()" style="flex: 1; min-width: 130px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <a href="docs.html" target="_blank" style="flex: 1; min-width: 130px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               View Docs
-            </button>
+            </a>
             <a href="embed-example.html" style="flex: 1; min-width: 140px; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
               Shopify / WP Guide →
             </a>
@@ -1496,6 +1496,11 @@
         </div>
       </div>
 
+      <div style="padding: 12px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <span id="leads-total-count" style="font-size: 12px; font-weight: 700; color: #18221c;">0 Inquiries Recorded</span>
+        <button onclick="closeLeadsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: Sandbox Developer Documentation & API Reference -->
