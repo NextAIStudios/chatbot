@@ -257,23 +257,34 @@
     var userAvatar = document.getElementById('nav-user-avatar');
     var userName = document.getElementById('nav-user-name');
 
+    var mobLoginBtn = document.getElementById('mobile-auth-login-btn');
+    var mobProfileWrap = document.getElementById('mobile-auth-profile-wrap');
+    var mobUserAvatar = document.getElementById('mobile-user-avatar');
+    var mobUserName = document.getElementById('mobile-user-name');
+
     if (user) {
       if (loginBtn) loginBtn.style.display = 'none';
       if (profileWrap) profileWrap.style.display = 'flex';
       var name = user.displayName || (user.email ? user.email.split('@')[0] : 'Developer');
       if (userName) userName.textContent = name;
+      var avatarUrl = user.photoURL || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=18221c&color=9be553&bold=true');
       if (userAvatar) {
-        if (user.photoURL) {
-          userAvatar.src = user.photoURL;
-          userAvatar.style.display = 'block';
-        } else {
-          userAvatar.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=18221c&color=9be553&bold=true';
-          userAvatar.style.display = 'block';
-        }
+        userAvatar.src = avatarUrl;
+        userAvatar.style.display = 'block';
+      }
+
+      if (mobLoginBtn) mobLoginBtn.style.display = 'none';
+      if (mobProfileWrap) mobProfileWrap.style.display = 'flex';
+      if (mobUserName) mobUserName.textContent = name;
+      if (mobUserAvatar) {
+        mobUserAvatar.src = avatarUrl;
+        mobUserAvatar.style.display = 'block';
       }
     } else {
       if (loginBtn) loginBtn.style.display = 'inline-flex';
       if (profileWrap) profileWrap.style.display = 'none';
+      if (mobLoginBtn) mobLoginBtn.style.display = 'inline-flex';
+      if (mobProfileWrap) mobProfileWrap.style.display = 'none';
     }
   }
 
