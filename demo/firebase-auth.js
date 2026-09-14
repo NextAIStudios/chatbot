@@ -38,14 +38,7 @@
           console.warn('Botly Firebase init notice:', err.message);
         }
       } else {
-        // Local Demo Mode (before user pastes their live Firebase keys)
-        try {
-          var localSavedUser = localStorage.getItem('botly_demo_user');
-          if (localSavedUser) {
-            currentUser = JSON.parse(localSavedUser);
-          }
-        } catch(e) {}
-        updateAuthNavbarUI(currentUser);
+        updateAuthNavbarUI(null);
       }
     },
 
@@ -73,25 +66,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          // Simulated demo sign-in when live Firebase keys are not yet pasted
-          var demoUser = {
-            uid: 'demo_google_' + Date.now(),
-            displayName: 'Sandbox Explorer',
-            email: 'developer@example.com',
-            photoURL: 'https://lh3.googleusercontent.com/a/default-user',
-            isDemo: true
-          };
-          currentUser = demoUser;
-          try { localStorage.setItem('botly_demo_user', JSON.stringify(demoUser)); } catch(e) {}
-          notifyListeners(demoUser);
-          updateAuthNavbarUI(demoUser);
-          self.closeModal();
-          if (pendingAction) {
-            var fn = pendingAction;
-            pendingAction = null;
-            fn();
-          }
-          resolve(demoUser);
+          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
           return;
         }
 
@@ -111,26 +86,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          var name = email.split('@')[0];
-          name = name.charAt(0).toUpperCase() + name.slice(1);
-          var demoUser = {
-            uid: 'demo_email_' + Date.now(),
-            displayName: name,
-            email: email,
-            photoURL: '',
-            isDemo: true
-          };
-          currentUser = demoUser;
-          try { localStorage.setItem('botly_demo_user', JSON.stringify(demoUser)); } catch(e) {}
-          notifyListeners(demoUser);
-          updateAuthNavbarUI(demoUser);
-          self.closeModal();
-          if (pendingAction) {
-            var fn = pendingAction;
-            pendingAction = null;
-            fn();
-          }
-          resolve(demoUser);
+          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
           return;
         }
 
@@ -149,24 +105,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          var demoUser = {
-            uid: 'demo_user_' + Date.now(),
-            displayName: displayName || email.split('@')[0],
-            email: email,
-            photoURL: '',
-            isDemo: true
-          };
-          currentUser = demoUser;
-          try { localStorage.setItem('botly_demo_user', JSON.stringify(demoUser)); } catch(e) {}
-          notifyListeners(demoUser);
-          updateAuthNavbarUI(demoUser);
-          self.closeModal();
-          if (pendingAction) {
-            var fn = pendingAction;
-            pendingAction = null;
-            fn();
-          }
-          resolve(demoUser);
+          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
           return;
         }
 
@@ -187,8 +126,13 @@
     signOut: function() {
       var self = this;
       return new Promise(function(resolve) {
-        if (self.isConfigured() && window.firebase) {
+        if (window.firebase && firebase.auth) {
           firebase.auth().signOut().then(function() {
+            currentUser = null;
+            notifyListeners(null);
+            updateAuthNavbarUI(null);
+            resolve();
+          }).catch(function() {
             currentUser = null;
             notifyListeners(null);
             updateAuthNavbarUI(null);
@@ -196,7 +140,6 @@
           });
         } else {
           currentUser = null;
-          try { localStorage.removeItem('botly_demo_user'); } catch(e) {}
           notifyListeners(null);
           updateAuthNavbarUI(null);
           resolve();
@@ -222,11 +165,6 @@
 
       if (msgEl && customMessage) {
         msgEl.textContent = customMessage;
-      }
-
-      var keyNotice = document.getElementById('auth-unconfigured-notice');
-      if (keyNotice) {
-        keyNotice.style.display = this.isConfigured() ? 'none' : 'block';
       }
 
       if (modal) {
