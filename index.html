@@ -510,14 +510,14 @@
           <li style="margin-bottom: 10px;"><a href="demo/customizer.html" style="color: #6b7280; text-decoration: none;">Botly Customizer Studio</a></li>
           <li style="margin-bottom: 10px;"><a href="demo/embed-example.html" style="color: #6b7280; text-decoration: none;">Embed Guide</a></li>
           <li style="margin-bottom: 10px;"><a href="examples/backend-api/README.md" style="color: #6b7280; text-decoration: none;">Webhook APIs</a></li>
-          <li style="margin-bottom: 10px;"><a href="https://github.com/NextAIStudios/chatbot" target="_blank" rel="noopener" style="color: #6b7280; text-decoration: none;">GitHub</a></li>
+          <li style="margin-bottom: 10px;"></li>
         </ul>
       </div>
     </div>
 
     <div style="max-width: 1180px; margin: 24px auto 0 auto; display: flex; justify-content: space-between; font-size: 12.5px; color: #9ca3af; flex-wrap: wrap; gap: 12px;">
       <span>© 2026 Botly Technologies Inc. All rights reserved.</span>
-      <span>MIT Licensed • Zero External Dependencies • Open Platform Architecture</span>
+      <span>Commercial Licensed • Zero External Dependencies • Open Platform Architecture</span>
     </div>
   </footer>
 
@@ -527,7 +527,7 @@
   <!-- Botly Initialization & Helpers -->
   <script>
     // Initialize Botly with SaaS pricing-aware configuration
-    InsuranceChatbot.init({
+    BotlyChatbot.init({
       mode: 'saas',
       goal: 'lead_generation',
       company: {
@@ -578,7 +578,7 @@
         },
         {
           keywords: ['integration', 'embed', 'install', 'add to website', 'wordpress', 'shopify', 'webflow', 'react', 'html', 'javascript'],
-          answer: "Adding Botly to your site takes under 5 minutes. \n\nDrop in one CSS link and one script tag, then call InsuranceChatbot.init() with your company config. That's it. \n\nWorks with HTML, React, Next.js, Vue, WordPress, Shopify, Webflow — anything."
+          answer: "Adding Botly to your site takes under 5 minutes. \n\nDrop in one CSS link and one script tag, then call BotlyChatbot.init() with your company config. That's it. \n\nWorks with HTML, React, Next.js, Vue, WordPress, Shopify, Webflow — anything."
         },
         {
           keywords: ['human', 'agent', 'representative', 'person', 'speak', 'talk', 'someone', 'contact', 'call', 'support', 'team', 'sales team'],
@@ -601,100 +601,10 @@
 
     // Helper to open chat with specific trigger
     function openChatWithPrompt(promptText) {
-      InsuranceChatbot.open();
+      BotlyChatbot.open();
       setTimeout(() => {
-        InsuranceChatbot.triggerAction(promptText);
+        BotlyChatbot.triggerAction(promptText);
       }, 350);
-    }
-
-    // Developer Snippet Switcher
-    const SNIPPETS = {
-      html: `<!-- 1. Include Botly Stylesheet & JavaScript Bundle -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
-<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>
-
-<!-- 2. Initialize Botly for your company -->
-<script>
-  InsuranceChatbot.init({
-    company: {
-      name: "Your Company Name",
-      supportPhone: "+1 (800) 555-0199",
-      supportEmail: "support@yourcompany.com"
-    },
-    bot: {
-      name: "Botly",
-      title: "AI Assistant",
-      avatar: "demo/botly-icon.svg"
-    },
-    theme: {
-      primaryColor: "#18221c",
-      primaryGradient: "linear-gradient(135deg, #18221c 0%, #26352c 100%)",
-      accentColor: "#9be553"
-    },
-    currency: {
-      code: "USD",
-      symbol: "$"
-    }
-  });
-<\/script>`,
-
-      python: `# FastAPI Webhook Server for Botly (examples/backend-api/server.py)
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI(title="Botly Webhook Server")
-
-class QueryRequest(BaseModel):
-    query: str
-    sessionId: str
-    userProfile: dict = {}
-
-@app.post("/api/botly/query")
-async def handle_query(req: QueryRequest):
-    return {
-        "text": f"Response calculated for session {req.sessionId}.",
-        "quickReplies": ["View Details", "Contact Team"],
-        "confidence": 0.98
-    }`,
-
-      node: `// Node.js Express Webhook for Botly (examples/backend-api/server.js)
-import express from 'express';
-const app = express();
-app.use(express.json());
-
-app.post('/api/botly/query', (req, res) => {
-  const { query, sessionId } = req.body;
-  res.json({
-    text: \`Response processed for session \${sessionId}.\`,
-    quickReplies: ["View Catalog", "Speak with Team"],
-    confidence: 0.99
-  });
-});
-
-app.listen(3000, () => console.log('Botly webhook live on port 3000'));`
-    };
-
-    function switchDevTab(tabKey) {
-      document.querySelectorAll('.dev-tab-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      const titles = {
-        html: 'index.html (Drop-in Embed)',
-        python: 'server.py (FastAPI Webhook Server)',
-        node: 'server.js (Node.js Express Webhook Server)'
-      };
-
-      document.getElementById('terminal-file-title').textContent = titles[tabKey];
-      document.getElementById('dev-code-display').textContent = SNIPPETS[tabKey];
-    }
-
-    function copyDevSnippet() {
-      const code = document.getElementById('dev-code-display').textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        const btn = document.querySelector('.terminal-copy-btn');
-        btn.textContent = 'Copied';
-        setTimeout(() => { btn.textContent = 'Copy Snippet'; }, 2000);
-      });
     }
   </script>
 

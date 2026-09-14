@@ -1,12 +1,10 @@
-/**
- * Plug & Play Insurance Chatbot (Standalone UMD/IIFE Distribution)
- * Zero external dependencies. Works in any website, WordPress, React, Shopify, or Webflow.
- * https://github.com/NextAIStudios/chatbot
+/** Botly — Plug & Play AI Chatbot Platform
+ * Commercial License. All rights reserved. NextAI Studios.
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.InsuranceChatbot = global.Botly = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.BotlyChatbot = global.InsuranceChatbot = global.Botly = factory());
 })(this, (function () { 'use strict';
 
   // 1. COMPANY GOALS CATALOG
@@ -1025,7 +1023,7 @@
   }
 
   // 4. MAIN CHATBOT WIDGET CONTROLLER
-  function InsuranceChatbotController(userConfig) {
+  function BotlyChatbotController(userConfig) {
     this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});
     this.trainedKnowledge = [];
     if (this.config.customKnowledge && Array.isArray(this.config.customKnowledge)) {
@@ -1041,7 +1039,7 @@
     this.launcher = null;
   }
 
-  InsuranceChatbotController.prototype.init = function(selector) {
+  BotlyChatbotController.prototype.init = function(selector) {
     var self = this;
     this.applyTheme();
 
@@ -1058,7 +1056,7 @@
     this.sendGreeting();
   };
 
-  InsuranceChatbotController.prototype.applyTheme = function() {
+  BotlyChatbotController.prototype.applyTheme = function() {
     var root = document.documentElement;
     var t = this.config.theme || {};
     if (t.primaryColor) {
@@ -1074,7 +1072,7 @@
     if (t.userBubbleBg) root.style.setProperty('--ins-user-bubble', t.userBubbleBg);
   };
 
-  InsuranceChatbotController.prototype.renderFloating = function() {
+  BotlyChatbotController.prototype.renderFloating = function() {
     var self = this;
     var bot = this.config.bot || {};
     var company = this.config.company || {};
@@ -1137,7 +1135,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.renderAvatarHtml = function() {
+  BotlyChatbotController.prototype.renderAvatarHtml = function() {
     var bot = this.config.bot || {};
     var t = this.config.theme || {};
     var primary = t.primaryColor || '#18221c';
@@ -1165,7 +1163,7 @@
     '</svg>';
   };
 
-  InsuranceChatbotController.prototype.renderInline = function(target) {
+  BotlyChatbotController.prototype.renderInline = function(target) {
     var self = this;
     var bot = this.config.bot || {};
     var company = this.config.company || {};
@@ -1209,7 +1207,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.toggle = function(force) {
+  BotlyChatbotController.prototype.toggle = function(force) {
     if (!this.container) return;
     var open = force !== undefined ? force : !this.container.classList.contains('open');
     if (open) {
@@ -1225,7 +1223,7 @@
     }
   };
 
-  InsuranceChatbotController.prototype.sendGreeting = function() {
+  BotlyChatbotController.prototype.sendGreeting = function() {
     var self = this;
     var bot = this.config.bot || {};
     setTimeout(function() {
@@ -1233,7 +1231,7 @@
     }, 200);
   };
 
-  InsuranceChatbotController.prototype.appendUser = function(text) {
+  BotlyChatbotController.prototype.appendUser = function(text) {
     var row = document.createElement('div');
     row.className = 'ins-msg-row user';
     row.innerHTML = '<div class="ins-msg-bubble">' + this.escape(text) +
@@ -1242,7 +1240,7 @@
     this.scrollDown();
   };
 
-  InsuranceChatbotController.prototype.appendBot = function(text, opts) {
+  BotlyChatbotController.prototype.appendBot = function(text, opts) {
     opts = opts || {};
     this.removeTyping();
 
@@ -1273,7 +1271,7 @@
     this.scrollDown();
   };
 
-  InsuranceChatbotController.prototype.showTyping = function() {
+  BotlyChatbotController.prototype.showTyping = function() {
     this.removeTyping();
     var t = document.createElement('div');
     t.className = 'ins-msg-row bot ins-typing-row';
@@ -1282,18 +1280,18 @@
     this.scrollDown();
   };
 
-  InsuranceChatbotController.prototype.removeTyping = function() {
+  BotlyChatbotController.prototype.removeTyping = function() {
     var ex = this.messagesList ? this.messagesList.querySelector('.ins-typing-row') : null;
     if (ex) ex.remove();
   };
 
-  InsuranceChatbotController.prototype.scrollDown = function() {
+  BotlyChatbotController.prototype.scrollDown = function() {
     if (this.messagesList) {
       this.messagesList.scrollTop = this.messagesList.scrollHeight;
     }
   };
 
-  InsuranceChatbotController.prototype.handleQuickReply = function(payload) {
+  BotlyChatbotController.prototype.handleQuickReply = function(payload) {
     if (payload.indexOf('intent_quote_') === 0) {
       var prod = payload.replace('intent_quote_', '');
       this.startQuoteWizard(prod);
@@ -1318,7 +1316,7 @@
     this.handleUserMessage(payload);
   };
 
-  InsuranceChatbotController.prototype.handleUserMessage = function(text) {
+  BotlyChatbotController.prototype.handleUserMessage = function(text) {
     var self = this;
     this.appendUser(text);
     this.showTyping();
@@ -1402,7 +1400,7 @@
     }, self.config.bot?.typingDelayMs || 400);
   };
 
-  InsuranceChatbotController.prototype.resolveLocalQuery = function(text) {
+  BotlyChatbotController.prototype.resolveLocalQuery = function(text) {
     var res = classifyQuery(text, this.config, this.config.customFaqs, this.trainedKnowledge);
     if (res.action === 'LEAD_CAPTURE') {
       this.startLeadCapture(res.inquiredNeed || text);
@@ -1423,7 +1421,7 @@
     this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
   };
 
-  InsuranceChatbotController.prototype.startLeadCapture = function(inquiredNeed) {
+  BotlyChatbotController.prototype.startLeadCapture = function(inquiredNeed) {
     var cleanNeed = (inquiredNeed || '').trim();
     this.leadState = {
       active: true,
@@ -1453,7 +1451,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.processLeadCaptureStep = function(text) {
+  BotlyChatbotController.prototype.processLeadCaptureStep = function(text) {
     var input = (text || '').trim();
     if (/^(cancel|nevermind|stop|exit|main menu|back)\b/i.test(input) || input === 'intent_cancel_lead') {
       this.leadState.active = false;
@@ -1559,7 +1557,7 @@
     }
   };
 
-  InsuranceChatbotController.prototype.startQuoteWizard = function(productKey) {
+  BotlyChatbotController.prototype.startQuoteWizard = function(productKey) {
     this.quoteState.active = true;
     this.quoteState.step = 1;
     this.quoteState.type = productKey in this.config.products ? productKey : 'auto';
@@ -1587,7 +1585,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.processQuoteStep = function(text) {
+  BotlyChatbotController.prototype.processQuoteStep = function(text) {
     var self = this;
     var lower = text.toLowerCase();
     var prod = this.config.products[this.quoteState.type];
@@ -1632,7 +1630,7 @@
           '<div class="ins-detail-line"><span>Deductible:</span> <strong>' + this.activeQuote.deductible + '</strong></div>' +
           '<div class="ins-detail-line"><span>Statutory Taxes/Levies:</span> <strong>' + sym + tax + '</strong></div>' +
         '</div>' +
-        '<button class="ins-btn-primary" onclick="InsuranceChatbot.triggerAction(\'checkout_now\')">' +
+        '<button class="ins-btn-primary" onclick="BotlyChatbot.triggerAction(\'checkout_now\')">' +
           '💳 Buy Policy Now (' + sym + annualTotal.toLocaleString() + ')' +
         '</button>' +
       '</div>';
@@ -1648,7 +1646,7 @@
     }
   };
 
-  InsuranceChatbotController.prototype.startClaimWizard = function() {
+  BotlyChatbotController.prototype.startClaimWizard = function() {
     this.claimState.active = true;
     this.claimState.step = 1;
     this.appendBot("I'm sorry to hear that you experienced a loss or damage! Don't worry—we're here to help you get back on your feet fast. 🛡️\n\nWhat kind of incident are you reporting?", {
@@ -1661,7 +1659,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.processClaimStep = function(text) {
+  BotlyChatbotController.prototype.processClaimStep = function(text) {
     if (this.claimState.step === 1) {
       this.claimState.type = text;
       this.claimState.step = 2;
@@ -1698,7 +1696,7 @@
     }
   };
 
-  InsuranceChatbotController.prototype.startInChatCheckout = function(customItem) {
+  BotlyChatbotController.prototype.startInChatCheckout = function(customItem) {
     var self = this;
     var chk = this.config.checkout || {};
     var mpesa = chk.mpesa || {};
@@ -1927,7 +1925,7 @@
     }, 100);
   };
 
-  InsuranceChatbotController.prototype.verifyAndRecordMpesaPayment = function(mpesaCode, details) {
+  BotlyChatbotController.prototype.verifyAndRecordMpesaPayment = function(mpesaCode, details) {
     details = details || {};
     var cleanCode = (mpesaCode || '').trim().toUpperCase();
     var chk = this.config.checkout || {};
@@ -2007,7 +2005,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.renderPolicyCertificate = function(quote, amountPaid) {
+  BotlyChatbotController.prototype.renderPolicyCertificate = function(quote, amountPaid) {
     var policyNo = 'POL-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
     var sym = quote.currencySymbol || 'KSh ';
     var company = this.config.company || {};
@@ -2043,8 +2041,8 @@
         '<div class="receipt-row total"><span>Total Paid:</span> <strong class="receipt-amount">' + sym + Number(amountPaid).toLocaleString() + '</strong></div>' +
       '</div>' +
       '<div class="receipt-actions">' +
-        '<button type="button" class="btn-receipt-action" onclick="InsuranceChatbot.printCertificate()">🖨️ Print Certificate</button>' +
-        '<button type="button" class="btn-receipt-action" onclick="InsuranceChatbot.printCertificate()">📥 Save PDF Card</button>' +
+        '<button type="button" class="btn-receipt-action" onclick="BotlyChatbot.printCertificate()">🖨️ Print Certificate</button>' +
+        '<button type="button" class="btn-receipt-action" onclick="BotlyChatbot.printCertificate()">📥 Save PDF Card</button>' +
       '</div>' +
     '</div>';
 
@@ -2058,7 +2056,7 @@
     });
   };
 
-  InsuranceChatbotController.prototype.printCertificate = function() {
+  BotlyChatbotController.prototype.printCertificate = function() {
     var receipt = this.lastIssuedReceipt || {
       policyNumber: 'POL-2026-882190',
       company: this.config.company || { name: 'Botly Insurance', tagline: 'Next-Gen Insurance AI Platform', licenseNumber: 'INS-LIC-2026-882190' },
@@ -2132,7 +2130,7 @@
     printWin.document.close();
   };
 
-  InsuranceChatbotController.prototype.reset = function() {
+  BotlyChatbotController.prototype.reset = function() {
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
     this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
@@ -2140,13 +2138,13 @@
     this.sendGreeting();
   };
 
-  InsuranceChatbotController.prototype.escape = function(str) {
+  BotlyChatbotController.prototype.escape = function(str) {
     var d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
   };
 
-  InsuranceChatbotController.prototype.formatMd = function(text) {
+  BotlyChatbotController.prototype.formatMd = function(text) {
     if (!text) return '';
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -2156,7 +2154,7 @@
       .replace(/•\s/g, '•&nbsp;');
   };
 
-  InsuranceChatbotController.prototype.trainData = function(content, format) {
+  BotlyChatbotController.prototype.trainData = function(content, format) {
     var items = parseTrainingData(content, format);
     var self = this;
     var count = 0;
@@ -2175,15 +2173,15 @@
     return { success: true, countAdded: items.length, totalCount: this.trainedKnowledge.length, items: items };
   };
 
-  InsuranceChatbotController.prototype.getTrainedData = function() {
+  BotlyChatbotController.prototype.getTrainedData = function() {
     return this.trainedKnowledge || [];
   };
 
-  InsuranceChatbotController.prototype.clearTrainedData = function() {
+  BotlyChatbotController.prototype.clearTrainedData = function() {
     this.trainedKnowledge = [];
   };
 
-  InsuranceChatbotController.prototype.testApiConnection = function(callback) {
+  BotlyChatbotController.prototype.testApiConnection = function(callback) {
     var api = this.config.api || {};
     var context = { companyName: this.config.company?.name || 'Insurance Company' };
     if (api.mockServer || api.endpoint === 'mock://insurance-ai') {
@@ -2215,11 +2213,11 @@
     });
   };
 
-  InsuranceChatbotController.prototype.setApiConfig = function(apiCfg) {
+  BotlyChatbotController.prototype.setApiConfig = function(apiCfg) {
     this.config.api = Object.assign({}, this.config.api || {}, apiCfg);
   };
 
-  InsuranceChatbotController.prototype.setCompanyGoal = function(goalKey) {
+  BotlyChatbotController.prototype.setCompanyGoal = function(goalKey) {
     if (!COMPANY_GOALS[goalKey]) return false;
     var preset = COMPANY_GOALS[goalKey];
     this.config.goal = goalKey;
@@ -2233,7 +2231,7 @@
     return true;
   };
 
-  InsuranceChatbotController.prototype.simulateUnlistedInquiry = function(queryText) {
+  BotlyChatbotController.prototype.simulateUnlistedInquiry = function(queryText) {
     var text = queryText || 'Can you provide commercial drone delivery fleet protection?';
     this.toggle(true);
     this.handleUserInput(text);
@@ -2244,7 +2242,7 @@
 
   return {
     init: function(config, selector) {
-      instance = new InsuranceChatbotController(config);
+      instance = new BotlyChatbotController(config);
       instance.init(selector);
       return instance;
     },
@@ -2267,6 +2265,8 @@
     clearCapturedLeads: function() { return clearStoredLeads(); },
     exportLeadsCSV: function() { return exportLeadsToCsv(); },
     startCheckout: function() { instance && instance.startInChatCheckout(); },
+    getLeads: function() { return getStoredLeads(); },
+    clearLeads: function() { return clearStoredLeads(); },
     getInstance: function() { return instance; }
   };
 }));

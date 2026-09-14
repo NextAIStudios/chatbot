@@ -14,7 +14,7 @@ import { CheckoutFlow } from '../payments/checkout-flow.js';
 import { ReceiptGenerator } from '../payments/receipt-generator.js';
 import { UIRenderer } from './ui-renderer.js';
 
-export class InsuranceChatbotWidget {
+export class BotlyChatbotWidget {
   constructor(customConfig = {}) {
     this.config = this.mergeConfig(DEFAULT_CONFIG, customConfig);
     this.intentEngine = new IntentEngine(this.config);
@@ -421,13 +421,13 @@ export class InsuranceChatbotWidget {
 
 // Global Browser SDK Expose
 if (typeof window !== 'undefined') {
-  window.InsuranceChatbotWidget = InsuranceChatbotWidget;
+  window.BotlyChatbotWidget = BotlyChatbotWidget;
   window.COMPANY_GOALS = COMPANY_GOALS;
-  window.InsuranceChatbot = {
+  window.BotlyChatbot = {
     instance: null,
     init: function(config = {}, selector = null) {
       if (!this.instance || selector) {
-        this.instance = new InsuranceChatbotWidget(config);
+        this.instance = new BotlyChatbotWidget(config);
         this.instance.init(selector);
       } else {
         this.instance.updateConfig(config);
@@ -463,4 +463,4 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export default InsuranceChatbotWidget;
+export default BotlyChatbotWidget;

@@ -1347,7 +1347,7 @@
           <button type="button" class="t-chip" onclick="testAskQuestion('What services or programs do you offer?')">Ask Memory</button>
           <button type="button" class="t-chip" onclick="testAskQuestion('Do you have automation?')">Ask Automation</button>
           <button type="button" class="t-chip" onclick="testAskQuestion('Can I speak with someone?')">Ask Human</button>
-          <button type="button" class="t-chip" onclick="InsuranceChatbot.reset()">Reset</button>
+          <button type="button" class="t-chip" onclick="BotlyChatbot.reset()">Reset</button>
         </div>
       </div>
 
@@ -2193,9 +2193,9 @@
         status.textContent = 'Sending ping query to ' + endpoint + '...';
       }
 
-      if (window.InsuranceChatbot && typeof window.InsuranceChatbot.testApiConnection === 'function') {
-        InsuranceChatbot.setApiConfig(wizardState.apiConfig);
-        InsuranceChatbot.testApiConnection(function(res) {
+      if (window.BotlyChatbot && typeof window.BotlyChatbot.testApiConnection === 'function') {
+        BotlyChatbot.setApiConfig(wizardState.apiConfig);
+        BotlyChatbot.testApiConnection(function(res) {
           if (btn) btn.textContent = 'Test API Connection';
           if (res.ok) {
             status.style.background = '#ecfdf5';
@@ -2288,7 +2288,7 @@
 '<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n' +
 '<!-- 2. Initialize ' + wizardState.companyName + ' Botly Chatbot ($10 Flat) -->\n' +
 '<script>\n' +
-'  InsuranceChatbot.init({\n' +
+'  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
@@ -2390,7 +2390,7 @@
       if (greetingEl) wizardState.greeting = greetingEl.value.trim() || "Hey! How can I help you today?";
       if (emailEl) wizardState.supportEmail = emailEl.value.trim() || 'care@mycompany.com';
 
-      if (!window.InsuranceChatbot) return;
+      if (!window.BotlyChatbot) return;
 
       // Combine all memory items
       var allKnowledge = []
@@ -2431,7 +2431,7 @@
       }
 
       try {
-        InsuranceChatbot.init({
+        BotlyChatbot.init({
           mode: 'saas',
           goals: wizardState.purposes,
           goal: wizardState.purposes[0] || 'lead_generation',
@@ -2478,8 +2478,8 @@
     }
 
     function testAskQuestion(prompt) {
-      if (window.InsuranceChatbot) {
-        var inst = window.InsuranceChatbot.getInstance && window.InsuranceChatbot.getInstance();
+      if (window.BotlyChatbot) {
+        var inst = window.BotlyChatbot.getInstance && window.BotlyChatbot.getInstance();
         if (inst && typeof inst.handleUserMessage === 'function') {
           inst.handleUserMessage(prompt);
         }
@@ -2574,8 +2574,8 @@
     }
 
     function downloadLeadsCSV() {
-      if (window.InsuranceChatbot && typeof window.InsuranceChatbot.exportLeadsCSV === 'function') {
-        var csv = window.InsuranceChatbot.exportLeadsCSV();
+      if (window.BotlyChatbot && typeof window.BotlyChatbot.exportLeadsCSV === 'function') {
+        var csv = window.BotlyChatbot.exportLeadsCSV();
         var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');

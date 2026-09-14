@@ -521,7 +521,7 @@
           <span>Open Customizer</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <button type="button" class="pill-btn-lime" onclick="InsuranceChatbot.open()">Test Live Bot</button>
+        <button type="button" class="pill-btn-lime" onclick="BotlyChatbot.open()">Test Live Bot</button>
       </div>
     </nav>
   </header>
@@ -599,23 +599,23 @@
           <div class="live-actions-box">
             <h4>Try These Actions</h4>
             <div class="live-btn-stack">
-              <button type="button" class="live-action-btn btn-lime" onclick="InsuranceChatbot.open()">
+              <button type="button" class="live-action-btn btn-lime" onclick="BotlyChatbot.open()">
                 <span>Open Chat</span>
                 <span>&#128172;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.triggerAction('How much does a Botly chatbot cost?')">
+              <button type="button" class="live-action-btn" onclick="BotlyChatbot.triggerAction('How much does a Botly chatbot cost?')">
                 <span>Ask About Pricing</span>
                 <span>&#128176;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.simulateUnlistedInquiry('I want to deploy chatbots for 10 companies')">
+              <button type="button" class="live-action-btn" onclick="BotlyChatbot.simulateUnlistedInquiry('I want to deploy chatbots for 10 companies')">
                 <span>Simulate Lead Capture</span>
                 <span>&#127919;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.startCheckout({ quoteRef: 'BOT-001', totalAmount: 10 })">
+              <button type="button" class="live-action-btn" onclick="BotlyChatbot.startCheckout({ quoteRef: 'BOT-001', totalAmount: 10 })">
                 <span>Trigger $10 Checkout</span>
                 <span>&#128179;</span>
               </button>
-              <button type="button" class="live-action-btn" onclick="InsuranceChatbot.exportLeadsCSV()">
+              <button type="button" class="live-action-btn" onclick="BotlyChatbot.exportLeadsCSV()">
                 <span>Export Leads (CSV)</span>
                 <span>&#128202;</span>
               </button>
@@ -722,7 +722,7 @@
 
     <!-- Complete SDK Quick Reference Table -->
     <section class="sdk-ref-section">
-      <h2>Public JavaScript SDK Reference (<code>window.InsuranceChatbot</code>)</h2>
+      <h2>Public JavaScript SDK Reference (<code>window.BotlyChatbot</code>)</h2>
       <p class="sub">Control the chatbot programmatically from any button, page event, marketing workflow, or CRM link.</p>
 
       <div class="sdk-table-wrap">
@@ -737,64 +737,64 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>InsuranceChatbot.init(options)</code></td>
+              <td><code>BotlyChatbot.init(options)</code></td>
               <td><span class="sdk-badge core">Core</span></td>
               <td>Initializes and renders the chatbot widget with custom config schema.</td>
-              <td><code>InsuranceChatbot.init({ goal: 'lead_generation' })</code></td>
+              <td><code>BotlyChatbot.init({ goal: 'lead_generation' })</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.open()</code></td>
+              <td><code>BotlyChatbot.open()</code></td>
               <td><span class="sdk-badge core">Core</span></td>
               <td>Expands the chat window and scrolls conversation into focus.</td>
-              <td><code>InsuranceChatbot.open()</code></td>
+              <td><code>BotlyChatbot.open()</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.close()</code></td>
+              <td><code>BotlyChatbot.close()</code></td>
               <td><span class="sdk-badge core">Core</span></td>
               <td>Collapses the chat window back into the floating launcher icon.</td>
-              <td><code>InsuranceChatbot.close()</code></td>
+              <td><code>BotlyChatbot.close()</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.toggle()</code></td>
+              <td><code>BotlyChatbot.toggle()</code></td>
               <td><span class="sdk-badge core">Core</span></td>
               <td>Toggles the open/closed state of the chat window.</td>
-              <td><code>InsuranceChatbot.toggle()</code></td>
+              <td><code>BotlyChatbot.toggle()</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.setCompanyGoal(goal)</code></td>
+              <td><code>BotlyChatbot.setCompanyGoal(goal)</code></td>
               <td><span class="sdk-badge leads">Goal</span></td>
               <td>Dynamically reconfigures the company goal, lead prompts, and triage logic.</td>
-              <td><code>InsuranceChatbot.setCompanyGoal('payment_checkout')</code></td>
+              <td><code>BotlyChatbot.setCompanyGoal('payment_checkout')</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.simulateUnlistedInquiry(q)</code></td>
+              <td><code>BotlyChatbot.simulateUnlistedInquiry(q)</code></td>
               <td><span class="sdk-badge leads">Leads</span></td>
               <td>Injects an unlisted question to trigger proactive lead capture triage.</td>
-              <td><code>InsuranceChatbot.simulateUnlistedInquiry('Custom enterprise pricing')</code></td>
+              <td><code>BotlyChatbot.simulateUnlistedInquiry('Custom enterprise pricing')</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.startCheckout(quote)</code></td>
+              <td><code>BotlyChatbot.startCheckout(quote)</code></td>
               <td><span class="sdk-badge pay">Payment</span></td>
               <td>Opens chat and launches interactive in-chat payment checkout card.</td>
-              <td><code>InsuranceChatbot.startCheckout({ quoteRef: 'Q-100', totalAmount: 79 })</code></td>
+              <td><code>BotlyChatbot.startCheckout({ quoteRef: 'Q-100', totalAmount: 79 })</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.getCapturedLeads()</code></td>
+              <td><code>BotlyChatbot.getCapturedLeads()</code></td>
               <td><span class="sdk-badge leads">Leads</span></td>
               <td>Returns array of all captured leads with names, phones, queries, and goals.</td>
-              <td><code>const leads = InsuranceChatbot.getCapturedLeads()</code></td>
+              <td><code>const leads = BotlyChatbot.getCapturedLeads()</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.exportLeadsCSV()</code></td>
+              <td><code>BotlyChatbot.exportLeadsCSV()</code></td>
               <td><span class="sdk-badge leads">Leads</span></td>
               <td>Downloads formatted CSV file of all captured customer inquiries.</td>
-              <td><code>InsuranceChatbot.exportLeadsCSV()</code></td>
+              <td><code>BotlyChatbot.exportLeadsCSV()</code></td>
             </tr>
             <tr>
-              <td><code>InsuranceChatbot.reset()</code></td>
+              <td><code>BotlyChatbot.reset()</code></td>
               <td><span class="sdk-badge core">Core</span></td>
               <td>Clears chat history and re-renders fresh welcome state.</td>
-              <td><code>InsuranceChatbot.reset()</code></td>
+              <td><code>BotlyChatbot.reset()</code></td>
             </tr>
           </tbody>
         </table>
@@ -840,13 +840,13 @@
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
           <li><a href="mailto:hello@botly.example.com" style="color: #94a3b8; text-decoration: none;">hello@botly.example.com</a></li>
           <li><a href="tel:+18005550199" style="color: #94a3b8; text-decoration: none;">+1 (800) 555-0199</a></li>
-          <li><a href="https://github.com/NextAIStudios/chatbot" target="_blank" style="color: #94a3b8; text-decoration: none;">GitHub Repository &rarr;</a></li>
+          <li></li>
         </ul>
       </div>
     </div>
 
     <div style="max-width: 1160px; margin: 0 auto; border-top: 1px solid #1f2a22; padding-top: 24px; text-align: center; color: #4b5563; font-size: 12px;">
-      &copy; 2026 Botly &middot; NextAI Studios &middot; Open Source MIT License
+      &copy; 2026 Botly &middot; NextAI Studios &middot; Open Source Commercial License
     </div>
   </footer>
 
@@ -881,7 +881,7 @@
   <!-- Your existing website content here -->
   <main>
     <h1>Welcome to Our Platform</h1>
-    <button onclick="InsuranceChatbot.open()">💬 Chat with Us</button>
+    <button onclick="BotlyChatbot.open()">💬 Chat with Us</button>
   </main>
 
   <!-- 2. Botly Standalone Bundle (Zero Dependencies) -->
@@ -889,7 +889,7 @@
 
   <!-- 3. One-line Initialization -->
   ` + S_OPEN + `
-    InsuranceChatbot.init({
+    BotlyChatbot.init({
       company: {
         name: "Acme Corporation",
         supportPhone: "+1 (800) 555-0199",
@@ -927,8 +927,8 @@ export default function BotlyChatbot() {
     script.src = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js';
     script.async = true;
     script.onload = () => {
-      if (window.InsuranceChatbot) {
-        window.InsuranceChatbot.init({
+      if (window.BotlyChatbot) {
+        window.BotlyChatbot.init({
           company: { name: 'Acme Corporation' },
           goal: '${goal}',
           bot: { name: 'Botly' },
@@ -971,8 +971,8 @@ export default function RootLayout({ children }) {
           src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"
           strategy="lazyOnload"
           onLoad={() => {
-            if (window.InsuranceChatbot) {
-              window.InsuranceChatbot.init({
+            if (window.BotlyChatbot) {
+              window.BotlyChatbot.init({
                 company: { name: 'Acme Corporation' },
                 goal: '${goal}',
                 bot: { name: 'Botly' },
@@ -1008,8 +1008,8 @@ onMounted(() => {
   script.src = 'https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js';
   script.async = true;
   script.onload = () => {
-    if (window.InsuranceChatbot) {
-      window.InsuranceChatbot.init({
+    if (window.BotlyChatbot) {
+      window.BotlyChatbot.init({
         company: { name: 'Acme Corporation' },
         goal: '${goal}',
         bot: { name: 'Botly' },
@@ -1048,8 +1048,8 @@ function botly_enqueue_chatbot() {
     // 3. Inject Initialization Script
     $inline_init = "
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.InsuranceChatbot) {
-                window.InsuranceChatbot.init({
+            if (window.BotlyChatbot) {
+                window.BotlyChatbot.init({
                     company: { name: '" . esc_js(get_bloginfo('name')) . "' },
                     goal: '${goal}',
                     bot: { name: 'Botly' },
@@ -1072,7 +1072,7 @@ add_action('wp_enqueue_scripts', 'botly_enqueue_chatbot');`;
 ` + S_BUNDLE + `
 ` + S_OPEN + `
   window.addEventListener('DOMContentLoaded', function() {
-    InsuranceChatbot.init({
+    BotlyChatbot.init({
       company: {
         name: "{{ shop.name | escape }}",
         supportEmail: "{{ shop.email }}"
@@ -1099,7 +1099,7 @@ add_action('wp_enqueue_scripts', 'botly_enqueue_chatbot');`;
 ` + S_BUNDLE + `
 
 ` + S_OPEN + `
-  InsuranceChatbot.init({
+  BotlyChatbot.init({
     company: {
       name: "Your Brand Name",
       supportPhone: "+1 (800) 555-0199",
@@ -1139,7 +1139,7 @@ async def home(request: Request):
 # <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">
 # ` + S_BUNDLE + `
 # ` + S_OPEN + `
-#   InsuranceChatbot.init({
+#   BotlyChatbot.init({
 #     company: { name: "{{ company_name }}" },
 #     goal: "{{ botly_goal }}"
 #   });
@@ -1168,7 +1168,7 @@ app.listen(3000, () => {
 <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"> -->
 <!-- ` + S_BUNDLE + ` -->
 <!-- ` + S_OPEN + ` -->
-<!--   InsuranceChatbot.init({ -->
+<!--   BotlyChatbot.init({ -->
 <!--     company: { name: '<%= companyName %>' }, -->
 <!--     goal: '<%= botlyGoal %>' -->
 <!--   }); -->
@@ -1227,8 +1227,8 @@ app.listen(3000, () => {
       renderCode();
 
       // Dynamically update the live mounted chatbot on this page!
-      if (window.InsuranceChatbot && typeof window.InsuranceChatbot.setCompanyGoal === 'function') {
-        window.InsuranceChatbot.setCompanyGoal(goalKey);
+      if (window.BotlyChatbot && typeof window.BotlyChatbot.setCompanyGoal === 'function') {
+        window.BotlyChatbot.setCompanyGoal(goalKey);
       }
     }
 
@@ -1272,8 +1272,8 @@ app.listen(3000, () => {
     document.addEventListener('DOMContentLoaded', () => {
       renderCode();
 
-      if (window.InsuranceChatbot) {
-        window.InsuranceChatbot.init({
+      if (window.BotlyChatbot) {
+        window.BotlyChatbot.init({
           mode: 'saas',
           company: {
             name: "Botly",

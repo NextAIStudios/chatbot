@@ -324,7 +324,7 @@ export class UIRenderer {
             <div class="ins-detail-line"><span>Deductible (Excess):</span> <strong>${q.deductible}</strong></div>
             ${q.addons.length > 0 ? `<div class="ins-detail-line"><span>Riders Included:</span> <strong>${q.addons.join(', ')}</strong></div>` : ''}
           </div>
-          <button class="ins-btn-primary" onclick="window.InsuranceChatbot.triggerAction('checkout_now')">
+          <button class="ins-btn-primary" onclick="window.BotlyChatbot.triggerAction('checkout_now')">
             💳 Buy Policy Now (${q.currencySymbol}${Number(q.annualTotal).toLocaleString()})
           </button>
         </div>

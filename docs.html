@@ -117,7 +117,7 @@
   <div class="docs-topbar-right">
     <a href="index.html" class="topbar-link">Home</a>
     <a href="demo/customizer.html" class="topbar-link">Customizer</a>
-    <a href="https://github.com/NextAIStudios/chatbot" target="_blank" rel="noopener" class="topbar-link">GitHub</a>
+    
     <a href="demo/customizer.html" class="topbar-cta">Get started free</a>
   </div>
 </header>
@@ -209,7 +209,7 @@
 &lt;!-- Before &lt;/body&gt; --&gt;
 &lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  InsuranceChatbot.init({
+  BotlyChatbot.init({
     company: { name: "Your Company" },
     bot: { name: "Botly", title: "AI Assistant" }
   });
@@ -218,8 +218,8 @@
 
     <div class="steps">
       <div class="step-card"><div class="step-num">1</div><div class="step-content"><h4>Include the stylesheet</h4><p>Add the &lt;link&gt; tag inside your &lt;head&gt;. Loads the widget design system.</p></div></div>
-      <div class="step-card"><div class="step-num">2</div><div class="step-content"><h4>Include the script</h4><p>Add the &lt;script&gt; before &lt;/body&gt;. Exposes the global <code>InsuranceChatbot</code> object.</p></div></div>
-      <div class="step-card"><div class="step-num">3</div><div class="step-content"><h4>Call InsuranceChatbot.init()</h4><p>Pass your company name, bot name, and optional config. Bot appears as a floating widget instantly.</p></div></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-content"><h4>Include the script</h4><p>Add the &lt;script&gt; before &lt;/body&gt;. Exposes the global <code>BotlyChatbot</code> object.</p></div></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-content"><h4>Call BotlyChatbot.init()</h4><p>Pass your company name, bot name, and optional config. Bot appears as a floating widget instantly.</p></div></div>
     </div>
 
     <hr class="docs-divider">
@@ -227,7 +227,7 @@
     <h2 class="docs-h2" id="init">Full Configuration Reference</h2>
     <div class="code-block">
       <div class="code-block-header"><span class="code-block-lang">JavaScript</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre class="code-pre">InsuranceChatbot.init({
+      <pre class="code-pre">BotlyChatbot.init({
   company: {
     name: "Acme Corp",
     supportPhone: "+254 700 000 000",
@@ -368,7 +368,7 @@
 &lt;/head&gt;&lt;body&gt;
   &lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
   &lt;script&gt;
-    InsuranceChatbot.init({
+    BotlyChatbot.init({
       company: { name: "Your Company", supportPhone: "+254 700 000 000" },
       bot: { name: "Ace", greeting: "Hi! How can I help?" },
       goal: "lead_generation",
@@ -397,7 +397,7 @@ export default function RootLayout({ children }) {
           src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"
           strategy="afterInteractive"
           onLoad={() =&gt; {
-            window.InsuranceChatbot.init({
+            window.BotlyChatbot.init({
               company: { name: "Your Company" },
               bot: { name: "Ace" },
               goal: "lead_generation"
@@ -418,7 +418,7 @@ export default function RootLayout({ children }) {
     href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"&gt;
   &lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
   &lt;script&gt;
-    InsuranceChatbot.init({
+    BotlyChatbot.init({
       company: { name: "&lt;?php bloginfo('name'); ?&gt;" },
       bot: { name: "Botly", title: "AI Assistant" },
       goal: "customer_support"
@@ -432,7 +432,7 @@ export default function RootLayout({ children }) {
     <h2 class="docs-h2" id="webhooks">Webhook / Backend API</h2>
     <div class="code-block">
       <div class="code-block-header"><span class="code-block-lang">JavaScript — Config</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre class="code-pre">InsuranceChatbot.init({
+      <pre class="code-pre">BotlyChatbot.init({
   api: {
     enabled: true,
     endpoint: "https://your-api.com/botly/query",
@@ -506,9 +506,9 @@ app.listen(3000);</pre>
     <p>All captured leads are stored in <code>localStorage</code> under <code>botly_captured_leads</code>.</p>
     <div class="code-block">
       <div class="code-block-header"><span class="code-block-lang">JavaScript</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre class="code-pre">const leads = InsuranceChatbot.getLeads();   // array of lead objects
-InsuranceChatbot.exportLeadsCSV();           // downloads .csv file
-InsuranceChatbot.clearLeads();               // clears from localStorage</pre>
+      <pre class="code-pre">const leads = BotlyChatbot.getLeads();   // array of lead objects
+BotlyChatbot.exportLeadsCSV();           // downloads .csv file
+BotlyChatbot.clearLeads();               // clears from localStorage</pre>
     </div>
 
     <hr class="docs-divider">
@@ -516,17 +516,17 @@ InsuranceChatbot.clearLeads();               // clears from localStorage</pre>
     <h2 class="docs-h2" id="js-api">JavaScript API</h2>
     <table class="prop-table">
       <tr><th>Method</th><th>Description</th></tr>
-      <tr><td><code>InsuranceChatbot.init(config)</code></td><td>Initialize the widget. Call once after script loads.</td></tr>
-      <tr><td><code>InsuranceChatbot.open()</code></td><td>Programmatically open the chat window.</td></tr>
-      <tr><td><code>InsuranceChatbot.close()</code></td><td>Close the chat window.</td></tr>
-      <tr><td><code>InsuranceChatbot.toggle()</code></td><td>Toggle open/closed state.</td></tr>
-      <tr><td><code>InsuranceChatbot.triggerAction(text)</code></td><td>Send a message as if the user typed it.</td></tr>
-      <tr><td><code>InsuranceChatbot.reset()</code></td><td>Clear conversation and reset to greeting.</td></tr>
-      <tr><td><code>InsuranceChatbot.getLeads()</code></td><td>Returns array of all captured leads.</td></tr>
-      <tr><td><code>InsuranceChatbot.exportLeadsCSV()</code></td><td>Downloads leads as a .csv file.</td></tr>
-      <tr><td><code>InsuranceChatbot.clearLeads()</code></td><td>Clears all stored leads from localStorage.</td></tr>
-      <tr><td><code>InsuranceChatbot.getKnowledge()</code></td><td>Returns current trained knowledge entries.</td></tr>
-      <tr><td><code>InsuranceChatbot.resetKnowledge()</code></td><td>Clears trained knowledge.</td></tr>
+      <tr><td><code>BotlyChatbot.init(config)</code></td><td>Initialize the widget. Call once after script loads.</td></tr>
+      <tr><td><code>BotlyChatbot.open()</code></td><td>Programmatically open the chat window.</td></tr>
+      <tr><td><code>BotlyChatbot.close()</code></td><td>Close the chat window.</td></tr>
+      <tr><td><code>BotlyChatbot.toggle()</code></td><td>Toggle open/closed state.</td></tr>
+      <tr><td><code>BotlyChatbot.triggerAction(text)</code></td><td>Send a message as if the user typed it.</td></tr>
+      <tr><td><code>BotlyChatbot.reset()</code></td><td>Clear conversation and reset to greeting.</td></tr>
+      <tr><td><code>BotlyChatbot.getLeads()</code></td><td>Returns array of all captured leads.</td></tr>
+      <tr><td><code>BotlyChatbot.exportLeadsCSV()</code></td><td>Downloads leads as a .csv file.</td></tr>
+      <tr><td><code>BotlyChatbot.clearLeads()</code></td><td>Clears all stored leads from localStorage.</td></tr>
+      <tr><td><code>BotlyChatbot.getKnowledge()</code></td><td>Returns current trained knowledge entries.</td></tr>
+      <tr><td><code>BotlyChatbot.resetKnowledge()</code></td><td>Clears trained knowledge.</td></tr>
     </table>
 
     <h2 class="docs-h2" id="events">Events</h2>

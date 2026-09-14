@@ -247,10 +247,10 @@ export class ReceiptGenerator {
         </div>
 
         <div class="receipt-actions">
-          <button type="button" class="btn-receipt-action btn-print" onclick="InsuranceChatbot.printCertificate()">
+          <button type="button" class="btn-receipt-action btn-print" onclick="BotlyChatbot.printCertificate()">
             🖨️ Print Certificate
           </button>
-          <button type="button" class="btn-receipt-action btn-download" onclick="InsuranceChatbot.printCertificate()">
+          <button type="button" class="btn-receipt-action btn-download" onclick="BotlyChatbot.printCertificate()">
             📥 Save PDF Card
           </button>
         </div>
