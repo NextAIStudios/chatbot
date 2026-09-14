@@ -1007,6 +1007,14 @@
             </label>
             <input type="email" id="wiz-support-email" class="wiz-input" placeholder="support@yourcompany.com" value="care@mycompany.com">
           </div>
+
+          <div class="form-group">
+            <label class="form-label" for="wiz-support-phone">
+              <span>Support Phone (Optional)</span>
+              <span class="form-hint">For team calls &amp; direct handover</span>
+            </label>
+            <input type="tel" id="wiz-support-phone" class="wiz-input" placeholder="+1 (800) 555-0199" value="+1 (800) 555-0199">
+          </div>
         </div>
 
         <!-- ==========================================
@@ -1431,6 +1439,7 @@
       botTitle: 'AI Assistant',
       greeting: "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.",
       supportEmail: 'care@mycompany.com',
+      supportPhone: '+1 (800) 555-0199',
       logoUrl: '', // Custom uploaded or pasted logo
       primaryColor: '#18221c',
       accentColor: '#9be553',
@@ -2293,7 +2302,8 @@
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
 '      name: ' + JSON.stringify(wizardState.companyName) + ',\n' +
-'      supportEmail: ' + JSON.stringify(wizardState.supportEmail || 'care@botly.ai') + '\n' +
+'      supportEmail: ' + JSON.stringify(wizardState.supportEmail || 'care@botly.ai') + ',\n' +
+'      supportPhone: ' + JSON.stringify(wizardState.supportPhone || '+1 (800) 555-0199') + '\n' +
 '    },\n' +
 '    bot: {\n' +
 '      name: ' + JSON.stringify(wizardState.botName) + ',\n' +
@@ -2383,12 +2393,14 @@
       var botTitleEl = document.getElementById('wiz-bot-title');
       var greetingEl = document.getElementById('wiz-bot-greeting');
       var emailEl = document.getElementById('wiz-support-email');
+      var phoneEl = document.getElementById('wiz-support-phone');
 
       if (compEl) wizardState.companyName = compEl.value.trim() || 'My Company';
       if (botNameEl) wizardState.botName = botNameEl.value.trim() || 'Botly';
       if (botTitleEl) wizardState.botTitle = botTitleEl.value.trim() || 'AI Assistant';
       if (greetingEl) wizardState.greeting = greetingEl.value.trim() || "Hey! How can I help you today?";
       if (emailEl) wizardState.supportEmail = emailEl.value.trim() || 'care@mycompany.com';
+      if (phoneEl) wizardState.supportPhone = phoneEl.value.trim() || '+1 (800) 555-0199';
 
       if (!window.BotlyChatbot) return;
 
@@ -2438,7 +2450,7 @@
           company: {
             name: wizardState.companyName,
             supportEmail: wizardState.supportEmail,
-            supportPhone: '+1 (800) 555-0199'
+            supportPhone: wizardState.supportPhone || '+1 (800) 555-0199'
           },
           bot: {
             name: wizardState.botName,
@@ -2600,7 +2612,7 @@
       applyBotLiveConfig();
       updateLeadsBadge();
 
-      ['wiz-company-name', 'wiz-bot-name', 'wiz-bot-title', 'wiz-bot-greeting', 'wiz-support-email'].forEach(function(id) {
+      ['wiz-company-name', 'wiz-bot-name', 'wiz-bot-title', 'wiz-bot-greeting', 'wiz-support-email', 'wiz-support-phone'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.addEventListener('input', applyBotLiveConfig);
       });

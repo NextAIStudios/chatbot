@@ -672,11 +672,102 @@
       });
   }
 
-  function classifyQuery(text, config, customFaqs, customKnowledge) {
+  function classifyQuery(text, config, customFaqs, customKnowledge, memory) {
     var raw = (text || '').trim();
     var queryTokens = tokenize(raw);
     var lower = raw.toLowerCase();
     var isSaasMode = !!(config.mode === 'saas' || (config.customFaqs && config.customFaqs.length > 0));
+
+    memory = memory || {
+      turns: 0,
+      history: [],
+      visitedTopics: [],
+      askedFollowUps: [],
+      lastFollowUp: null,
+      goalStage: 0,
+      lastTopic: ''
+    };
+    if (typeof memory.goalStage !== 'number') memory.goalStage = 0;
+    if (!Array.isArray(memory.askedFollowUps)) memory.askedFollowUps = [];
+    if (!Array.isArray(memory.visitedTopics)) memory.visitedTopics = [];
+
+    // Affirmative & Negative response handling for progressive follow-ups
+    var isAffirmative = /^(yes|yeah|yep|yup|sure|ok|okay|definitely|certainly|absolutely|please|yes\s*please|let'?s\s*do\s*it|let'?s\s*do\s*that|proceed|sounds\s*good|sounds\s*great|i'?d\s*like\s*that|i\s*want\s*that|let'?s\s*go|go\s*ahead|book\s*it|schedule|sign\s*me\s*up|count\s*me\s*in|i\s*agree|yes\s*i\s*would|yes\s*we\s*do|checkout|buy\s*now|book\s*now)\b/i.test(lower);
+    var isNegative = /^(no|nope|not\s*now|not\s*right\s*now|no\s*thanks|no\s*thank\s*you|maybe\s*later|not\s*yet|nevermind|i'?m\s*good|pass)\b/i.test(lower);
+
+    if (isNegative && lower.length < 35) {
+      memory.lastFollowUp = null;
+      var compName = (config && config.company && config.company.name) ? config.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      return {
+        intent: 'dismiss',
+        reply: "No problem at all! 😊 Take your time. Feel free to ask any other questions about our services, or let me know whenever you'd like to explore further.",
+        suggestedQuickReplies: isSaasMode ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
+        ] : [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '💳 Proceed to Payment', payload: 'intent_pay' },
+          { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+        ]
+      };
+    }
+
+    if (isAffirmative && memory.lastFollowUp && lower.length < 40) {
+      var followType = memory.lastFollowUp.type;
+      var topicDesc = memory.lastFollowUp.topic || memory.lastTopic || 'your inquiry';
+
+      if (followType === 'payment_checkout') {
+        memory.lastFollowUp = null;
+        return {
+          intent: 'start_payment_flow',
+          action: 'OPEN_PAYMENT_WIZARD'
+        };
+      }
+
+      if (followType === 'consultation_booking') {
+        memory.lastFollowUp = null;
+        return {
+          intent: 'consultation_booking',
+          action: 'LEAD_CAPTURE',
+          inquiredNeed: '1-on-1 Consultation Session (' + topicDesc + ')',
+          leadIntro: "Awesome! Let's get your 1-on-1 consultation session scheduled. May I please have your **full name**?"
+        };
+      }
+
+      if (followType === 'lead_generation') {
+        memory.lastFollowUp = null;
+        return {
+          intent: 'lead_generation',
+          action: 'LEAD_CAPTURE',
+          inquiredNeed: topicDesc ? 'Follow-up regarding ' + topicDesc : 'Specialist Follow-Up & Consultation',
+          leadIntro: "Wonderful! I'll have our specialist prepare a custom proposal and reach out directly. May I please have your **full name**?"
+        };
+      }
+
+      if (followType === 'customer_support' || followType === 'human_handover') {
+        memory.lastFollowUp = null;
+        var supportPhone = (config && config.company && config.company.supportPhone) || '+1 (800) 555-0199';
+        var supportEmail = (config && config.company && config.company.supportEmail) || 'care@mycompany.com';
+        return {
+          intent: 'human_handover',
+          action: 'LEAD_CAPTURE',
+          inquiredNeed: 'Support Specialist Callback (' + topicDesc + ')',
+          leadIntro: "I'd be glad to connect you with our support team! You can also reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nCould you please share your **full name** so an agent can call you right back?"
+        };
+      }
+    }
+
+    // Direct booking intent
+    if (/\b(book\s*a\s*(call|consultation|meeting|demo)|schedule\s*a\s*(call|consultation|meeting|demo)|i\s*want\s*to\s*book|book\s*consultation)\b/i.test(lower)) {
+      return {
+        intent: 'consultation_booking',
+        action: 'LEAD_CAPTURE',
+        inquiredNeed: '1-on-1 Consultation Demo (' + (memory.lastTopic || 'General Consultation') + ')',
+        leadIntro: "Awesome! Let's get your 1-on-1 consultation session scheduled. May I please have your **full name**?"
+      };
+    }
 
     // 1. Direct Greetings
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
@@ -789,72 +880,314 @@
       }
     });
 
-    function generateFollowUpQuestion(item) {
-      if (isSaasMode) {
-        var goals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
+    function generateFollowUpQuestion(item, mem, cfg, saasMode) {
+      cfg = cfg || config || {};
+      mem = mem || memory || { turns: 0, history: [], visitedTopics: [], askedFollowUps: [], lastFollowUp: null, goalStage: 0, lastTopic: '' };
+      if (typeof mem.goalStage !== 'number') mem.goalStage = 0;
+      if (!Array.isArray(mem.askedFollowUps)) mem.askedFollowUps = [];
+      if (!Array.isArray(mem.visitedTopics)) mem.visitedTopics = [];
+
+      var goals = cfg.goals || (cfg.goal ? [cfg.goal] : ['lead_generation']);
+      var compName = (cfg.company && cfg.company.name) ? cfg.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'our team';
+      var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '+1 (800) 555-0199';
+
+      if (!saasMode) {
+        var tone = (cfg && cfg.followUpDynamics && cfg.followUpDynamics.tone) || (cfg && cfg.goal === 'customer_support' ? 'support' : (cfg && cfg.goal === 'payment_checkout' ? 'sales' : 'consultative'));
+
+        if (tone === 'direct') {
+          return { text: '💬 Would you like to proceed with this or explore other options?', type: 'direct', key: 'ins_direct' };
+        }
+
+        if (!item) {
+          if (tone === 'sales') return { text: '💬 Would you like me to connect you with an advisor to reserve this rate today?', type: 'sales', key: 'ins_reserve_rate' };
+          if (tone === 'support') return { text: '💬 Did this completely solve your inquiry, or can I clarify anything else?', type: 'customer_support', key: 'ins_solve_inquiry' };
+          return { text: '💬 Does this answer your question, or would you like me to clarify anything specific?', type: 'customer_support', key: 'ins_clarify_specific' };
+        }
+
+        var cat = item.category || '';
+        var q = (item.question || '').toLowerCase();
+
+        if (tone === 'sales') {
+          if (cat === 'payments' || q.indexOf('pay') !== -1) {
+            return { text: '💬 Shall we complete your activation and lock in your discount right now?', type: 'payment_checkout', key: 'ins_complete_act' };
+          }
+          if (cat === 'auto' || cat === 'health') {
+            return { text: '💬 Would you like our underwriter to reserve this quote for you today?', type: 'lead_generation', key: 'ins_reserve_quote' };
+          }
+        }
+
+        if (tone === 'support') {
+          if (cat === 'claims' || q.indexOf('claim') !== -1) {
+            return { text: '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?', type: 'customer_support', key: 'ins_file_claim' };
+          }
+          return { text: '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?', type: 'customer_support', key: 'ins_support_specialist' };
+        }
+
+        if (cat === 'claims' || q.indexOf('claim') !== -1) {
+          return { text: '💬 Would you like me to start an incident report and fast-track a claim for you right now?', type: 'customer_support', key: 'ins_start_incident' };
+        }
+        if (cat === 'auto' || q.indexOf('auto') !== -1 || q.indexOf('car') !== -1) {
+          return { text: '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?', type: 'lead_generation', key: 'ins_exact_quote' };
+        }
+        if (cat === 'health' || q.indexOf('health') !== -1 || q.indexOf('medical') !== -1) {
+          return { text: '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?', type: 'lead_generation', key: 'ins_health_tiers' };
+        }
+        if (cat === 'payments' || q.indexOf('pay') !== -1 || q.indexOf('discount') !== -1) {
+          return { text: '💬 Would you like to proceed with checkout and apply your active discount code now?', type: 'payment_checkout', key: 'ins_pay_discount' };
+        }
+        if (q.indexOf('deductible') !== -1) {
+          return { text: '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?', type: 'lead_generation', key: 'ins_deductible_effect' };
+        }
+        return { text: '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?', type: 'customer_support', key: 'ins_clarify_setup' };
+      }
+
+      // SaaS Mode: Progressive, Context-Aware, Memory-Tracking Follow-Up System
+      var qLower = (item ? item.question || '' : '').toLowerCase();
+      var aLower = (item ? item.answer || '' : '').toLowerCase();
+      var fullTxt = qLower + ' ' + aLower + ' ' + (item && item.keywords ? item.keywords.join(' ') : '').toLowerCase();
+
+      var isPricing = /\b(price|pricing|cost|fee|rate|plan|plans|package|packages|tier|tiers|\$|subscription|billing|charge)\b/i.test(fullTxt);
+      var isServices = /\b(service|services|solution|solutions|feature|features|capability|capabilities|offer|provide|platform|develop|custom)\b/i.test(fullTxt);
+      var isSupport = /\b(support|contact|reach|phone|email|help|assist|call|hours|location)\b/i.test(fullTxt);
+      var isOnboarding = /\b(start|how|work|setup|install|embed|guide|onboard|getting started|step|process)\b/i.test(fullTxt);
+
+      var topicLabel = (item && item.question) ? item.question : 'our services';
+      if (topicLabel.length > 38) topicLabel = topicLabel.substring(0, 35) + '...';
+
+      var stage = mem.goalStage;
+      var candidateList = [];
+
+      // 1. If topic is Pricing / Plans
+      if (isPricing) {
         if (goals.indexOf('payment_checkout') !== -1) {
-          return '💬 Would you like to complete an order or checkout, or do you have any other questions?';
+          candidateList.push({
+            key: 'chk_lock_plan',
+            type: 'payment_checkout',
+            text: '💬 Would you like to proceed with secure in-chat checkout to lock in this plan today?'
+          });
+          candidateList.push({
+            key: 'chk_complete_order',
+            type: 'payment_checkout',
+            text: '💬 Ready to get started? We can complete your order right here in chat in under 2 minutes.'
+          });
+          candidateList.push({
+            key: 'chk_launch_now',
+            type: 'payment_checkout',
+            text: '💬 Shall we launch instant checkout now to activate your setup?'
+          });
         }
         if (goals.indexOf('consultation_booking') !== -1) {
-          return '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team?';
+          candidateList.push({
+            key: 'con_pricing_demo',
+            type: 'consultation_booking',
+            text: '💬 Would you like to schedule a 1-on-1 consultation to review a tailored pricing proposal?'
+          });
+          candidateList.push({
+            key: 'con_15min_session',
+            type: 'consultation_booking',
+            text: '💬 Shall we book a quick 15-minute demo with our team to walk through what\'s included?'
+          });
         }
         if (goals.indexOf('lead_generation') !== -1) {
-          return '💬 Would you like our team to follow up with you directly, or can I help with anything else?';
+          candidateList.push({
+            key: 'lead_custom_pricing',
+            type: 'lead_generation',
+            text: '💬 Would you like our specialist to send you a customized pricing breakdown for your team?'
+          });
+          candidateList.push({
+            key: 'lead_discount_followup',
+            type: 'lead_generation',
+            text: '💬 Shall I have an advisor follow up with you directly to discuss discount options and volume tiers?'
+          });
         }
-        return '💬 Does this help, or would you like more details?';
-      }
-
-      var tone = (config && config.followUpDynamics && config.followUpDynamics.tone) || (config && config.goal === 'customer_support' ? 'support' : (config && config.goal === 'payment_checkout' ? 'sales' : 'consultative'));
-
-      if (tone === 'direct') {
-        return '💬 Would you like to proceed with this or explore other options?';
-      }
-
-      if (!item) {
-        if (tone === 'sales') return '💬 Would you like me to connect you with an advisor to reserve this rate today?';
-        if (tone === 'support') return '💬 Did this completely solve your inquiry, or can I clarify anything else?';
-        return '💬 Does this answer your question, or would you like me to clarify anything specific?';
-      }
-
-      var cat = item.category || '';
-      var q = (item.question || '').toLowerCase();
-
-      if (tone === 'sales') {
-        if (cat === 'payments' || q.indexOf('pay') !== -1) {
-          return '💬 Shall we complete your activation and lock in your discount right now?';
-        }
-        if (cat === 'auto' || cat === 'health') {
-          return '💬 Would you like our underwriter to reserve this quote for you today?';
+        if (goals.indexOf('customer_support') !== -1 || candidateList.length === 0) {
+          candidateList.push({
+            key: 'sup_pricing_help',
+            type: 'customer_support',
+            text: '💬 Did this pricing information help, or would you like to speak directly with an advisor?'
+          });
         }
       }
-
-      if (tone === 'support') {
-        if (cat === 'claims' || q.indexOf('claim') !== -1) {
-          return '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?';
+      // 2. If topic is Services / Solutions
+      else if (isServices) {
+        if (goals.indexOf('lead_generation') !== -1) {
+          if (stage === 0) {
+            candidateList.push({
+              key: 'lead_which_service',
+              type: 'lead_generation',
+              text: '💬 Which of these services aligns best with your current project, or would you like a tailored recommendation from our team?'
+            });
+          }
+          candidateList.push({
+            key: 'lead_custom_proposal',
+            type: 'lead_generation',
+            text: '💬 Would you like our specialist to prepare a custom scope breakdown and proposal for your team?'
+          });
+          candidateList.push({
+            key: 'lead_advisor_connect',
+            type: 'lead_generation',
+            text: '💬 Shall I connect you directly with a specialist to review requirements and share personalized options?'
+          });
         }
-        return '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?';
+        if (goals.indexOf('consultation_booking') !== -1) {
+          candidateList.push({
+            key: 'con_walkthrough',
+            type: 'consultation_booking',
+            text: '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team to walk through your requirements?'
+          });
+          candidateList.push({
+            key: 'con_workflow_demo',
+            type: 'consultation_booking',
+            text: '💬 Would you like to see how this works in practice for your specific workflow in a live demo?'
+          });
+        }
+        if (goals.indexOf('payment_checkout') !== -1) {
+          candidateList.push({
+            key: 'chk_package_options',
+            type: 'payment_checkout',
+            text: '💬 Would you like to review our available packages and pricing tiers for this service?'
+          });
+        }
+        if (goals.indexOf('customer_support') !== -1) {
+          candidateList.push({
+            key: 'sup_service_clarify',
+            type: 'customer_support',
+            text: '💬 Does this cover what you were looking for, or can I clarify any specific feature?'
+          });
+        }
+      }
+      // 3. If topic is Support / Contact / Phone
+      else if (isSupport) {
+        candidateList.push({
+          key: 'sup_direct_callback',
+          type: 'customer_support',
+          text: '💬 Did this answer address your inquiry, or would you prefer a quick callback from our support specialist?'
+        });
+        candidateList.push({
+          key: 'sup_phone_escalate',
+          type: 'customer_support',
+          text: '💬 Our team is available at **' + phoneNum + '**. Would you like an advisor to reach out directly?'
+        });
+      }
+      // 4. If topic is Onboarding / Getting Started
+      else if (isOnboarding) {
+        if (goals.indexOf('lead_generation') !== -1) {
+          candidateList.push({
+            key: 'lead_onboard_step',
+            type: 'lead_generation',
+            text: '💬 Would you like our team to guide you through getting started with a personalized walkthrough?'
+          });
+        }
+        if (goals.indexOf('consultation_booking') !== -1) {
+          candidateList.push({
+            key: 'con_onboard_session',
+            type: 'consultation_booking',
+            text: '💬 Would you like to schedule a 1-on-1 onboarding demo session with our specialist?'
+          });
+        }
+        if (goals.indexOf('payment_checkout') !== -1) {
+          candidateList.push({
+            key: 'chk_onboard_checkout',
+            type: 'payment_checkout',
+            text: '💬 Ready to activate your setup with instant checkout, or do you have any other questions?'
+          });
+        }
       }
 
-      if (cat === 'claims' || q.indexOf('claim') !== -1) {
-        return '💬 Would you like me to start an incident report and fast-track a claim for you right now?';
+      // 5. Default progressive sequence across the active goals
+      if (goals.indexOf('payment_checkout') !== -1) {
+        candidateList.push({
+          key: 'chk_default_progress',
+          type: 'payment_checkout',
+          text: '💬 Would you like to complete an order or checkout, or do you have any other questions?'
+        });
       }
-      if (cat === 'auto' || q.indexOf('auto') !== -1 || q.indexOf('car') !== -1) {
-        return '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?';
+      if (goals.indexOf('consultation_booking') !== -1) {
+        candidateList.push({
+          key: 'con_default_progress',
+          type: 'consultation_booking',
+          text: '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team?'
+        });
       }
-      if (cat === 'health' || q.indexOf('health') !== -1 || q.indexOf('medical') !== -1) {
-        return '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?';
+      if (goals.indexOf('lead_generation') !== -1) {
+        candidateList.push({
+          key: 'lead_default_progress',
+          type: 'lead_generation',
+          text: '💬 Would you like our team to follow up with you directly, or can I help with anything else?'
+        });
+        candidateList.push({
+          key: 'lead_default_progress_2',
+          type: 'lead_generation',
+          text: '💬 Shall I have an advisor follow up with tailored recommendations for your business?'
+        });
       }
-      if (cat === 'payments' || q.indexOf('pay') !== -1 || q.indexOf('discount') !== -1) {
-        return '💬 Would you like to proceed with checkout and apply your active discount code now?';
+      if (goals.indexOf('customer_support') !== -1) {
+        candidateList.push({
+          key: 'sup_default_progress',
+          type: 'customer_support',
+          text: '💬 Does this help address your inquiry, or would you like more details?'
+        });
       }
-      if (q.indexOf('deductible') !== -1) {
-        return '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?';
+      candidateList.push({
+        key: 'gen_default_help',
+        type: goals[0] || 'lead_generation',
+        text: '💬 Does this help, or would you like more details?'
+      });
+
+      // Filter out any candidates already asked in this conversation!
+      var chosen = null;
+      for (var ci = 0; ci < candidateList.length; ci++) {
+        var cand = candidateList[ci];
+        if (mem.askedFollowUps.indexOf(cand.key) === -1 && mem.askedFollowUps.indexOf(cand.text) === -1) {
+          chosen = cand;
+          break;
+        }
       }
-      return '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?';
+
+      // If all candidates have been asked, create a fresh non-repeating follow-up
+      if (!chosen) {
+        var cycleNum = mem.askedFollowUps.length + 1;
+        var freshKey = 'fresh_followup_' + cycleNum;
+        if (goals.indexOf('consultation_booking') !== -1 && mem.askedFollowUps.indexOf('fresh_con_' + cycleNum) === -1) {
+          chosen = {
+            key: 'fresh_con_' + cycleNum,
+            type: 'consultation_booking',
+            text: '💬 Would you like to schedule a 1-on-1 advisor call to review any remaining questions?'
+          };
+        } else if (goals.indexOf('payment_checkout') !== -1 && mem.askedFollowUps.indexOf('fresh_chk_' + cycleNum) === -1) {
+          chosen = {
+            key: 'fresh_chk_' + cycleNum,
+            type: 'payment_checkout',
+            text: '💬 When you are ready, I can help you complete your order right here. Shall we proceed?'
+          };
+        } else {
+          chosen = {
+            key: freshKey,
+            type: goals[0] || 'lead_generation',
+            text: '💬 What other details about **' + topicLabel + '** can I help clarify, or would you like our team to connect with you?'
+          };
+        }
+      }
+
+      // Record in memory
+      mem.askedFollowUps.push(chosen.key);
+      mem.askedFollowUps.push(chosen.text);
+      mem.goalStage = stage + 1;
+      mem.lastTopic = topicLabel;
+      mem.lastFollowUp = {
+        type: chosen.type,
+        topic: topicLabel,
+        text: chosen.text,
+        stage: stage
+      };
+
+      return chosen;
     }
 
     if (best && highest >= 0.25) {
-      var followUp = generateFollowUpQuestion(best);
+      var followUpObj = generateFollowUpQuestion(best, memory, config, isSaasMode);
+      var followUpText = (typeof followUpObj === 'string') ? followUpObj : (followUpObj ? followUpObj.text : '');
       var replyPrefix = '';
       if (best.source === 'document' || best.category === 'document') {
         replyPrefix = '**From Company Records:**\n\n';
@@ -869,19 +1202,31 @@
 
       if (isSaasMode) {
         var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
+        
+        // Contextual follow-up quick reply
+        if (followUpObj && followUpObj.type === 'consultation_booking') {
+          faqQuickReplies.push({ label: 'Book Consultation', payload: 'I want to book a consultation session' });
+        } else if (followUpObj && followUpObj.type === 'payment_checkout') {
+          faqQuickReplies.push({ label: 'Proceed to Checkout', payload: 'I want to proceed to checkout' });
+        } else if (followUpObj && followUpObj.type === 'lead_generation') {
+          faqQuickReplies.push({ label: 'Yes, follow up with me', payload: 'Yes please follow up with me' });
+        }
+
         if (activeGoals.indexOf('lead_generation') !== -1) {
           faqQuickReplies.push({ label: 'Get started', payload: 'How do I get started?' });
         }
-        if (activeGoals.indexOf('payment_checkout') !== -1) {
+        if (activeGoals.indexOf('payment_checkout') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Checkout') !== -1; })) {
           faqQuickReplies.push({ label: 'Pricing & Plans', payload: 'What are your pricing and plans?' });
         }
-        if (activeGoals.indexOf('consultation_booking') !== -1) {
+        if (activeGoals.indexOf('consultation_booking') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Consultation') !== -1; })) {
           faqQuickReplies.push({ label: 'Book a Call', payload: 'I want to book a consultation session' });
         }
         if (activeGoals.indexOf('customer_support') !== -1 || faqQuickReplies.length < 2) {
           faqQuickReplies.push({ label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel });
         }
-        faqQuickReplies.unshift({ label: 'Our Services', payload: 'What services do you offer?' });
+        if (!faqQuickReplies.some(function(q) { return q.label === 'Our Services'; })) {
+          faqQuickReplies.unshift({ label: 'Our Services', payload: 'What services do you offer?' });
+        }
       } else {
         faqQuickReplies = [
           { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
@@ -892,8 +1237,10 @@
 
       return {
         intent: 'faq',
-        reply: replyPrefix + best.answer + '\n\n' + followUp,
-        suggestedQuickReplies: faqQuickReplies
+        reply: replyPrefix + best.answer + '\n\n' + followUpText,
+        suggestedQuickReplies: faqQuickReplies,
+        lastFollowUp: typeof followUpObj === 'object' ? followUpObj : null,
+        topic: best.question || ''
       };
     }
 
@@ -903,23 +1250,53 @@
       var isBotlySelf = !compName || compName.toLowerCase() === 'botly' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
 
       if (isBotlySelf) {
+        var priceFollowUp = (memory && memory.goalStage > 0)
+          ? "💬 Ready to deploy Botly for your business today?"
+          : "💬 Would you like help getting started?";
+        if (memory) {
+          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: 'Botly $10 Plan Deployment',
+            text: priceFollowUp,
+            stage: memory.goalStage || 0
+          };
+          memory.lastTopic = 'Botly $10 Chatbot Pricing';
+          if (memory.askedFollowUps) memory.askedFollowUps.push(priceFollowUp);
+          memory.goalStage = (memory.goalStage || 0) + 1;
+        }
         return {
           intent: 'faq',
-          reply: "$10 per chatbot per company, flat.\n\nNo monthly subscription, no per-message fees, no hidden charges. You pay $10 once to deploy a bot for a company with unlimited conversations.\n\nNeed high-volume multi-brand or agency deployment? Custom Enterprise pricing is also available.\n\n💬 Would you like help getting started?",
+          reply: "$10 per chatbot per company, flat.\n\nNo monthly subscription, no per-message fees, no hidden charges. You pay $10 once to deploy a bot for a company with unlimited conversations.\n\nNeed high-volume multi-brand or agency deployment? Custom Enterprise pricing is also available.\n\n" + priceFollowUp,
           suggestedQuickReplies: [
             { label: 'Get started', payload: 'I want to get a chatbot for my company, how do I start?' },
             { label: 'Custom Enterprise', payload: 'Tell me about custom Enterprise pricing' },
             { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
-          ]
+          ],
+          lastFollowUp: memory ? memory.lastFollowUp : null,
+          topic: 'Botly Pricing'
         };
       } else {
         var supportEmail = (config && config.company && config.company.supportEmail) ? config.company.supportEmail : 'our team';
+        var compFollowUp = "💬 Would you like our team to get in touch with you?";
+        if (memory) {
+          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: compName + ' Pricing & Custom Packages',
+            text: compFollowUp,
+            stage: memory.goalStage || 0
+          };
+          memory.lastTopic = compName + ' Pricing & Packages';
+          if (memory.askedFollowUps) memory.askedFollowUps.push(compFollowUp);
+          memory.goalStage = (memory.goalStage || 0) + 1;
+        }
         return {
           intent: 'faq',
-          reply: "For pricing details, available packages, or custom requirements for **" + compName + "**, please reach out to our team at **" + supportEmail + "** or leave your contact details in this chat.\n\n💬 Would you like our team to get in touch with you?",
+          reply: "For pricing details, available packages, or custom requirements for **" + compName + "**, please reach out to our team at **" + supportEmail + "** or leave your contact details in this chat.\n\n" + compFollowUp,
           suggestedQuickReplies: [
             { label: 'Talk to someone', payload: 'I want to speak with someone from the ' + compName + ' team' }
-          ]
+          ],
+          lastFollowUp: memory ? memory.lastFollowUp : null,
+          topic: compName + ' Pricing'
         };
       }
     }
@@ -1035,6 +1412,15 @@
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
     this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
+    this.conversationMemory = {
+      turns: 0,
+      history: [],
+      visitedTopics: [],
+      askedFollowUps: [],
+      lastFollowUp: null,
+      goalStage: 0,
+      lastTopic: ''
+    };
     this.container = null;
     this.launcher = null;
   }
@@ -1401,9 +1787,42 @@
   };
 
   BotlyChatbotController.prototype.resolveLocalQuery = function(text) {
-    var res = classifyQuery(text, this.config, this.config.customFaqs, this.trainedKnowledge);
+    this.removeTyping();
+    if (!this.conversationMemory) {
+      this.conversationMemory = {
+        turns: 0,
+        history: [],
+        visitedTopics: [],
+        askedFollowUps: [],
+        lastFollowUp: null,
+        goalStage: 0,
+        lastTopic: ''
+      };
+    }
+    var mem = this.conversationMemory;
+    var res = classifyQuery(text, this.config, this.config.customFaqs, this.trainedKnowledge, mem);
+
+    // Update conversation memory
+    mem.turns++;
+    mem.history.push({ role: 'user', text: text, timestamp: Date.now() });
+    if (res.reply) {
+      mem.history.push({ role: 'bot', text: res.reply, intent: res.intent, timestamp: Date.now() });
+    }
+    if (res.lastFollowUp) {
+      mem.lastFollowUp = res.lastFollowUp;
+      if (res.lastFollowUp.text && mem.askedFollowUps.indexOf(res.lastFollowUp.text) === -1) {
+        mem.askedFollowUps.push(res.lastFollowUp.text);
+      }
+    }
+    if (res.topic) {
+      mem.lastTopic = res.topic;
+      if (mem.visitedTopics.indexOf(res.topic) === -1) {
+        mem.visitedTopics.push(res.topic);
+      }
+    }
+
     if (res.action === 'LEAD_CAPTURE') {
-      this.startLeadCapture(res.inquiredNeed || text);
+      this.startLeadCapture(res.inquiredNeed || text, res.leadIntro);
       return;
     }
     if (res.action === 'OPEN_QUOTE_WIZARD') {
@@ -1421,7 +1840,7 @@
     this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
   };
 
-  BotlyChatbotController.prototype.startLeadCapture = function(inquiredNeed) {
+  BotlyChatbotController.prototype.startLeadCapture = function(inquiredNeed, customIntro) {
     var cleanNeed = (inquiredNeed || '').trim();
     this.leadState = {
       active: true,
@@ -1433,16 +1852,18 @@
     var compName = (this.config.company && this.config.company.name) ? this.config.company.name : 'our';
     var isSaas = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
     var needDisplay = cleanNeed ? ' regarding "**' + this.escape(cleanNeed) + '**"' : '';
-    var startMsg = '';
-    if (this.config.leadCapture && this.config.leadCapture.askNamePrompt) {
-      startMsg = this.config.leadCapture.askNamePrompt
-        .replace(/\{need\}/g, cleanNeed || 'your custom request')
-        .replace(/\{needTopic\}/g, needDisplay)
-        .replace(/\{companyName\}/g, compName);
-    } else if (isSaas) {
-      startMsg = "That's a great question" + needDisplay + "! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nMay I please have your **full name**?";
-    } else {
-      startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?";
+    var startMsg = customIntro || '';
+    if (!startMsg) {
+      if (this.config.leadCapture && this.config.leadCapture.askNamePrompt) {
+        startMsg = this.config.leadCapture.askNamePrompt
+          .replace(/\{need\}/g, cleanNeed || 'your custom request')
+          .replace(/\{needTopic\}/g, needDisplay)
+          .replace(/\{companyName\}/g, compName);
+      } else if (isSaas) {
+        startMsg = "That's a great question" + needDisplay + "! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nMay I please have your **full name**?";
+      } else {
+        startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?";
+      }
     }
     this.appendBot(startMsg, {
       quickReplies: [
@@ -2134,6 +2555,15 @@
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
     this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
+    this.conversationMemory = {
+      turns: 0,
+      history: [],
+      visitedTopics: [],
+      askedFollowUps: [],
+      lastFollowUp: null,
+      goalStage: 0,
+      lastTopic: ''
+    };
     if (this.messagesList) this.messagesList.innerHTML = '';
     this.sendGreeting();
   };

@@ -384,6 +384,41 @@ assert(mpesaCsv.includes('Payment Method') && mpesaCsv.includes('M-Pesa Code') &
 assert(mpesaCsv.includes('UIC8E69GLQ'), 'CSV export rows contain customer M-Pesa code');
 assert(mpesaCsv.includes('Kevin Otieno'), 'CSV export rows contain customer name');
 
+console.log('\n--- 🔄 13. Testing Progressive Non-Repeating Follow-Up Questions & Conversation Memory ---');
+const progressiveEngine = new IntentEngine({
+  mode: 'saas',
+  goals: ['consultation_booking', 'lead_generation'],
+  company: { name: 'Acme Cloud', supportPhone: '+1 (800) 555-0199', supportEmail: 'hello@acmecloud.com' },
+  customKnowledge: [
+    {
+      question: 'What services does Acme Cloud provide?',
+      answer: 'We provide managed cloud infrastructure, Kubernetes clusters, and AI deployment tools.',
+      keywords: ['services', 'cloud', 'infrastructure', 'kubernetes']
+    },
+    {
+      question: 'What are Acme Cloud pricing plans?',
+      answer: 'Plans start at $49/month for starter clusters and $199/month for enterprise dedicated nodes.',
+      keywords: ['pricing', 'plans', 'cost', 'month', 'rates']
+    }
+  ]
+});
+
+// Test 13.1: First FAQ query returns contextual follow-up
+const turn1 = progressiveEngine.classify('What services does Acme Cloud provide?');
+assert(turn1.reply.includes('Kubernetes'), 'Answers first FAQ correctly');
+const followUp1 = progressiveEngine.memory.lastFollowUp;
+assert(followUp1 && followUp1.text, 'Generates initial follow-up question');
+
+// Test 13.2: Second FAQ query returns a DIFFERENT, PROGRESSIVE follow-up question (Anti-repetition)
+const turn2 = progressiveEngine.classify('What are Acme Cloud pricing plans?');
+assert(turn2.reply.includes('$49/month'), 'Answers second FAQ correctly');
+const followUp2 = progressiveEngine.memory.lastFollowUp;
+assert(followUp2 && followUp2.text !== followUp1.text, 'Second follow-up question is progressive and does NOT repeat the first');
+
+// Test 13.3: Follow-ups track visited topics in conversation memory
+assert(progressiveEngine.memory.askedFollowUps.length >= 2, 'Memory tracks all asked follow-up keys/questions');
+assert(progressiveEngine.memory.goalStage >= 2, 'Goal stage progresses with each turn');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);
