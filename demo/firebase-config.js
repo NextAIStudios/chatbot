@@ -12,7 +12,8 @@ window.BOTLY_FIREBASE_CONFIG = window.BOTLY_FIREBASE_CONFIG || {
   apiKey: "YOUR_API_KEY",
   authDomain: "botly-662d7.firebaseapp.com",
   projectId: "botly-662d7",
-  storageBucket: "botly-662d7.appspot.com",
+  storageBucket: "botly-662d7.firebasestorage.app",
   messagingSenderId: "264733463582",
-  appId: "YOUR_APP_ID"
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };

@@ -3,4 +3,6 @@ node_modules/
 *.log
 .env
 .env.local
+demo/firebase-config.local.js
+*firebase-config.local.js
 dist/*.map
