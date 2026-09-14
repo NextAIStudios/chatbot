@@ -95,11 +95,21 @@
     @media (max-width: 900px) {
       .contact-grid {
         grid-template-columns: 1fr;
-        gap: 30px;
+        gap: 24px;
         margin: 20px auto 50px auto;
+        padding: 0 16px;
       }
       .contact-card {
-        padding: 24px 20px;
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+      .contact-input,
+      .contact-select,
+      .contact-textarea {
+        font-size: 16px !important; /* prevent iOS zoom */
+      }
+      .contact-hero-headline {
+        font-size: 34px !important;
       }
     }
   </style>
