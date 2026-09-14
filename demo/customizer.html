@@ -553,6 +553,30 @@
       text-overflow: ellipsis;
     }
 
+    /* Checkout Method Tab Switcher */
+    .checkout-tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .checkout-tab-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
     /* Bottom Wizard Controls */
     .wizard-footer {
       padding: 14px 20px;
@@ -861,26 +885,26 @@
               <span style="font-size: 10px; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #10b981; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">In-Chat Checkout</span>
             </div>
 
-            <!-- Option 1: External Checkout URL -->
-            <div class="form-group" style="margin-bottom: 14px;">
-              <label class="form-label" style="margin-bottom: 4px;">
-                <span>External Checkout Page URL</span>
-                <span class="form-hint">Optional</span>
-              </label>
-              <input type="url" id="wiz-checkout-url" class="wiz-input" placeholder="https://mycompany.com/checkout or your online store cart" oninput="handleCheckoutConfigChange()">
-              <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
-                When customers are ready to buy, the bot displays a button linking directly to your external checkout or payment page.
-              </small>
+            <!-- Method Tabs: Separate M-Pesa & Card -->
+            <div style="display: flex; gap: 6px; margin-bottom: 14px; background: #f1f5f9; padding: 4px; border-radius: 10px;">
+              <button type="button" id="tab-checkout-mpesa" class="checkout-tab-btn active" onclick="switchCheckoutTab('mpesa')">
+                <span style="font-size: 14px;">📱</span>
+                <span>M-Pesa Setup (Direct In-Chat)</span>
+              </button>
+              <button type="button" id="tab-checkout-card" class="checkout-tab-btn" onclick="switchCheckoutTab('card')">
+                <span style="font-size: 14px;">💳</span>
+                <span>Card &amp; External Payment Link</span>
+              </button>
             </div>
 
-            <!-- Option 2: M-Pesa Configuration -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+            <!-- Panel 1: M-Pesa Setup -->
+            <div id="checkout-panel-mpesa" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <label style="font-size: 12px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span>
-                  M-Pesa Payment Details
+                  M-Pesa Direct In-Chat Setup
                 </label>
-                <span style="font-size: 11px; color: #059669; font-weight: 700;">Customer inputs M-Pesa code after paying</span>
+                <span style="font-size: 11px; color: #059669; font-weight: 700;">Customer enters confirmation code</span>
               </div>
 
               <!-- M-Pesa Mode Selector -->
@@ -922,14 +946,61 @@
                 </div>
               </div>
 
-              <div class="form-group" style="margin: 0;">
+              <div class="form-group" style="margin-bottom: 10px;">
                 <label class="form-label" style="margin-bottom: 4px;"><span>Package / Product Description</span></label>
                 <input type="text" id="wiz-checkout-item" class="wiz-input" placeholder="e.g. Standard Package / Full Access" value="Standard Package" oninput="handleCheckoutConfigChange()">
               </div>
+
+              <div style="font-size: 11.5px; color: #166534; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
+                <strong>📱 In-Chat Verification:</strong> Customers pay on their phone via M-Pesa and enter their confirmation code (e.g. <strong>UIC8E69GLQ</strong>) right into the chatbot. The bot verifies the code and logs the paid order automatically.
+              </div>
             </div>
 
-            <div style="margin-top: 12px; font-size: 11.5px; color: #166534; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
-              <strong>M-Pesa Verification:</strong> After paying, the customer enters their confirmation code (e.g. <strong>UIC8E69GLQ</strong>) directly in chat. The chatbot verifies the code and automatically records the lead with full payment details in your Leads Manager.
+            <!-- Panel 2: Card & External Link Setup -->
+            <div id="checkout-panel-card" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #0284c7;"></span>
+                  Card &amp; External Payment Link Setup
+                </label>
+                <span style="font-size: 11px; color: #0284c7; font-weight: 700;">Stripe • PayPal • Shopify • Web URL</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" style="margin-bottom: 4px;">
+                  <span>Card Checkout Page / Payment Link URL</span>
+                </label>
+                <input type="url" id="wiz-checkout-url" class="wiz-input" placeholder="https://buy.stripe.com/... or https://mycompany.com/checkout" oninput="handleCheckoutConfigChange()">
+                <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
+                  Paste your Stripe Payment Link, PayPal, Shopify cart, Flutterwave link, or store checkout page URL.
+                </small>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="margin-bottom: 4px;"><span>Checkout Button Label</span></label>
+                  <input type="text" id="wiz-card-button-label" class="wiz-input" placeholder="Proceed to Card Checkout ↗" value="Proceed to Card Checkout ↗" oninput="handleCheckoutConfigChange()">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="margin-bottom: 4px;"><span>Amount &amp; Currency</span></label>
+                  <div style="display: flex; gap: 6px;">
+                    <select id="wiz-card-currency" class="wiz-input" style="width: 80px; padding: 7px 8px; font-weight: 700;" onchange="handleCheckoutConfigChange()">
+                      <option value="USD" selected>USD</option>
+                      <option value="KES">KES</option>
+                    </select>
+                    <input type="number" id="wiz-card-amount" class="wiz-input" style="flex: 1;" placeholder="10" value="10" oninput="handleCheckoutConfigChange()">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" style="margin-bottom: 4px;"><span>Card Product / Service Description</span></label>
+                <input type="text" id="wiz-card-item-name" class="wiz-input" placeholder="e.g. Standard Package / Starter Tier" value="Standard Package" oninput="handleCheckoutConfigChange()">
+              </div>
+
+              <div style="font-size: 11.5px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
+                <strong>💳 Card Checkout Experience:</strong> When customers select Card in chat, the bot shows a dedicated Card summary card with order amount and a secure button opening your checkout link in one click.
+              </div>
             </div>
           </div>
         </div>
@@ -1466,6 +1537,7 @@
         authBearer: ''
       },
       checkoutConfig: {
+        activeTab: 'mpesa',
         externalUrl: '',
         mpesaType: 'buy_goods',
         mpesaNumber: '123456',
@@ -1473,7 +1545,11 @@
         mpesaBusinessName: 'NextGen Ke',
         amount: '1000',
         currency: 'KES',
-        itemName: 'Standard Package'
+        itemName: 'Standard Package',
+        cardButtonLabel: 'Proceed to Card Checkout ↗',
+        cardItemName: 'Standard Package',
+        cardAmount: '10',
+        cardCurrency: 'USD'
       }
     };
 
@@ -1641,6 +1717,27 @@
       }
     }
 
+    function switchCheckoutTab(tab) {
+      var btnMpesa = document.getElementById('tab-checkout-mpesa');
+      var btnCard = document.getElementById('tab-checkout-card');
+      var panelMpesa = document.getElementById('checkout-panel-mpesa');
+      var panelCard = document.getElementById('checkout-panel-card');
+
+      if (tab === 'card') {
+        if (btnMpesa) btnMpesa.classList.remove('active');
+        if (btnCard) btnCard.classList.add('active');
+        if (panelMpesa) panelMpesa.style.display = 'none';
+        if (panelCard) panelCard.style.display = 'block';
+        if (wizardState.checkoutConfig) wizardState.checkoutConfig.activeTab = 'card';
+      } else {
+        if (btnMpesa) btnMpesa.classList.add('active');
+        if (btnCard) btnCard.classList.remove('active');
+        if (panelMpesa) panelMpesa.style.display = 'block';
+        if (panelCard) panelCard.style.display = 'none';
+        if (wizardState.checkoutConfig) wizardState.checkoutConfig.activeTab = 'mpesa';
+      }
+    }
+
     function setMpesaType(type) {
       wizardState.checkoutConfig.mpesaType = type;
       ['buygoods', 'paybill', 'sendmoney'].forEach(function(k) {
@@ -1680,6 +1777,11 @@
       var amtEl = document.getElementById('wiz-checkout-amount');
       var itemEl = document.getElementById('wiz-checkout-item');
 
+      var cardBtnEl = document.getElementById('wiz-card-button-label');
+      var cardCurEl = document.getElementById('wiz-card-currency');
+      var cardAmtEl = document.getElementById('wiz-card-amount');
+      var cardItemEl = document.getElementById('wiz-card-item-name');
+
       if (urlEl) wizardState.checkoutConfig.externalUrl = urlEl.value.trim();
       if (numEl) wizardState.checkoutConfig.mpesaNumber = numEl.value.trim();
       if (accEl) wizardState.checkoutConfig.mpesaAccount = accEl.value.trim();
@@ -1687,6 +1789,11 @@
       if (curEl) wizardState.checkoutConfig.currency = curEl.value;
       if (amtEl) wizardState.checkoutConfig.amount = amtEl.value.trim();
       if (itemEl) wizardState.checkoutConfig.itemName = itemEl.value.trim();
+
+      if (cardBtnEl) wizardState.checkoutConfig.cardButtonLabel = cardBtnEl.value.trim();
+      if (cardCurEl) wizardState.checkoutConfig.cardCurrency = cardCurEl.value;
+      if (cardAmtEl) wizardState.checkoutConfig.cardAmount = cardAmtEl.value.trim();
+      if (cardItemEl) wizardState.checkoutConfig.cardItemName = cardItemEl.value.trim();
 
       applyBotLiveConfig();
     }
@@ -2277,17 +2384,27 @@
       var checkoutPart = '';
       if (wizardState.purposes.indexOf('payment_checkout') !== -1 || wizardState.checkoutConfig.externalUrl || wizardState.checkoutConfig.mpesaNumber) {
         checkoutPart = ',\n    checkout: {\n' +
-          '      enabled: true' +
-          (wizardState.checkoutConfig.externalUrl ? ',\n      externalUrl: ' + JSON.stringify(wizardState.checkoutConfig.externalUrl) : '') +
-          ',\n      item: ' + JSON.stringify(wizardState.checkoutConfig.itemName || 'Standard Package') +
-          ',\n      mpesa: {\n' +
+          '      enabled: true,\n' +
+          '      // Method 1: M-Pesa Direct In-Chat Setup\n' +
+          '      mpesa: {\n' +
           '        type: ' + JSON.stringify(wizardState.checkoutConfig.mpesaType) + ',\n' +
           '        number: ' + JSON.stringify(wizardState.checkoutConfig.mpesaNumber) + ',\n' +
           (wizardState.checkoutConfig.mpesaType === 'paybill' ? '        account: ' + JSON.stringify(wizardState.checkoutConfig.mpesaAccount) + ',\n' : '') +
           '        businessName: ' + JSON.stringify(wizardState.checkoutConfig.mpesaBusinessName) + ',\n' +
           '        amount: ' + JSON.stringify(wizardState.checkoutConfig.amount) + ',\n' +
-          '        currency: ' + JSON.stringify(wizardState.checkoutConfig.currency) + '\n' +
-          '      }\n' +
+          '        currency: ' + JSON.stringify(wizardState.checkoutConfig.currency) + ',\n' +
+          '        item: ' + JSON.stringify(wizardState.checkoutConfig.itemName || 'Standard Package') + '\n' +
+          '      },\n' +
+          '      // Method 2: Card & External Payment Link Setup\n' +
+          '      card: {\n' +
+          '        url: ' + JSON.stringify(wizardState.checkoutConfig.externalUrl || '') + ',\n' +
+          '        buttonLabel: ' + JSON.stringify(wizardState.checkoutConfig.cardButtonLabel || 'Proceed to Card Checkout ↗') + ',\n' +
+          '        amount: ' + JSON.stringify(wizardState.checkoutConfig.cardAmount || '10') + ',\n' +
+          '        currency: ' + JSON.stringify(wizardState.checkoutConfig.cardCurrency || 'USD') + ',\n' +
+          '        item: ' + JSON.stringify(wizardState.checkoutConfig.cardItemName || 'Standard Package') + '\n' +
+          '      }' +
+          (wizardState.checkoutConfig.externalUrl ? ',\n      externalUrl: ' + JSON.stringify(wizardState.checkoutConfig.externalUrl) : '') +
+          ',\n      item: ' + JSON.stringify(wizardState.checkoutConfig.itemName || 'Standard Package') + '\n' +
           '    }';
       }
 
@@ -2477,7 +2594,15 @@
               account: wizardState.checkoutConfig.mpesaAccount,
               businessName: wizardState.checkoutConfig.mpesaBusinessName,
               amount: wizardState.checkoutConfig.amount,
-              currency: wizardState.checkoutConfig.currency
+              currency: wizardState.checkoutConfig.currency,
+              item: wizardState.checkoutConfig.itemName
+            },
+            card: {
+              url: wizardState.checkoutConfig.externalUrl,
+              buttonLabel: wizardState.checkoutConfig.cardButtonLabel,
+              amount: wizardState.checkoutConfig.cardAmount,
+              currency: wizardState.checkoutConfig.cardCurrency,
+              item: wizardState.checkoutConfig.cardItemName
             }
           },
           customKnowledge: allKnowledge,

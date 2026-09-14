@@ -769,6 +769,16 @@
       };
     }
 
+    // User explicitly asking to repeat the last question or what was asked
+    if (/\b(repeat(\s*the)?\s*question|ask\s*(me\s*)?(again|that)|what\s*did\s*you\s*(just\s*)?ask|say\s*(that\s*)?again|what\s*was\s*that\s*question)\b/i.test(lower)) {
+      if (memory && memory.lastFollowUp && memory.lastFollowUp.text) {
+        return {
+          intent: 'repeat_question',
+          reply: "I was asking:\n\n" + memory.lastFollowUp.text
+        };
+      }
+    }
+
     // 1. Direct Greetings
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
       var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly';
@@ -810,8 +820,14 @@
     var configGoals = config.goals || (config.goal ? [config.goal] : []);
     var hasPaymentGoal = (configGoals.indexOf('payment_checkout') !== -1) || (config && config.checkout && config.checkout.enabled);
     if (!isSaasMode || hasPaymentGoal) {
+      if (lower === 'checkout_method_mpesa' || /\b(mpesa|m-pesa|lipa\s*na\s*mpesa)\b/i.test(lower)) {
+        return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD', paymentMethod: 'mpesa' };
+      }
+      if (lower === 'checkout_method_card' || /\b(credit\s*card|debit\s*card|pay\s*with\s*card|visa|mastercard|stripe|paypal)\b/i.test(lower)) {
+        return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD', paymentMethod: 'card' };
+      }
       if (/\b(pay|payment|checkout|buy|lipa|order|purchase)\b/i.test(lower)) {
-        return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD' };
+        return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD', paymentMethod: null };
       }
     }
 
@@ -892,74 +908,73 @@
       var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'our team';
       var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '+1 (800) 555-0199';
 
+      var candidateList = [];
+      var stage = mem.goalStage;
+      var topicLabel = (item && item.question) ? item.question : 'our services';
+      if (topicLabel.length > 38) topicLabel = topicLabel.substring(0, 35) + '...';
+
       if (!saasMode) {
         var tone = (cfg && cfg.followUpDynamics && cfg.followUpDynamics.tone) || (cfg && cfg.goal === 'customer_support' ? 'support' : (cfg && cfg.goal === 'payment_checkout' ? 'sales' : 'consultative'));
 
         if (tone === 'direct') {
-          return { text: '💬 Would you like to proceed with this or explore other options?', type: 'direct', key: 'ins_direct' };
+          candidateList.push({ text: '💬 Would you like to proceed with this or explore other options?', type: 'direct', key: 'ins_direct' });
         }
 
         if (!item) {
-          if (tone === 'sales') return { text: '💬 Would you like me to connect you with an advisor to reserve this rate today?', type: 'sales', key: 'ins_reserve_rate' };
-          if (tone === 'support') return { text: '💬 Did this completely solve your inquiry, or can I clarify anything else?', type: 'customer_support', key: 'ins_solve_inquiry' };
-          return { text: '💬 Does this answer your question, or would you like me to clarify anything specific?', type: 'customer_support', key: 'ins_clarify_specific' };
-        }
+          if (tone === 'sales') candidateList.push({ text: '💬 Would you like me to connect you with an advisor to reserve this rate today?', type: 'sales', key: 'ins_reserve_rate' });
+          if (tone === 'support') candidateList.push({ text: '💬 Did this completely solve your inquiry, or can I clarify anything else?', type: 'customer_support', key: 'ins_solve_inquiry' });
+          candidateList.push({ text: '💬 Does this answer your question, or would you like me to clarify anything specific?', type: 'customer_support', key: 'ins_clarify_specific' });
+        } else {
+          var cat = item.category || '';
+          var q = (item.question || '').toLowerCase();
 
-        var cat = item.category || '';
-        var q = (item.question || '').toLowerCase();
-
-        if (tone === 'sales') {
-          if (cat === 'payments' || q.indexOf('pay') !== -1) {
-            return { text: '💬 Shall we complete your activation and lock in your discount right now?', type: 'payment_checkout', key: 'ins_complete_act' };
+          if (tone === 'sales') {
+            if (cat === 'payments' || q.indexOf('pay') !== -1) {
+              candidateList.push({ text: '💬 Shall we complete your activation and lock in your discount right now?', type: 'payment_checkout', key: 'ins_complete_act' });
+            }
+            if (cat === 'auto' || cat === 'health') {
+              candidateList.push({ text: '💬 Would you like our underwriter to reserve this quote for you today?', type: 'lead_generation', key: 'ins_reserve_quote' });
+            }
           }
-          if (cat === 'auto' || cat === 'health') {
-            return { text: '💬 Would you like our underwriter to reserve this quote for you today?', type: 'lead_generation', key: 'ins_reserve_quote' };
-          }
-        }
 
-        if (tone === 'support') {
+          if (tone === 'support') {
+            if (cat === 'claims' || q.indexOf('claim') !== -1) {
+              candidateList.push({ text: '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?', type: 'customer_support', key: 'ins_file_claim' });
+            }
+            candidateList.push({ text: '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?', type: 'customer_support', key: 'ins_support_specialist' });
+          }
+
           if (cat === 'claims' || q.indexOf('claim') !== -1) {
-            return { text: '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?', type: 'customer_support', key: 'ins_file_claim' };
+            candidateList.push({ text: '💬 Would you like me to start an incident report and fast-track a claim for you right now?', type: 'customer_support', key: 'ins_start_incident' });
           }
-          return { text: '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?', type: 'customer_support', key: 'ins_support_specialist' };
+          if (cat === 'auto' || q.indexOf('auto') !== -1 || q.indexOf('car') !== -1) {
+            candidateList.push({ text: '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?', type: 'lead_generation', key: 'ins_exact_quote' });
+          }
+          if (cat === 'health' || q.indexOf('health') !== -1 || q.indexOf('medical') !== -1) {
+            candidateList.push({ text: '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?', type: 'lead_generation', key: 'ins_health_tiers' });
+          }
+          if (cat === 'payments' || q.indexOf('pay') !== -1 || q.indexOf('discount') !== -1) {
+            candidateList.push({ text: '💬 Would you like to proceed with checkout and apply your active discount code now?', type: 'payment_checkout', key: 'ins_pay_discount' });
+          }
+          if (q.indexOf('deductible') !== -1) {
+            candidateList.push({ text: '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?', type: 'lead_generation', key: 'ins_deductible_effect' });
+          }
+          candidateList.push({ text: '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?', type: 'customer_support', key: 'ins_clarify_setup' });
+          candidateList.push({ text: '💬 Can I help with any other policy details or coverage options?', type: 'customer_support', key: 'ins_more_options' });
         }
+      } else {
+        // SaaS Mode: Progressive, Context-Aware, Memory-Tracking Follow-Up System
+        var qLower = (item ? item.question || '' : '').toLowerCase();
+        var aLower = (item ? item.answer || '' : '').toLowerCase();
+        var fullTxt = qLower + ' ' + aLower + ' ' + (item && item.keywords ? item.keywords.join(' ') : '').toLowerCase();
 
-        if (cat === 'claims' || q.indexOf('claim') !== -1) {
-          return { text: '💬 Would you like me to start an incident report and fast-track a claim for you right now?', type: 'customer_support', key: 'ins_start_incident' };
-        }
-        if (cat === 'auto' || q.indexOf('auto') !== -1 || q.indexOf('car') !== -1) {
-          return { text: '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?', type: 'lead_generation', key: 'ins_exact_quote' };
-        }
-        if (cat === 'health' || q.indexOf('health') !== -1 || q.indexOf('medical') !== -1) {
-          return { text: '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?', type: 'lead_generation', key: 'ins_health_tiers' };
-        }
-        if (cat === 'payments' || q.indexOf('pay') !== -1 || q.indexOf('discount') !== -1) {
-          return { text: '💬 Would you like to proceed with checkout and apply your active discount code now?', type: 'payment_checkout', key: 'ins_pay_discount' };
-        }
-        if (q.indexOf('deductible') !== -1) {
-          return { text: '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?', type: 'lead_generation', key: 'ins_deductible_effect' };
-        }
-        return { text: '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?', type: 'customer_support', key: 'ins_clarify_setup' };
-      }
+        var isPricing = /\b(price|pricing|cost|fee|rate|plan|plans|package|packages|tier|tiers|\$|subscription|billing|charge)\b/i.test(fullTxt);
+        var isServices = /\b(service|services|solution|solutions|feature|features|capability|capabilities|offer|provide|platform|develop|custom)\b/i.test(fullTxt);
+        var isSupport = /\b(support|contact|reach|phone|email|help|assist|call|hours|location)\b/i.test(fullTxt);
+        var isOnboarding = /\b(start|how|work|setup|install|embed|guide|onboard|getting started|step|process)\b/i.test(fullTxt);
 
-      // SaaS Mode: Progressive, Context-Aware, Memory-Tracking Follow-Up System
-      var qLower = (item ? item.question || '' : '').toLowerCase();
-      var aLower = (item ? item.answer || '' : '').toLowerCase();
-      var fullTxt = qLower + ' ' + aLower + ' ' + (item && item.keywords ? item.keywords.join(' ') : '').toLowerCase();
-
-      var isPricing = /\b(price|pricing|cost|fee|rate|plan|plans|package|packages|tier|tiers|\$|subscription|billing|charge)\b/i.test(fullTxt);
-      var isServices = /\b(service|services|solution|solutions|feature|features|capability|capabilities|offer|provide|platform|develop|custom)\b/i.test(fullTxt);
-      var isSupport = /\b(support|contact|reach|phone|email|help|assist|call|hours|location)\b/i.test(fullTxt);
-      var isOnboarding = /\b(start|how|work|setup|install|embed|guide|onboard|getting started|step|process)\b/i.test(fullTxt);
-
-      var topicLabel = (item && item.question) ? item.question : 'our services';
-      if (topicLabel.length > 38) topicLabel = topicLabel.substring(0, 35) + '...';
-
-      var stage = mem.goalStage;
-      var candidateList = [];
-
-      // 1. If topic is Pricing / Plans
-      if (isPricing) {
+        // 1. If topic is Pricing / Plans
+        if (isPricing) {
         if (goals.indexOf('payment_checkout') !== -1) {
           candidateList.push({
             key: 'chk_lock_plan',
@@ -1134,6 +1149,7 @@
         type: goals[0] || 'lead_generation',
         text: '💬 Does this help, or would you like more details?'
       });
+      }
 
       // Filter out any candidates already asked in this conversation!
       var chosen = null;
@@ -1691,6 +1707,14 @@
       this.startClaimWizard();
       return;
     }
+    if (payload === 'checkout_method_mpesa' || payload === 'intent_mpesa' || payload === 'pay_mpesa') {
+      this.startInChatCheckout('mpesa');
+      return;
+    }
+    if (payload === 'checkout_method_card' || payload === 'intent_card' || payload === 'pay_card') {
+      this.startInChatCheckout('card');
+      return;
+    }
     if (payload === 'intent_pay' || payload === 'checkout_now') {
       this.startInChatCheckout();
       return;
@@ -1704,6 +1728,16 @@
 
   BotlyChatbotController.prototype.handleUserMessage = function(text) {
     var self = this;
+    if (text === 'checkout_method_mpesa') {
+      this.appendUser('Pay with M-Pesa 📱');
+      this.startInChatCheckout('mpesa');
+      return;
+    }
+    if (text === 'checkout_method_card') {
+      this.appendUser('Pay with Card 💳');
+      this.startInChatCheckout('card');
+      return;
+    }
     this.appendUser(text);
     this.showTyping();
 
@@ -1834,7 +1868,7 @@
       return;
     }
     if (res.action === 'OPEN_PAYMENT_WIZARD') {
-      this.startInChatCheckout();
+      this.startInChatCheckout(res.paymentMethod || null);
       return;
     }
     this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
@@ -2117,143 +2151,288 @@
     }
   };
 
-  BotlyChatbotController.prototype.startInChatCheckout = function(customItem) {
+  BotlyChatbotController.prototype.startInChatCheckout = function(methodOrItem, customItem) {
     var self = this;
     var chk = this.config.checkout || {};
     var mpesa = chk.mpesa || {};
-    var isCustomCheckout = (this.config.mode === 'saas') || (chk && (chk.externalUrl || mpesa.number || mpesa.type || chk.enabled));
+    var card = chk.card || {};
+    var isCustomCheckout = (this.config.mode === 'saas') || (chk && (chk.externalUrl || mpesa.number || mpesa.type || chk.enabled || chk.card));
+
+    var method = (methodOrItem === 'mpesa' || methodOrItem === 'card') ? methodOrItem : null;
+    var item = (methodOrItem && methodOrItem !== 'mpesa' && methodOrItem !== 'card') ? methodOrItem : customItem;
 
     if (isCustomCheckout) {
-      var sym = (mpesa.currency === 'USD' || this.config.currency?.code === 'USD') ? '$' : 'KES ';
-      var amount = mpesa.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
-      var itemName = customItem || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
-      var cardId = 'chk-' + Math.random().toString(36).substring(2, 7);
-
-      var externalUrl = chk.externalUrl || '';
-      var mpesaType = mpesa.type || 'buy_goods';
-      var mpesaNumber = mpesa.number || '123456';
-      var mpesaAccount = mpesa.account || '';
-      var businessName = mpesa.businessName || this.config.company?.name || 'NextGen Ke';
-
-      var mpesaTypeTitle = 'Buy Goods and Services (Till)';
-      var stepInstructions = '';
-      if (mpesaType === 'buy_goods') {
-        mpesaTypeTitle = 'Buy Goods (Till Number)';
-        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via M-Pesa Till:</div>' +
-          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
-            '<li>Select <strong>Buy Goods and Services</strong></li>' +
-            '<li>Enter Till Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-            '<li>Enter your M-Pesa PIN and send</li>' +
-          '</ol>';
-      } else if (mpesaType === 'paybill') {
-        mpesaTypeTitle = 'Paybill Number';
-        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Paybill:</div>' +
-          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
-            '<li>Select <strong>Paybill</strong></li>' +
-            '<li>Enter Business No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-            (mpesaAccount ? '<li>Enter Account No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaAccount) + '</strong></li>' : '<li>Enter Account No: <strong>' + self.escape(itemName) + '</strong></li>') +
-            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-            '<li>Enter your M-Pesa PIN and send</li>' +
-          '</ol>';
-      } else {
-        mpesaTypeTitle = 'Send Money (Phone)';
-        stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Send Money:</div>' +
-          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Send Money</strong></li>' +
-            '<li>Enter Phone Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-            '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-            '<li>Enter your M-Pesa PIN and send</li>' +
-          '</ol>';
+      if (method === 'mpesa') {
+        this.renderMpesaCheckoutCard(item);
+        return;
+      }
+      if (method === 'card') {
+        this.renderCardCheckoutCard(item);
+        return;
       }
 
-      var externalLinkHtml = '';
-      if (externalUrl) {
-        externalLinkHtml = '<div style="margin-bottom:12px; padding:10px 12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">' +
-          '<div>' +
-            '<div style="font-size:11.5px; font-weight:700; color:#166534;">Web Checkout Page</div>' +
-            '<div style="font-size:11px; color:#15803d;">You can complete payment directly on our checkout page:</div>' +
-          '</div>' +
-          '<a href="' + self.escape(externalUrl) + '" target="_blank" rel="noopener noreferrer" style="background:#059669; color:#ffffff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">' +
-            'Proceed to Checkout ↗' +
-          '</a>' +
-        '</div>';
-      }
-
-      var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
-        '<div class="checkout-header">' +
-          '<div class="checkout-title"><span class="lock-icon">🔒</span><strong>Secure Order Checkout</strong></div>' +
-          '<span class="pci-badge">Verified Merchant</span>' +
+      // No method specified: prompt user to select M-Pesa or Card!
+      var selectId = 'pay-sel-' + Math.random().toString(36).substring(2, 7);
+      var selHtml = '<div class="checkout-method-selector" id="' + selectId + '" style="margin-top: 8px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">' +
+        '<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">' +
+          '<span>🔒</span> <span>Select Payment Method</span>' +
         '</div>' +
-        '<div class="checkout-summary-bar">' +
-          '<div class="plan-info"><span class="plan-name">' + self.escape(itemName) + '</span><span class="plan-sub">' + self.escape(businessName) + ' • Instant Verification</span></div>' +
-          '<div class="plan-price" id="' + cardId + '-price">' + sym + Number(amount).toLocaleString() + '</div>' +
-        '</div>' +
-        externalLinkHtml +
-        '<div style="background:#ffffff; border:1.5px solid #059669; border-radius:12px; padding:12px; margin-bottom:10px;">' +
-          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">' +
-            '<div style="display:flex; align-items:center; gap:6px;">' +
-              '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:2px 5px; border-radius:4px;">M-PESA</span>' +
-              '<strong style="font-size:12px; color:#0f172a;">Lipa na M-Pesa Instructions</strong>' +
+        '<div style="display: flex; flex-direction: column; gap: 8px;">' +
+          '<button type="button" class="btn-select-mpesa-opt" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1.5px solid #10b981; background: #ecfdf5; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">' +
+            '<span style="font-size: 22px; line-height: 1;">📱</span>' +
+            '<div style="flex: 1;">' +
+              '<div style="font-size: 13px; font-weight: 800; color: #065f46;">Pay with M-Pesa</div>' +
+              '<div style="font-size: 11px; color: #047857; margin-top: 1px;">Direct in-chat Till / Paybill with confirmation code verification</div>' +
             '</div>' +
-            '<span style="font-size:11px; font-weight:700; color:#059669;">' + mpesaTypeTitle + '</span>' +
-          '</div>' +
-          stepInstructions +
-          '<div style="margin-top:10px; background:#f0fdf4; border:1px dashed #86efac; border-radius:8px; padding:10px;">' +
-            '<label style="display:block; font-size:11.5px; font-weight:800; color:#166534; margin-bottom:4px;">Enter M-Pesa Confirmation Code (e.g. UIC8E69GLQ):</label>' +
-            '<div style="display:flex; gap:6px; margin-bottom:6px;">' +
-              '<input type="text" id="' + cardId + '-mpesa-code" class="input-field" placeholder="e.g. UIC8E69GLQ" style="flex:1; text-transform:uppercase; font-family:monospace; font-weight:800; letter-spacing:1px; font-size:13px; padding:7px 10px;" maxlength="12" />' +
-              '<button type="button" class="btn-submit-payment" id="' + cardId + '-verify-btn" style="width:auto; margin:0; padding:7px 14px; font-size:12px; background:#059669;">Verify Code</button>' +
+            '<span style="font-size: 14px; color: #059669; font-weight: 800;">→</span>' +
+          '</button>' +
+          '<button type="button" class="btn-select-card-opt" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">' +
+            '<span style="font-size: 22px; line-height: 1;">💳</span>' +
+            '<div style="flex: 1;">' +
+              '<div style="font-size: 13px; font-weight: 800; color: #0369a1;">Pay with Card</div>' +
+              '<div style="font-size: 11px; color: #0284c7; margin-top: 1px;">Credit / Debit Card via secure checkout payment link</div>' +
             '</div>' +
-            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">' +
-              '<input type="text" id="' + cardId + '-cust-name" class="input-field" placeholder="Your Name (Optional)" style="font-size:11px; padding:5px 8px;" />' +
-              '<input type="tel" id="' + cardId + '-cust-phone" class="input-field" placeholder="Your Phone (Optional)" style="font-size:11px; padding:5px 8px;" />' +
-            '</div>' +
-            '<div id="' + cardId + '-err-msg" style="display:none; color:#dc2626; font-size:11px; margin-top:4px; font-weight:600;"></div>' +
-          '</div>' +
+            '<span style="font-size: 14px; color: #0284c7; font-weight: 800;">→</span>' +
+          '</button>' +
         '</div>' +
       '</div>';
 
-      this.appendBot("💳 **Review payment details below to complete your checkout:**", {
-        html: checkoutHtml
+      this.appendBot("💳 **How would you like to complete your payment?**\n\nPlease select your preferred payment method:", {
+        quickReplies: [
+          { label: '📱 Pay with M-Pesa', payload: 'checkout_method_mpesa' },
+          { label: '💳 Pay with Card', payload: 'checkout_method_card' }
+        ],
+        html: selHtml
       });
 
       setTimeout(function() {
-        var cardEl = document.getElementById(cardId);
-        if (!cardEl) return;
-        var verifyBtn = cardEl.querySelector('#' + cardId + '-verify-btn');
-        var codeInput = cardEl.querySelector('#' + cardId + '-mpesa-code');
-        var errMsg = cardEl.querySelector('#' + cardId + '-err-msg');
-        var nameInput = cardEl.querySelector('#' + cardId + '-cust-name');
-        var phoneInput = cardEl.querySelector('#' + cardId + '-cust-phone');
-
-        if (verifyBtn && codeInput) {
-          verifyBtn.addEventListener('click', function() {
-            var raw = (codeInput.value || '').trim();
-            var validCode = extractMpesaCode(raw);
-            if (!validCode) {
-              if (errMsg) {
-                errMsg.textContent = 'Please enter a valid 8-12 character M-Pesa code (e.g. UIC8E69GLQ).';
-                errMsg.style.display = 'block';
-              }
-              return;
-            }
-            if (errMsg) errMsg.style.display = 'none';
-            self.verifyAndRecordMpesaPayment(validCode, {
-              name: (nameInput && nameInput.value) || '',
-              phone: (phoneInput && phoneInput.value) || '',
-              item: itemName,
-              amount: amount,
-              currency: sym,
-              mpesaDetails: { type: mpesaType, number: mpesaNumber, account: mpesaAccount, businessName: businessName }
-            });
+        var el = document.getElementById(selectId);
+        if (!el) return;
+        var btnMpesa = el.querySelector('.btn-select-mpesa-opt');
+        var btnCard = el.querySelector('.btn-select-card-opt');
+        if (btnMpesa) {
+          btnMpesa.addEventListener('click', function() {
+            self.startInChatCheckout('mpesa', item);
           });
         }
-      }, 100);
+        if (btnCard) {
+          btnCard.addEventListener('click', function() {
+            self.startInChatCheckout('card', item);
+          });
+        }
+      }, 80);
       return;
     }
+
+  BotlyChatbotController.prototype.renderMpesaCheckoutCard = function(customItem) {
+    var self = this;
+    var chk = this.config.checkout || {};
+    var mpesa = chk.mpesa || {};
+    var sym = (mpesa.currency === 'USD' || this.config.currency?.code === 'USD') ? '$' : 'KES ';
+    var amount = mpesa.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
+    var itemName = customItem || mpesa.item || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
+    var cardId = 'chk-mpesa-' + Math.random().toString(36).substring(2, 7);
+
+    var mpesaType = mpesa.type || 'buy_goods';
+    var mpesaNumber = mpesa.number || '123456';
+    var mpesaAccount = mpesa.account || '';
+    var businessName = mpesa.businessName || this.config.company?.name || 'NextGen Ke';
+
+    var mpesaTypeTitle = 'Buy Goods and Services (Till)';
+    var stepInstructions = '';
+    if (mpesaType === 'buy_goods') {
+      mpesaTypeTitle = 'Buy Goods (Till Number)';
+      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via M-Pesa Till:</div>' +
+        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+          '<li>Select <strong>Buy Goods and Services</strong></li>' +
+          '<li>Enter Till Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+          '<li>Enter your M-Pesa PIN and send</li>' +
+        '</ol>';
+    } else if (mpesaType === 'paybill') {
+      mpesaTypeTitle = 'Paybill Number';
+      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Paybill:</div>' +
+        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+          '<li>Select <strong>Paybill</strong></li>' +
+          '<li>Enter Business No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+          (mpesaAccount ? '<li>Enter Account No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaAccount) + '</strong></li>' : '<li>Enter Account No: <strong>' + self.escape(itemName) + '</strong></li>') +
+          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+          '<li>Enter your M-Pesa PIN and send</li>' +
+        '</ol>';
+    } else {
+      mpesaTypeTitle = 'Send Money (Phone)';
+      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Send Money:</div>' +
+        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Send Money</strong></li>' +
+          '<li>Enter Phone Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
+          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
+          '<li>Enter your M-Pesa PIN and send</li>' +
+        '</ol>';
+    }
+
+    var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
+      '<div class="checkout-header">' +
+        '<div class="checkout-title"><span class="lock-icon">📱</span><strong>M-Pesa Direct Checkout</strong></div>' +
+        '<span class="pci-badge" style="background:#ecfdf5; color:#059669; border:1px solid #10b981;">Verified Merchant</span>' +
+      '</div>' +
+      '<div class="checkout-summary-bar">' +
+        '<div class="plan-info"><span class="plan-name">' + self.escape(itemName) + '</span><span class="plan-sub">' + self.escape(businessName) + ' • Instant Verification</span></div>' +
+        '<div class="plan-price" id="' + cardId + '-price">' + sym + Number(amount).toLocaleString() + '</div>' +
+      '</div>' +
+      '<div style="background:#ffffff; border:1.5px solid #059669; border-radius:12px; padding:12px; margin-bottom:10px;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">' +
+          '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:2px 5px; border-radius:4px;">M-PESA</span>' +
+            '<strong style="font-size:12px; color:#0f172a;">Lipa na M-Pesa Instructions</strong>' +
+          '</div>' +
+          '<span style="font-size:11px; font-weight:700; color:#059669;">' + mpesaTypeTitle + '</span>' +
+        '</div>' +
+        stepInstructions +
+        '<div style="margin-top:10px; background:#f0fdf4; border:1px dashed #86efac; border-radius:8px; padding:10px;">' +
+          '<label style="display:block; font-size:11.5px; font-weight:800; color:#166534; margin-bottom:4px;">Enter M-Pesa Confirmation Code (e.g. UIC8E69GLQ):</label>' +
+          '<div style="display:flex; gap:6px; margin-bottom:6px;">' +
+            '<input type="text" id="' + cardId + '-mpesa-code" class="input-field" placeholder="e.g. UIC8E69GLQ" style="flex:1; text-transform:uppercase; font-family:monospace; font-weight:800; letter-spacing:1px; font-size:13px; padding:7px 10px;" maxlength="12" />' +
+            '<button type="button" class="btn-submit-payment" id="' + cardId + '-verify-btn" style="width:auto; margin:0; padding:7px 14px; font-size:12px; background:#059669;">Verify Code</button>' +
+          '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">' +
+            '<input type="text" id="' + cardId + '-cust-name" class="input-field" placeholder="Your Name (Optional)" style="font-size:11px; padding:5px 8px;" />' +
+            '<input type="tel" id="' + cardId + '-cust-phone" class="input-field" placeholder="Your Phone (Optional)" style="font-size:11px; padding:5px 8px;" />' +
+          '</div>' +
+          '<div id="' + cardId + '-err-msg" style="display:none; color:#dc2626; font-size:11px; margin-top:4px; font-weight:600;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="text-align:center; padding-top:4px;">' +
+        '<button type="button" id="' + cardId + '-switch-card" style="background:none; border:none; color:#0284c7; font-size:11.5px; font-weight:700; cursor:pointer; text-decoration:underline;">' +
+          'Need to pay via Credit/Debit Card instead? Click here 💳' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    this.appendBot("📱 **Follow the M-Pesa instructions below and enter your confirmation code:**", {
+      html: checkoutHtml
+    });
+
+    setTimeout(function() {
+      var cardEl = document.getElementById(cardId);
+      if (!cardEl) return;
+      var verifyBtn = cardEl.querySelector('#' + cardId + '-verify-btn');
+      var codeInput = cardEl.querySelector('#' + cardId + '-mpesa-code');
+      var errMsg = cardEl.querySelector('#' + cardId + '-err-msg');
+      var nameInput = cardEl.querySelector('#' + cardId + '-cust-name');
+      var phoneInput = cardEl.querySelector('#' + cardId + '-cust-phone');
+      var switchBtn = cardEl.querySelector('#' + cardId + '-switch-card');
+
+      if (switchBtn) {
+        switchBtn.addEventListener('click', function() {
+          self.startInChatCheckout('card', itemName);
+        });
+      }
+
+      if (verifyBtn && codeInput) {
+        verifyBtn.addEventListener('click', function() {
+          var raw = (codeInput.value || '').trim();
+          var validCode = extractMpesaCode(raw);
+          if (!validCode) {
+            if (errMsg) {
+              errMsg.textContent = 'Please enter a valid 8-12 character M-Pesa code (e.g. UIC8E69GLQ).';
+              errMsg.style.display = 'block';
+            }
+            return;
+          }
+          if (errMsg) errMsg.style.display = 'none';
+          self.verifyAndRecordMpesaPayment(validCode, {
+            name: (nameInput && nameInput.value) || '',
+            phone: (phoneInput && phoneInput.value) || '',
+            item: itemName,
+            amount: amount,
+            currency: sym,
+            mpesaDetails: { type: mpesaType, number: mpesaNumber, account: mpesaAccount, businessName: businessName }
+          });
+        });
+      }
+    }, 100);
+  };
+
+  BotlyChatbotController.prototype.renderCardCheckoutCard = function(customItem) {
+    var self = this;
+    var chk = this.config.checkout || {};
+    var card = chk.card || {};
+    var externalUrl = card.url || chk.externalUrl || '';
+    var btnLabel = card.buttonLabel || 'Proceed to Card Checkout ↗';
+    var cardItem = customItem || card.item || chk.item || 'Standard Package';
+    var cardAmt = card.amount || chk.amount || (this.activeQuote ? this.activeQuote.annualTotal : 10);
+    var cardCur = card.currency || 'USD';
+    var sym = (cardCur === 'USD' || cardCur === '$') ? '$' : (cardCur === 'KES' ? 'KES ' : (cardCur + ' '));
+    var cardId = 'chk-card-' + Math.random().toString(36).substring(2, 7);
+    var compName = (this.config.company && this.config.company.name) || 'Botly Store';
+
+    var ctaHtml = '';
+    if (externalUrl) {
+      ctaHtml = '<div style="margin-top:12px;">' +
+        '<a href="' + self.escape(externalUrl) + '" target="_blank" rel="noopener noreferrer" style="display:block; width:100%; box-sizing:border-box; text-align:center; background:#0284c7; color:#ffffff; padding:12px 16px; border-radius:10px; font-weight:800; font-size:13px; text-decoration:none; box-shadow:0 2px 8px rgba(2,132,199,0.35); transition:all 0.2s;">' +
+          self.escape(btnLabel) +
+        '</a>' +
+        '<div style="font-size:11px; color:#64748b; margin-top:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">' +
+          '<span>🔒</span> <span>Opens secure payment gateway in a new tab</span>' +
+        '</div>' +
+      '</div>';
+    } else {
+      ctaHtml = '<div style="margin-top:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 12px; font-size:11.5px; color:#991b1b; line-height:1.45;">' +
+        '<strong>Card Checkout Link Not Configured:</strong> The store owner has not pasted an external checkout URL yet. You can configure it in Botly Customizer Studio under <em>Sale &amp; Checkout Setup &gt; Card &amp; External Payment Link</em>, or pay with M-Pesa right now.' +
+      '</div>';
+    }
+
+    var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
+      '<div class="checkout-header">' +
+        '<div class="checkout-title"><span class="lock-icon">💳</span><strong>Card &amp; External Checkout</strong></div>' +
+        '<span class="pci-badge" style="background:#f0f9ff; color:#0284c7; border:1px solid #38bdf8;">PCI-DSS Level 1</span>' +
+      '</div>' +
+      '<div class="checkout-summary-bar">' +
+        '<div class="plan-info"><span class="plan-name">' + self.escape(cardItem) + '</span><span class="plan-sub">' + self.escape(compName) + ' • Secure Card Gateway</span></div>' +
+        '<div class="plan-price" id="' + cardId + '-price">' + sym + Number(cardAmt).toLocaleString() + '</div>' +
+      '</div>' +
+      '<div style="background:#ffffff; border:1.5px solid #0284c7; border-radius:12px; padding:14px; margin-bottom:10px;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">' +
+          '<span style="font-size:12px; font-weight:800; color:#0f172a;">Accepted Payment Cards &amp; Wallets:</span>' +
+          '<span style="font-size:10px; font-weight:700; color:#0284c7; background:#e0f2fe; padding:2px 6px; border-radius:4px;">Encrypted 256-bit</span>' +
+        '</div>' +
+        '<div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:10px;">' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#1e293b;">💳 Visa</span>' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#1e293b;">💳 Mastercard</span>' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#1e293b;">💳 Amex</span>' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#1e293b;">Apple Pay</span>' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#1e293b;">Google Pay</span>' +
+          '<span style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; color:#0284c7;">Stripe / PayPal</span>' +
+        '</div>' +
+        '<p style="font-size:11.5px; color:#475569; margin:0 0 10px 0; line-height:1.45;">' +
+          'Click the button below to review your order details and safely input your card information on our verified checkout page.' +
+        '</p>' +
+        ctaHtml +
+      '</div>' +
+      '<div style="text-align:center; padding-top:4px;">' +
+        '<button type="button" id="' + cardId + '-switch-mpesa" style="background:none; border:none; color:#059669; font-size:11.5px; font-weight:700; cursor:pointer; text-decoration:underline;">' +
+          'Prefer to pay with M-Pesa instead? Click here 📱' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    this.appendBot("💳 **Review card order details below to proceed to secure payment:**", {
+      html: checkoutHtml
+    });
+
+    setTimeout(function() {
+      var cardEl = document.getElementById(cardId);
+      if (!cardEl) return;
+      var switchBtn = cardEl.querySelector('#' + cardId + '-switch-mpesa');
+      if (switchBtn) {
+        switchBtn.addEventListener('click', function() {
+          self.startInChatCheckout('mpesa', cardItem);
+        });
+      }
+    }, 100);
+  };
 
     var quote = this.activeQuote || {
       quoteId: 'QT-DIRECT',

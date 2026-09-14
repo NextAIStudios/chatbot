@@ -140,6 +140,17 @@ export class IntentEngine {
       };
     }
 
+    // User explicitly asking to repeat the last question or what was asked
+    if (/\b(repeat(\s*the)?\s*question|ask\s*(me\s*)?(again|that)|what\s*did\s*you\s*(just\s*)?ask|say\s*(that\s*)?again|what\s*was\s*that\s*question)\b/i.test(lower)) {
+      if (this.memory && this.memory.lastFollowUp && this.memory.lastFollowUp.text) {
+        return {
+          intent: 'repeat_question',
+          confidence: 0.98,
+          reply: `I was asking:\n\n${this.memory.lastFollowUp.text}`
+        };
+      }
+    }
+
     // 2. Human Agent / Escalation
     if (/human|agent|representative|advisor|speak\s*to\s*(someone|person)|customer\s*service\s*rep/i.test(lower)) {
       const phone = this.config.company?.supportPhone || '+1 (800) 555-0199';
@@ -151,6 +162,50 @@ export class IntentEngine {
           ? `I'd be glad to connect you with our team! You can reach us at **${phone}** or email **${email}**.\n\nAlternatively, enter your email or phone below and someone from our team will reach out shortly.`
           : `I'd be glad to connect you with a licensed underwriter! You can reach our direct priority line at **${phone}** or email **${email}**.\n\nAlternatively, enter your email or phone below and I'll schedule a callback within 15 minutes.`
       };
+    }
+
+    // Payment / Checkout Intents (both SaaS mode with payment_checkout goal and insurance mode)
+    const configGoals = this.config.goals || (this.config.goal ? [this.config.goal] : []);
+    const hasPaymentGoal = configGoals.includes('payment_checkout') || !!(this.config.checkout && this.config.checkout.enabled);
+
+    if (!isSaas || hasPaymentGoal) {
+      if (lower === 'checkout_method_mpesa' || /\b(mpesa|m-pesa|lipa\s*na\s*mpesa)\b/i.test(lower)) {
+        return {
+          intent: 'start_payment_flow',
+          confidence: 0.95,
+          action: 'OPEN_PAYMENT_WIZARD',
+          paymentMethod: 'mpesa'
+        };
+      }
+      if (lower === 'checkout_method_card' || /\b(credit\s*card|debit\s*card|pay\s*with\s*card|visa|mastercard|stripe|paypal)\b/i.test(lower)) {
+        return {
+          intent: 'start_payment_flow',
+          confidence: 0.95,
+          action: 'OPEN_PAYMENT_WIZARD',
+          paymentMethod: 'card'
+        };
+      }
+      if (/\b(pay|payment|checkout|buy\s*policy|purchase|renew\s*policy|premium\s*payment|bill)\b/i.test(lower)) {
+        // If it's a general question about payment methods or installments
+        if (/methods?|accept|how\s*can\s*i\s*pay|installment|monthly/i.test(lower)) {
+          const faqMatch = this.matchKnowledgeBase(queryTokens, 'payments');
+          if (faqMatch && faqMatch.score > 0.35) {
+            return {
+              intent: 'faq',
+              confidence: faqMatch.score,
+              matchedItem: faqMatch.item,
+              reply: faqMatch.item.answer + '\n\n' + this.generateFollowUpQuestion(faqMatch.item)
+            };
+          }
+        }
+
+        return {
+          intent: 'start_payment_flow',
+          confidence: 0.9,
+          action: 'OPEN_PAYMENT_WIZARD',
+          paymentMethod: null
+        };
+      }
     }
 
     // In insurance mode ONLY, evaluate claim / quote / policy flows
@@ -172,28 +227,6 @@ export class IntentEngine {
           intent: 'start_claim_flow',
           confidence: 0.9,
           action: 'OPEN_CLAIMS_WIZARD'
-        };
-      }
-
-      // 4. Payment / Checkout Intents
-      if (/\b(pay|payment|checkout|buy\s*policy|purchase|renew\s*policy|premium\s*payment|bill)\b/i.test(lower)) {
-        // If it's a general question about payment methods or installments
-        if (/methods?|accept|how\s*can\s*i\s*pay|installment|monthly/i.test(lower)) {
-          const faqMatch = this.matchKnowledgeBase(queryTokens, 'payments');
-          if (faqMatch && faqMatch.score > 0.35) {
-            return {
-              intent: 'faq',
-              confidence: faqMatch.score,
-              matchedItem: faqMatch.item,
-              reply: faqMatch.item.answer + '\n\n' + this.generateFollowUpQuestion(faqMatch.item)
-            };
-          }
-        }
-
-        return {
-          intent: 'start_payment_flow',
-          confidence: 0.9,
-          action: 'OPEN_PAYMENT_WIZARD'
         };
       }
 
@@ -313,56 +346,62 @@ export class IntentEngine {
     const goals = cfg.goals || (cfg.goal ? [cfg.goal] : ['lead_generation']);
     const phoneNum = cfg.company?.supportPhone || '+1 (800) 555-0199';
 
+    const candidateList = [];
+    const stage = mem.goalStage;
+    let topicLabel = (item && item.question) ? item.question : 'our services';
+    if (topicLabel.length > 38) topicLabel = topicLabel.substring(0, 35) + '...';
+
     if (this.config.mode !== 'saas') {
       const tone = this.config.followUpDynamics?.tone || (this.config.goal === 'customer_support' ? 'support' : (this.config.goal === 'payment_checkout' ? 'sales' : 'consultative'));
 
       if (tone === 'direct') {
-        return '💬 Would you like to proceed with this or explore other options?';
+        candidateList.push({ key: 'ins_direct', type: 'direct', text: '💬 Would you like to proceed with this or explore other options?' });
       }
 
       if (!item) {
-        if (tone === 'sales') return '💬 Would you like me to connect you with an advisor to reserve this rate today?';
-        if (tone === 'support') return '💬 Did this completely solve your inquiry, or can I clarify anything else?';
-        return '💬 Does this answer your question, or would you like me to clarify anything specific?';
-      }
+        if (tone === 'sales') candidateList.push({ key: 'ins_reserve_rate', type: 'sales', text: '💬 Would you like me to connect you with an advisor to reserve this rate today?' });
+        if (tone === 'support') candidateList.push({ key: 'ins_solve_inquiry', type: 'customer_support', text: '💬 Did this completely solve your inquiry, or can I clarify anything else?' });
+        candidateList.push({ key: 'ins_clarify_specific', type: 'customer_support', text: '💬 Does this answer your question, or would you like me to clarify anything specific?' });
+      } else {
+        const cat = item.category || '';
+        const q = (item.question || '').toLowerCase();
 
-      const cat = item.category || '';
-      const q = (item.question || '').toLowerCase();
-
-      if (tone === 'sales') {
-        if (cat === 'payments' || q.includes('pay')) {
-          return '💬 Shall we complete your activation and lock in your discount right now?';
+        if (tone === 'sales') {
+          if (cat === 'payments' || q.includes('pay')) {
+            candidateList.push({ key: 'ins_complete_act', type: 'payment_checkout', text: '💬 Shall we complete your activation and lock in your discount right now?' });
+          }
+          if (cat === 'auto' || cat === 'health') {
+            candidateList.push({ key: 'ins_reserve_quote', type: 'lead_generation', text: '💬 Would you like our underwriter to reserve this quote for you today?' });
+          }
         }
-        if (cat === 'auto' || cat === 'health') {
-          return '💬 Would you like our underwriter to reserve this quote for you today?';
-        }
-      }
 
-      if (tone === 'support') {
+        if (tone === 'support') {
+          if (cat === 'claims' || q.includes('claim')) {
+            candidateList.push({ key: 'ins_file_claim', type: 'customer_support', text: '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?' });
+          }
+          candidateList.push({ key: 'ins_support_specialist', type: 'customer_support', text: '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?' });
+        }
+
         if (cat === 'claims' || q.includes('claim')) {
-          return '💬 Would you like me to file this claim for you immediately, or do you have supporting documents to check?';
+          candidateList.push({ key: 'ins_start_incident', type: 'customer_support', text: '💬 Would you like me to start an incident report and fast-track a claim for you right now?' });
         }
-        return '💬 Did this help resolve your concern, or would you prefer a quick call from a support specialist?';
-      }
+        if (cat === 'auto' || q.includes('auto') || q.includes('car')) {
+          candidateList.push({ key: 'ins_exact_quote', type: 'lead_generation', text: '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?' });
+        }
+        if (cat === 'health' || q.includes('health') || q.includes('medical')) {
+          candidateList.push({ key: 'ins_health_tiers', type: 'lead_generation', text: '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?' });
+        }
+        if (cat === 'payments' || q.includes('pay') || q.includes('discount')) {
+          candidateList.push({ key: 'ins_pay_discount', type: 'payment_checkout', text: '💬 Would you like to proceed with checkout and apply your active discount code now?' });
+        }
+        if (q.includes('deductible')) {
+          candidateList.push({ key: 'ins_deductible_effect', type: 'lead_generation', text: '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?' });
+        }
 
-      if (cat === 'claims' || q.includes('claim')) {
-        return '💬 Would you like me to start an incident report and fast-track a claim for you right now?';
+        candidateList.push({ key: 'ins_clarify_setup', type: 'customer_support', text: '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?' });
+        candidateList.push({ key: 'ins_more_options', type: 'customer_support', text: '💬 Can I help with any other policy details or coverage options?' });
       }
-      if (cat === 'auto' || q.includes('auto') || q.includes('car')) {
-        return '💬 Would you like me to calculate an exact quote with these options included, or compare another tier?';
-      }
-      if (cat === 'health' || q.includes('health') || q.includes('medical')) {
-        return '💬 Would you like to compare our Silver, Gold, and Platinum health tiers, or check family add-on rates?';
-      }
-      if (cat === 'payments' || q.includes('pay') || q.includes('discount')) {
-        return '💬 Would you like to proceed with checkout and apply your active discount code now?';
-      }
-      if (q.includes('deductible')) {
-        return '💬 Would you like to see how choosing a higher or lower deductible affects your monthly premium?';
-      }
-
-      return '💬 Does this answer what you had in mind, or would you like me to clarify anything specific about your setup?';
-    }
+    } else {
 
     // SaaS Mode: Progressive, Context-Aware, Memory-Tracking Follow-Up System
     const qLower = (item ? item.question || '' : '').toLowerCase();
@@ -373,12 +412,6 @@ export class IntentEngine {
     const isServices = /\b(service|services|solution|solutions|feature|features|capability|capabilities|offer|provide|platform|develop|custom)\b/i.test(fullTxt);
     const isSupport = /\b(support|contact|reach|phone|email|help|assist|call|hours|location)\b/i.test(fullTxt);
     const isOnboarding = /\b(start|how|work|setup|install|embed|guide|onboard|getting started|step|process)\b/i.test(fullTxt);
-
-    let topicLabel = (item && item.question) ? item.question : 'our services';
-    if (topicLabel.length > 38) topicLabel = topicLabel.substring(0, 35) + '...';
-
-    const stage = mem.goalStage;
-    const candidateList = [];
 
     // 1. If topic is Pricing / Plans
     if (isPricing) {
@@ -452,6 +485,7 @@ export class IntentEngine {
       candidateList.push({ key: 'sup_default_progress', type: 'customer_support', text: '💬 Does this help address your inquiry, or would you like more details?' });
     }
     candidateList.push({ key: 'gen_default_help', type: goals[0] || 'lead_generation', text: '💬 Does this help, or would you like more details?' });
+    }
 
     // Anti-repetition filter
     let chosen = null;

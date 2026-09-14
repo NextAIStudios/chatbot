@@ -419,6 +419,41 @@ assert(followUp2 && followUp2.text !== followUp1.text, 'Second follow-up questio
 assert(progressiveEngine.memory.askedFollowUps.length >= 2, 'Memory tracks all asked follow-up keys/questions');
 assert(progressiveEngine.memory.goalStage >= 2, 'Goal stage progresses with each turn');
 
+console.log('\n--- 💳 14. Testing M-Pesa vs Card Payment Selection & Anti-Repetition Repeat Questions ---');
+const checkoutEngine = new IntentEngine({
+  mode: 'saas',
+  goals: ['payment_checkout', 'lead_generation'],
+  checkout: {
+    enabled: true,
+    externalUrl: 'https://buy.stripe.com/test_123',
+    mpesa: { number: '123456', type: 'buy_goods' },
+    card: { url: 'https://buy.stripe.com/test_123', amount: '10', currency: 'USD' }
+  }
+});
+
+// Test 14.1: General checkout asks user to select M-Pesa or Card (paymentMethod: null)
+const payGeneral = checkoutEngine.classify('I want to checkout now');
+assert(payGeneral.action === 'OPEN_PAYMENT_WIZARD' && payGeneral.paymentMethod === null, 'General checkout routes to OPEN_PAYMENT_WIZARD with null paymentMethod to prompt user to choose');
+
+// Test 14.2: Explicit M-Pesa query identifies mpesa method
+const payMpesa = checkoutEngine.classify('pay with mpesa');
+assert(payMpesa.action === 'OPEN_PAYMENT_WIZARD' && payMpesa.paymentMethod === 'mpesa', 'Routes explicit M-Pesa query directly to mpesa method');
+
+// Test 14.3: Explicit Card query identifies card method
+const payCard = checkoutEngine.classify('pay with credit card');
+assert(payCard.action === 'OPEN_PAYMENT_WIZARD' && payCard.paymentMethod === 'card', 'Routes explicit Card query directly to card method');
+
+// Test 14.4: Repeating the question when asked returns previous follow-up text
+progressiveEngine.classify('What are Acme Cloud pricing plans?');
+const repeatTurn = progressiveEngine.classify('what did you ask?');
+assert(repeatTurn.intent === 'repeat_question' && repeatTurn.reply.includes('I was asking:'), 'Recognizes user request to repeat the question and quotes last asked follow-up');
+
+// Test 14.5: Insurance mode also enforces anti-repetition memory tracking
+const insEngine = new IntentEngine({ mode: 'insurance' });
+const insTurn1 = insEngine.classify('What is a deductible?');
+const insTurn2 = insEngine.classify('What is the difference between comprehensive and third party?');
+assert(insEngine.memory.askedFollowUps.length >= 2, 'Insurance mode tracks asked follow-up questions in memory');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);
