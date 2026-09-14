@@ -1185,6 +1185,265 @@ footer {
   transform: translateY(-1px);
 }
 
+.pill-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #ffffff;
+  color: #18221c;
+  border: 1.5px solid #18221c;
+  border-radius: 9999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pill-btn-outline:hover {
+  background: #18221c;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(24, 34, 28, 0.12);
+}
+
+.pill-btn-dark,
+.pill-btn-lime,
+.pill-btn-outline {
+  box-sizing: border-box;
+  height: 42px;
+  line-height: 1;
+}
+
+.nav-auth-profile-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1.5px solid #18221c;
+  border-radius: 9999px;
+  padding: 4px 14px 4px 6px;
+  height: 42px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.nav-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nav-user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #18221c;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-sign-out-btn {
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.nav-sign-out-btn:hover {
+  color: #b91c1c;
+}
+
+/* ==================================================
+   BOTLY AUTHENTICATION MODAL DESIGN SYSTEM
+================================================== */
+.botly-auth-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.72);
+  z-index: 9999999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: authFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes authFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.botly-auth-card {
+  background: #ffffff;
+  width: 92%;
+  max-width: 440px;
+  border-radius: 24px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(24, 34, 28, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.botly-auth-header {
+  padding: 24px 28px 16px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.botly-auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.botly-auth-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #18221c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(24, 34, 28, 0.2);
+}
+
+.botly-auth-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: #18221c;
+  letter-spacing: -0.3px;
+}
+
+.botly-auth-badge {
+  display: inline-block;
+  background: rgba(155, 229, 83, 0.2);
+  border: 1px solid rgba(155, 229, 83, 0.4);
+  color: #15803d;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.3px;
+  margin-top: 3px;
+}
+
+.botly-auth-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.botly-auth-close:hover {
+  background: #18221c;
+  color: #ffffff;
+  border-color: #18221c;
+}
+
+.botly-auth-body {
+  padding: 22px 28px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.botly-auth-google-btn {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #18221c;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.botly-auth-google-btn:hover {
+  border-color: #18221c;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.botly-auth-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: #18221c;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+
+.botly-auth-input:focus {
+  border-color: #18221c;
+  background: #ffffff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(155, 229, 83, 0.3);
+}
+
+.botly-auth-submit-btn {
+  width: 100%;
+  height: 44px;
+  background: #18221c;
+  color: #ffffff;
+  border: 1px solid #18221c;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.botly-auth-submit-btn:hover {
+  background: #27362d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(24, 34, 28, 0.25);
+}
+
 /* Hero Section */
 .botly-hero {
   max-width: 1100px;
