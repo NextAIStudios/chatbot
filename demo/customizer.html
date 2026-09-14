@@ -752,7 +752,12 @@
       </a>
 
       <!-- Actions -->
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" onclick="openDocsModal()" id="btn-top-docs" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Docs
+        </button>
+
         <button type="button" onclick="openLeadsModal()" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px;">
           Leads
           <span id="nav-leads-badge" style="background: #18221c; color: #9be553; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 800;">0</span>
@@ -1386,11 +1391,15 @@
             <pre class="code-pre" id="deploy-code-preview">&lt;!-- Embed Code Loading... --&gt;</pre>
           </div>
 
-          <div style="display: flex; gap: 10px;">
-            <a href="embed-example.html" style="flex: 1; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none;">
-              WordPress / Shopify Guides →
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="openDocsModal()" style="flex: 1; min-width: 130px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              View Docs
+            </button>
+            <a href="embed-example.html" style="flex: 1; min-width: 140px; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+              Shopify / WP Guide →
             </a>
-            <button type="button" onclick="downloadConfigJson()" style="flex: 1; background: #ffffff; border: 1.5px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer;">
+            <button type="button" onclick="downloadConfigJson()" style="flex: 1; min-width: 110px; background: #ffffff; border: 1.5px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer;">
               Export JSON
             </button>
           </div>
@@ -1487,9 +1496,336 @@
         </div>
       </div>
 
+  </div>
+
+  <!-- Modal: Sandbox Developer Documentation & API Reference -->
+  <div id="docs-manager-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; width: 95%; max-width: 1040px; height: 88vh; max-height: 850px; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden;">
+
+      <!-- Top Bar -->
+      <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #18221c; display: flex; align-items: center; justify-content: center; color: #9be553;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: #0f172a;">Developer Documentation</h3>
+              <span style="font-size: 11px; font-weight: 700; background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 9999px; border: 1px solid #a7f3d0;">Sandbox Reference</span>
+            </div>
+            <span style="font-size: 12px; color: #64748b;">Instant integration guide, API methods, bot memory &amp; payment setup.</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <a href="docs.html" target="_blank" style="display: flex; align-items: center; gap: 5px; background: #18221c; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 9999px; transition: all 0.15s;" title="Open standalone documentation page">
+            <span>Open Full Page</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <button onclick="closeDocsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; padding: 4px 8px;" aria-label="Close docs">✕</button>
+        </div>
+      </div>
+
+      <!-- Search Subbar -->
+      <div style="padding: 10px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; align-items: center; gap: 12px;">
+        <div style="position: relative; flex: 1; max-width: 460px;">
+          <input type="text" id="docs-modal-search" placeholder="Search parameters, methods, M-Pesa, memory, webhooks..." oninput="filterDocsSearch()" style="width: 100%; padding: 8px 14px 8px 34px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; outline: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" style="position: absolute; left: 11px; top: 11px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+        <span style="font-size: 11.5px; color: #64748b;">Drop-in ready • $10 flat per bot • Zero external dependencies</span>
+      </div>
+
+      <!-- Modal Body (Two Column) -->
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left Tab Navigation -->
+        <div style="width: 220px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex-shrink: 0;">
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('quickstart')" id="dtab-quickstart" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: none; background: #18221c; color: #ffffff; cursor: pointer;">
+            <span>⚡ Quickstart</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('init')" id="dtab-init" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>⚙️ Full Config</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('identity')" id="dtab-identity" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>👤 Identity &amp; Persona</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('memory')" id="dtab-memory" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>🧠 Bot Memory</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('payments')" id="dtab-payments" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>💳 M-Pesa &amp; Cards</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('webhooks')" id="dtab-webhooks" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>🔌 Webhook API</span>
+          </button>
+          <button type="button" class="docs-nav-tab" onclick="switchDocsTab('jsapi')" id="dtab-jsapi" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+            <span>💻 JS API &amp; Events</span>
+          </button>
+        </div>
+
+        <!-- Right Content Panels -->
+        <div style="flex: 1; overflow-y: auto; padding: 24px; background: #ffffff;" id="docs-modal-scroll-area">
+
+          <!-- PANEL: QUICKSTART -->
+          <div class="docs-panel-section" id="dpanel-quickstart">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">Quickstart &amp; Drop-in HTML</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Embed Botly on any website in under 60 seconds with 2 lines of code. Works on WordPress, Shopify, Next.js, Webflow, or vanilla HTML.
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">HTML SNIPPET</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">&lt;!-- 1. Include Botly Stylesheet in &lt;head&gt; --&gt;
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css"&gt;
+
+&lt;!-- 2. Include Botly Script &amp; Initialize before &lt;/body&gt; --&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  BotlyChatbot.init({
+    company: { name: "Your Company", supportPhone: "+254 700 000 000" },
+    bot: { name: "Botly", title: "AI Assistant" },
+    goal: "lead_generation"
+  });
+&lt;/script&gt;</pre>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #166534; line-height: 1.5;">
+              <strong>Pro-tip:</strong> You can configure and preview all settings in real-time in this Sandbox, then copy the customized embed code directly from Step 5 (Ship It).
+            </div>
+          </div>
+
+          <!-- PANEL: FULL CONFIG -->
+          <div class="docs-panel-section" id="dpanel-init" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">Full Configuration Reference</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Pass any combination of options to <code>BotlyChatbot.init({ ... })</code>:
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">JAVASCRIPT INIT</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">BotlyChatbot.init({
+  company: {
+    name: "Acme Corp",
+    supportPhone: "+254 700 000 000",
+    supportEmail: "support@acme.com",
+    websiteUrl: "https://acme.com"
+  },
+  bot: {
+    name: "Ace",
+    title: "AI Assistant",
+    avatar: "https://acme.com/bot-icon.svg",
+    greeting: "Hi! I am Ace from Acme. How can I assist you today?"
+  },
+  goal: "lead_generation", // "lead_generation" | "payment_checkout" | "customer_support" | "consultation_booking"
+  theme: {
+    primaryColor: "#18221c",
+    accentColor: "#9be553"
+  },
+  currency: { code: "KES", symbol: "KSh" },
+  customFaqs: [
+    { keywords: ["hours", "open"], answer: "Monday to Friday, 8am-6pm EAT." }
+  ],
+  checkout: {
+    enabled: true,
+    currency: "KES",
+    mpesa: {
+      enabled: true,
+      type: "paybill",
+      number: "522522",
+      accountName: "Acme Corp"
+    },
+    card: {
+      enabled: true,
+      url: "https://checkout.stripe.com/c/pay/cs_live_123",
+      gateway: "Stripe",
+      label: "Pay with Card / Stripe"
+    }
+  }
+});</pre>
+            </div>
+          </div>
+
+          <!-- PANEL: IDENTITY & PERSONA -->
+          <div class="docs-panel-section" id="dpanel-identity" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">Identity &amp; Persona Settings</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Configure your business brand, contact channels, and bot avatar with strict logo isolation.
+            </p>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 18px;">
+              <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                <th style="padding: 8px 12px; color: #0f172a;">Field</th>
+                <th style="padding: 8px 12px; color: #0f172a;">Type</th>
+                <th style="padding: 8px 12px; color: #0f172a;">Purpose</th>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 12px; font-family: monospace; color: #15803d; font-weight: 700;">company.name</td>
+                <td style="padding: 8px 12px; color: #64748b;">string</td>
+                <td style="padding: 8px 12px; color: #334155;">Brand name mentioned in conversational replies and handovers.</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 12px; font-family: monospace; color: #15803d; font-weight: 700;">company.supportPhone</td>
+                <td style="padding: 8px 12px; color: #64748b;">string</td>
+                <td style="padding: 8px 12px; color: #334155;">Customer support hotline displayed when users request to speak to a person.</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 12px; font-family: monospace; color: #15803d; font-weight: 700;">company.supportEmail</td>
+                <td style="padding: 8px 12px; color: #64748b;">string</td>
+                <td style="padding: 8px 12px; color: #334155;">Email address provided for escalations and lead notifications.</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 12px; font-family: monospace; color: #15803d; font-weight: 700;">bot.avatar</td>
+                <td style="padding: 8px 12px; color: #64748b;">string (URL)</td>
+                <td style="padding: 8px 12px; color: #334155;">Isolated bot avatar image. Never overrides website header logo.</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- PANEL: BOT MEMORY -->
+          <div class="docs-panel-section" id="dpanel-memory" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">Bot Memory &amp; Custom Training</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Train your bot on company knowledge, FAQs, documents, and website data.
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">MEMORY OPTIONS</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">// 1. Injected FAQs / Custom Data
+customFaqs: [
+  {
+    keywords: ["hours", "open", "location"],
+    answer: "We are open Monday-Friday 8am-6pm in Nairobi."
+  }
+],
+
+// 2. Website Knowledge Memory
+customKnowledge: [
+  {
+    source: "website",
+    sourceUrl: "https://acme.com",
+    question: "What does Acme do?",
+    answer: "Acme delivers autonomous customer communication AI.",
+    keywords: ["acme", "services", "about"]
+  }
+]</pre>
+            </div>
+          </div>
+
+          <!-- PANEL: PAYMENTS -->
+          <div class="docs-panel-section" id="dpanel-payments" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">M-Pesa &amp; Card Payments</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Botly supports in-chat payment method selection. When users ask to pay, the bot prompts them to select M-Pesa or Card, presenting the dedicated payment card:
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">CHECKOUT SETUP</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">checkout: {
+  enabled: true,
+  currency: "KES",
+  mpesa: {
+    enabled: true,
+    type: "paybill",          // "paybill" | "till" | "phone"
+    number: "522522",
+    accountName: "Acme Corp",
+    accountNumber: "ORDER-001"
+  },
+  card: {
+    enabled: true,
+    url: "https://checkout.stripe.com/c/pay/cs_live_...",
+    gateway: "Stripe",        // "Stripe" | "Flutterwave" | "PayPal" | "Paystack" | "Pesapal" | "Custom"
+    label: "Pay with Card / Stripe"
+  }
+}</pre>
+            </div>
+            <p style="font-size: 12.5px; color: #475569;">
+              <strong>Confirmation Code Logging:</strong> When a user enters their M-Pesa confirmation code (e.g. <code>UIC8E69GLQ</code>), the bot verifies and stores it inside <code>botly_captured_leads</code> with the M-Pesa tag.
+            </p>
+          </div>
+
+          <!-- PANEL: WEBHOOK API -->
+          <div class="docs-panel-section" id="dpanel-webhooks" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">Webhook / Live Backend API</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Route queries directly to your own server for custom dynamic responses, database lookups, or CRM syncing.
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">WEBHOOK CONFIG</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">BotlyChatbot.init({
+  api: {
+    enabled: true,
+    endpoint: "https://your-api.com/chat/query",
+    mode: "hybrid", // "hybrid" checks memory first, "api_only" routes all
+    method: "POST",
+    authBearer: "optional-secret-token"
+  }
+});</pre>
+            </div>
+          </div>
+
+          <!-- PANEL: JS API -->
+          <div class="docs-panel-section" id="dpanel-jsapi" style="display: none;">
+            <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px;">JavaScript API &amp; Custom Events</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+              Control the widget programmatically and listen to lead capture or payment events.
+            </p>
+
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">PROGRAMMATIC METHODS</span>
+                <button type="button" onclick="copyDocsSnippet(this)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <pre style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">// Open / Close / Toggle widget
+BotlyChatbot.open();
+BotlyChatbot.close();
+BotlyChatbot.toggle();
+
+// Trigger a user prompt programmatically
+BotlyChatbot.triggerAction("I would like to explore Botly for my company");
+
+// Reset conversation
+BotlyChatbot.reset();
+
+// Access and Export leads
+const leads = BotlyChatbot.getLeads();
+BotlyChatbot.exportLeadsCSV();
+
+// Listen to Custom Events
+window.addEventListener('botly:lead', (e) => {
+  console.log('Lead Captured:', e.detail);
+});
+
+window.addEventListener('botly:payment', (e) => {
+  console.log('Payment Completed:', e.detail);
+});</pre>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
       <div style="padding: 12px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-        <span id="leads-total-count" style="font-size: 12px; font-weight: 700; color: #18221c;">0 Inquiries Recorded</span>
-        <button onclick="closeLeadsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
+        <span style="font-size: 12px; color: #64748b;">Botly Docs is hosted directly in your sandbox suite at <a href="docs.html" target="_blank" style="color: #15803d; font-weight: 600;">demo/docs.html</a></span>
+        <div style="display: flex; gap: 8px;">
+          <a href="docs.html" target="_blank" style="padding: 6px 14px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #18221c; text-decoration: none;">View Standalone Page ↗</a>
+          <button onclick="closeDocsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2727,6 +3063,95 @@
       if (!str) return '';
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+
+    // ==================================================
+    // DOCS MODAL & SEARCH
+    // ==================================================
+    function openDocsModal(targetTab) {
+      var m = document.getElementById('docs-manager-modal');
+      if (m) {
+        m.style.display = 'flex';
+        if (targetTab) {
+          switchDocsTab(targetTab);
+        } else {
+          switchDocsTab('quickstart');
+        }
+      }
+    }
+
+    function closeDocsModal() {
+      var m = document.getElementById('docs-manager-modal');
+      if (m) m.style.display = 'none';
+    }
+
+    function switchDocsTab(tabId) {
+      document.querySelectorAll('.docs-nav-tab').forEach(function(b) {
+        b.style.background = 'transparent';
+        b.style.color = '#475569';
+        b.style.fontWeight = '600';
+      });
+      var activeBtn = document.getElementById('dtab-' + tabId);
+      if (activeBtn) {
+        activeBtn.style.background = '#18221c';
+        activeBtn.style.color = '#ffffff';
+        activeBtn.style.fontWeight = '700';
+      }
+      document.querySelectorAll('.docs-panel-section').forEach(function(p) {
+        p.style.display = 'none';
+      });
+      var activePanel = document.getElementById('dpanel-' + tabId);
+      if (activePanel) {
+        activePanel.style.display = 'block';
+      }
+      var scrollArea = document.getElementById('docs-modal-scroll-area');
+      if (scrollArea) scrollArea.scrollTop = 0;
+    }
+
+    function filterDocsSearch() {
+      var searchInput = document.getElementById('docs-modal-search');
+      var query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      var panels = document.querySelectorAll('.docs-panel-section');
+      if (!query) {
+        var activeBtn = Array.from(document.querySelectorAll('.docs-nav-tab')).find(function(b) {
+          return b.style.color === 'rgb(255, 255, 255)' || b.style.color === '#ffffff';
+        }) || document.getElementById('dtab-quickstart');
+        var tabId = activeBtn ? activeBtn.id.replace('dtab-', '') : 'quickstart';
+        switchDocsTab(tabId);
+        return;
+      }
+      panels.forEach(function(panel) {
+        var text = panel.textContent.toLowerCase();
+        if (text.indexOf(query) !== -1) {
+          panel.style.display = 'block';
+        } else {
+          panel.style.display = 'none';
+        }
+      });
+    }
+
+    function copyDocsSnippet(btn) {
+      var block = btn.closest('div').parentElement;
+      var pre = block ? block.querySelector('pre') : null;
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#16a34a';
+        btn.style.color = '#ffffff';
+        setTimeout(function() {
+          btn.textContent = orig;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDocsModal();
+        closeLeadsModal();
+      }
+    });
 
     // ==================================================
     // INITIALIZATION
