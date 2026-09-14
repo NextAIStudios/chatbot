@@ -11,6 +11,7 @@
   var currentUser = null;
   var authListeners = [];
   var isInitialized = false;
+  var initialAuthResolved = false;
   var pendingAction = null;
 
   var BotlyAuth = {
@@ -24,8 +25,18 @@
             firebase.initializeApp(config);
           }
           isInitialized = true;
+          // Set persistent session storage so login survives page reload & navigation
+          try {
+            if (firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+              firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(pe) {
+                console.warn('Botly persistence notice:', pe.message);
+              });
+            }
+          } catch(e) {}
+
           firebase.auth().onAuthStateChanged(function(user) {
             currentUser = user;
+            initialAuthResolved = true;
             notifyListeners(user);
             updateAuthNavbarUI(user);
             if (user && pendingAction) {
@@ -36,9 +47,13 @@
           });
         } catch(err) {
           console.warn('Botly Firebase init notice:', err.message);
+          initialAuthResolved = true;
+          notifyListeners(null);
         }
       } else {
         updateAuthNavbarUI(null);
+        initialAuthResolved = true;
+        notifyListeners(null);
       }
     },
 
@@ -58,8 +73,14 @@
     onAuthStateChanged: function(callback) {
       if (typeof callback === 'function') {
         authListeners.push(callback);
-        if (currentUser) callback(currentUser);
+        if (initialAuthResolved) {
+          try { callback(currentUser); } catch(e) { console.error(e); }
+        }
       }
+    },
+
+    isReady: function() {
+      return initialAuthResolved;
     },
 
     signInWithGoogle: function() {
@@ -172,11 +193,28 @@
       }
     },
 
-    closeModal: function() {
+    closeModal: function(force) {
+      if (window.BOTLY_REQUIRE_AUTH_PAGE && !currentUser && !force) {
+        // Page requires authentication: sign-in modal persists and cannot be dismissed
+        var card = document.querySelector('.botly-auth-card');
+        if (card) {
+          card.classList.remove('auth-shake');
+          void card.offsetWidth;
+          card.classList.add('auth-shake');
+        }
+        var hint = document.getElementById('auth-persist-hint');
+        if (hint) {
+          hint.style.display = 'block';
+          setTimeout(function() { hint.style.display = 'none'; }, 2800);
+        }
+        return false;
+      }
+
       var modal = document.getElementById('botly-auth-modal');
       if (modal) {
         modal.style.display = 'none';
       }
+      return true;
     }
   };
 

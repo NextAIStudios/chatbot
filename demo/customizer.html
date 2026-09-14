@@ -14,6 +14,7 @@
   <script src="firebase-config.js"></script>
   <script src="firebase-config.local.js" onerror="this.remove()"></script>
   <script src="firebase-auth.js"></script>
+  <script>window.BOTLY_REQUIRE_AUTH_PAGE = true;</script>
   <style>
     /* ==================================================
        WIZARD STUDIO MODERN DESIGN SYSTEM
@@ -792,8 +793,8 @@
     </nav>
   </header>
 
-  <!-- Studio Main Layout -->
-  <div class="studio-layout">
+  <!-- Studio Main Layout (Gated until authentication resolves) -->
+  <div class="studio-layout gated">
 
     <!-- Left: 5-Step Wizard Sidebar -->
     <aside class="wizard-sidebar">
@@ -1854,7 +1855,7 @@ window.addEventListener('botly:payment', (e) => {
   </div>
 
   <!-- Modal: Firebase Authentication & Paywall Gate -->
-  <div id="botly-auth-modal" class="botly-auth-backdrop">
+  <div id="botly-auth-modal" class="botly-auth-backdrop" onclick="handleAuthBackdropClick(event)">
     <div class="botly-auth-card">
       <!-- Modal Header -->
       <div class="botly-auth-header">
@@ -1867,13 +1868,18 @@ window.addEventListener('botly:payment', (e) => {
             <span class="botly-auth-badge">Sandbox Access &amp; $10 Licensing</span>
           </div>
         </div>
-        <button type="button" class="botly-auth-close" onclick="BotlyAuth.closeModal()" aria-label="Close modal">✕</button>
+        <button type="button" class="botly-auth-close" id="auth-modal-close-btn" onclick="handleAuthCloseBtn()" aria-label="Close modal" title="Return to Home Page">✕</button>
+      </div>
+
+      <!-- Persistent Gating Hint Banner -->
+      <div id="auth-persist-hint" style="display: none; margin: 12px 28px 0 28px; background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; padding: 9px 14px; font-size: 12.5px; color: #854d0e; font-weight: 700; text-align: center;">
+        🔒 Sign in is required to access the Customizer Sandbox Studio.
       </div>
 
       <!-- Context Message -->
       <div style="padding: 16px 28px 4px 28px;">
         <p id="auth-modal-message" style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.55;">
-          Sign in to save your custom AI chatbot, deploy to production, and process $10 flat bot licensing.
+          Sign in to access your custom AI chatbot sandbox, save settings, and deploy to production.
         </p>
       </div>
 
@@ -1920,6 +1926,12 @@ window.addEventListener('botly:payment', (e) => {
           <button type="button" onclick="toggleAuthMode()" id="btn-auth-toggle" style="background: none; border: none; color: #18221c; font-weight: 800; cursor: pointer; padding: 0 4px; text-decoration: underline; text-underline-offset: 3px;">
             Create account
           </button>
+        </div>
+
+        <div style="text-align: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+          <a href="../index.html" style="color: #64748b; font-size: 12.5px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s;" onmouseover="this.style.color='#18221c'" onmouseout="this.style.color='#64748b'">
+            ← Return to Botly Home Page
+          </a>
         </div>
       </div>
     </div>
@@ -3351,6 +3363,78 @@ window.addEventListener('botly:payment', (e) => {
       });
     }
 
+    window.handleAuthBackdropClick = function(e) {
+      if (e.target.id === 'botly-auth-modal') {
+        if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
+          var card = document.querySelector('.botly-auth-card');
+          if (card) {
+            card.classList.remove('auth-shake');
+            void card.offsetWidth;
+            card.classList.add('auth-shake');
+          }
+          var hint = document.getElementById('auth-persist-hint');
+          if (hint) {
+            hint.style.display = 'block';
+            setTimeout(function() { hint.style.display = 'none'; }, 2800);
+          }
+          return;
+        }
+        window.BotlyAuth.closeModal();
+      }
+    };
+
+    window.handleAuthCloseBtn = function() {
+      if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
+        window.location.href = '../index.html';
+        return;
+      }
+      window.BotlyAuth.closeModal();
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
+          var card = document.querySelector('.botly-auth-card');
+          if (card) {
+            card.classList.remove('auth-shake');
+            void card.offsetWidth;
+            card.classList.add('auth-shake');
+          }
+          var hint = document.getElementById('auth-persist-hint');
+          if (hint) {
+            hint.style.display = 'block';
+            setTimeout(function() { hint.style.display = 'none'; }, 2800);
+          }
+          return;
+        }
+        if (window.BotlyAuth) window.BotlyAuth.closeModal();
+      }
+    });
+
+    function updateSandboxAuthGate(user) {
+      var studio = document.querySelector('.studio-layout');
+      var modal = document.getElementById('botly-auth-modal');
+      var closeBtn = document.getElementById('auth-modal-close-btn');
+
+      if (user) {
+        // Authenticated: unlock studio and hide modal
+        if (studio) studio.classList.remove('gated');
+        if (modal) modal.style.display = 'none';
+        if (closeBtn) closeBtn.title = 'Close modal';
+      } else {
+        // Unauthenticated: gate studio and PERSIST sign-in modal
+        if (studio) studio.classList.add('gated');
+        if (modal) {
+          modal.style.display = 'flex';
+        }
+        if (closeBtn) closeBtn.title = 'Return to Home Page';
+        var msgEl = document.getElementById('auth-modal-message');
+        if (msgEl) {
+          msgEl.textContent = 'Sign in to access your custom AI chatbot sandbox, save settings, and deploy to production.';
+        }
+      }
+    }
+
     // ==================================================
     // INITIALIZATION
     // ==================================================
@@ -3370,12 +3454,12 @@ window.addEventListener('botly:payment', (e) => {
         renderLeadsTable();
       });
 
-      // Look whether user is signed in to access Sandbox Studio
-      setTimeout(function() {
-        if (window.BotlyAuth && !window.BotlyAuth.isAuthenticated()) {
-          window.BotlyAuth.openModal('Sign in to access your custom AI chatbot sandbox, save settings, and deploy to production.');
-        }
-      }, 350);
+      // Reactive auth listener: ensures sign-in persists whenever user is unauthenticated
+      if (window.BotlyAuth) {
+        window.BotlyAuth.onAuthStateChanged(function(user) {
+          updateSandboxAuthGate(user);
+        });
+      }
     });
   </script>
 </body>

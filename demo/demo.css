@@ -1289,6 +1289,23 @@ footer {
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes authShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.auth-shake {
+  animation: authShake 0.35s ease-in-out !important;
+}
+
+.studio-layout.gated {
+  filter: blur(8px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 0.3s ease;
+}
+
 .botly-auth-card {
   background: #ffffff;
   width: 92%;
