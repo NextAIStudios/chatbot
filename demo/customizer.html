@@ -763,6 +763,11 @@
 
       <!-- Actions -->
       <div class="customizer-nav-actions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <button type="button" onclick="openWebhooksModal()" class="customizer-webhooks-btn" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Webhook & API Console in Sandbox">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Webhooks
+        </button>
+
         <a href="docs.html" target="_blank" id="btn-top-docs" class="customizer-docs-link" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Docs
@@ -772,10 +777,6 @@
           Leads
           <span id="nav-leads-badge" style="background: #18221c; color: #9be553; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 800;">0</span>
         </button>
-
-        <a href="embed-example.html" class="customizer-embed-link" style="color: #475569; font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 10px;">
-          Embed Guide →
-        </a>
 
         <!-- Auth Status Controls -->
         <button type="button" id="nav-auth-login-btn" onclick="BotlyAuth.openModal()" class="pill-btn-outline" style="height: 34px; padding: 0 14px; font-size: 12.5px;">
@@ -1384,8 +1385,17 @@
               <button type="button" id="btn-test-api" onclick="testLiveApiConnection()" class="t-chip" style="flex: 1; padding: 8px; background: #18221c; color: #ffffff; border: none; justify-content: center; display: flex; align-items: center; gap: 6px;">
                 Test API Connection
               </button>
+              <button type="button" onclick="openWebhooksModal('simulator')" class="t-chip" style="padding: 8px 12px; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; justify-content: center; display: flex; align-items: center; gap: 5px; font-weight: 700;" title="Open interactive simulator">
+                Simulator ↗
+              </button>
             </div>
             <div id="api-connection-status" style="display: none; padding: 8px 12px; border-radius: 8px; font-size: 11.5px;"></div>
+
+            <button type="button" onclick="openWebhooksModal()" style="width: 100%; margin-top: 10px; padding: 9px 12px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 10px; font-size: 12px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span>Explore Webhook APIs &amp; Live Server Architecture</span>
+              <span style="background: #18221c; color: #9be553; font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 800;">HUB</span>
+            </button>
           </div>
         </div>
 
@@ -1879,6 +1889,323 @@ window.addEventListener('botly:payment', (e) => {
         <div style="display: flex; gap: 8px;">
           <a href="docs.html" target="_blank" style="padding: 6px 14px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #18221c; text-decoration: none;">View Standalone Page ↗</a>
           <button onclick="closeDocsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Sandbox Webhook & Live Backend API Console -->
+  <div id="webhooks-sandbox-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.68); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; width: 95%; max-width: 1080px; height: 88vh; max-height: 860px; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden;">
+
+      <!-- Top Bar -->
+      <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #18221c; display: flex; align-items: center; justify-content: center; color: #9be553;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: #0f172a;">Webhook &amp; Live Backend API Console</h3>
+              <span style="font-size: 11px; font-weight: 700; background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 9999px; border: 1px solid #a7f3d0;">Sandbox Suite</span>
+            </div>
+            <span style="font-size: 12px; color: #64748b;">Connect company databases, stream lead &amp; payment webhooks, and test endpoints live.</span>
+          </div>
+        </div>
+
+        <button onclick="closeWebhooksModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; padding: 4px 8px;" aria-label="Close modal">✕</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div style="padding: 10px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; gap: 8px; overflow-x: auto;">
+        <button type="button" class="wh-nav-tab active" id="whtab-btn-inbound" onclick="switchWhTab('inbound')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: none; background: #18221c; color: #ffffff; cursor: pointer;">
+          <span>🔌 Inbound Query API</span>
+        </button>
+        <button type="button" class="wh-nav-tab" id="whtab-btn-outbound" onclick="switchWhTab('outbound')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+          <span>⚡ Outbound Webhooks</span>
+        </button>
+        <button type="button" class="wh-nav-tab" id="whtab-btn-simulator" onclick="switchWhTab('simulator')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+          <span>🧪 Live Webhook Simulator</span>
+        </button>
+        <button type="button" class="wh-nav-tab" id="whtab-btn-starters" onclick="switchWhTab('starters')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer;">
+          <span>💻 Backend Starters (Node &amp; Python)</span>
+        </button>
+      </div>
+
+      <!-- Content Area -->
+      <div style="flex: 1; overflow-y: auto; padding: 24px; background: #ffffff;" id="webhooks-modal-scroll">
+
+        <!-- ==============================================
+             PANEL 1: INBOUND QUERY API
+        =============================================== -->
+        <div class="wh-panel-section" id="whpanel-inbound" style="display: block;">
+          <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Connecting Botly Pro to Your Live Backend</h4>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
+            When a visitor asks a question, Botly Pro can query your existing API server, internal CRM, or database microservice in real time to fetch answers.
+          </p>
+
+          <!-- Visual Architecture Card -->
+          <div style="background: linear-gradient(135deg, #18221c 0%, #223226 100%); border-radius: 12px; padding: 20px; color: #ffffff; margin-bottom: 24px;">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #9be553; margin-bottom: 14px;">End-to-End Live Query Flow</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; text-align: center;">
+              <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 8px;">
+                <div style="font-size: 11px; color: #9be553; font-weight: 800; margin-bottom: 4px;">STEP 1</div>
+                <div style="font-size: 13px; font-weight: 700;">Visitor Prompt</div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">User types query</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 8px;">
+                <div style="font-size: 11px; color: #9be553; font-weight: 800; margin-bottom: 4px;">STEP 2</div>
+                <div style="font-size: 13px; font-weight: 700;">HTTP POST</div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">JSON sent to endpoint</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 8px;">
+                <div style="font-size: 11px; color: #9be553; font-weight: 800; margin-bottom: 4px;">STEP 3</div>
+                <div style="font-size: 13px; font-weight: 700;">DB / LLM Search</div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">Backend queries data</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 8px;">
+                <div style="font-size: 11px; color: #9be553; font-weight: 800; margin-bottom: 4px;">STEP 4</div>
+                <div style="font-size: 13px; font-weight: 700;">JSON Reply</div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">Returns formatted answer</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 8px;">
+                <div style="font-size: 11px; color: #9be553; font-weight: 800; margin-bottom: 4px;">STEP 5</div>
+                <div style="font-size: 13px; font-weight: 700;">Live Render</div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">Botly displays bubble</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuration Code Snippet -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 13px; font-weight: 700; color: #18221c;">1. Botly Pro Client Initialization</span>
+              <button type="button" onclick="copyWhSnippet(this, 'wh-code-init')" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #18221c; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer;">Copy</button>
+            </div>
+            <div style="background: #0f1a13; border-radius: 10px; overflow: hidden;">
+              <pre id="wh-code-init" style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">BotlyChatbot.init({
+  company: {
+    name: "My Enterprise"
+  },
+  // 🔌 Point directly to your backend API:
+  api: {
+    enabled: true,
+    endpoint: "https://api.mycompany.com/v1/bot-query",
+    mode: "hybrid",        // "hybrid" = queries API first, falls back to local KB if offline
+    method: "POST",
+    authBearer: "sk-production-secret-token",
+    responsePath: "reply"  // JSON path containing answer (e.g. "reply", "answer", "data.text")
+  }
+});</pre>
+            </div>
+          </div>
+
+          <!-- Request & Response JSON Contracts Side-by-Side -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 700; color: #18221c;">2. Request Payload (Sent to Your API)</span>
+                <button type="button" onclick="copyWhSnippet(this, 'wh-code-req')" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #18221c; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <div style="background: #0f1a13; border-radius: 10px; overflow: hidden;">
+                <pre id="wh-code-req" style="margin: 0; padding: 12px 14px; font-family: monospace; font-size: 11.5px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">{
+  "message": "Which hospitals are in your network?",
+  "sessionId": "session_live_94821a",
+  "company": "My Enterprise"
+}</pre>
+              </div>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 700; color: #18221c;">3. Response Contract (Returned by Your API)</span>
+                <button type="button" onclick="copyWhSnippet(this, 'wh-code-res')" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #18221c; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;">Copy</button>
+              </div>
+              <div style="background: #0f1a13; border-radius: 10px; overflow: hidden;">
+                <pre id="wh-code-res" style="margin: 0; padding: 12px 14px; font-family: monospace; font-size: 11.5px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">{
+  "reply": "We partner with over 4,500 accredited facilities nationwide with 100% direct billing.",
+  "quickReplies": [
+    { "label": "🚗 Get Quote", "payload": "intent_quote" },
+    { "label": "📑 File Claim", "payload": "intent_claim" }
+  ]
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             PANEL 2: OUTBOUND WEBHOOKS & EVENTS
+        =============================================== -->
+        <div class="wh-panel-section" id="whpanel-outbound" style="display: none;">
+          <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Outbound Webhooks &amp; Real-Time Events</h4>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
+            Botly Pro triggers standard JavaScript Custom Events whenever leads are captured or payments occur. Forward them directly to Zapier, Make, Slack, or your CRM webhook endpoint.
+          </p>
+
+          <!-- Webhook 1: botly:lead -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="background: #18221c; color: #9be553; font-family: monospace; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">event: botly:lead</span>
+                <span style="font-size: 13px; font-weight: 700; color: #18221c;">New Lead Captured Webhook</span>
+              </div>
+              <button type="button" onclick="copyWhSnippet(this, 'wh-code-lead-hook')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #18221c; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;">Copy</button>
+            </div>
+            <p style="font-size: 12.5px; color: #64748b; margin: 0 0 12px 0;">Dispatched automatically when a visitor submits their name, phone number, and inquiry need.</p>
+            <div style="background: #0f1a13; border-radius: 8px; overflow: hidden;">
+              <pre id="wh-code-lead-hook" style="margin: 0; padding: 12px 14px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">// Listen and forward captured leads to your webhook (Zapier, Slack, CRM)
+window.addEventListener('botly:lead', async (event) => {
+  const lead = event.detail;
+  // lead: { name: "Jane Doe", phone: "+254712345678", need: "Custom Software", goal: "lead_generation", timestamp: "..." }
+
+  // Forward to your backend or CRM webhook:
+  await fetch('https://api.yourcompany.com/webhooks/leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lead)
+  });
+});</pre>
+            </div>
+          </div>
+
+          <!-- Webhook 2: botly:payment -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="background: #18221c; color: #9be553; font-family: monospace; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">event: botly:payment</span>
+                <span style="font-size: 13px; font-weight: 700; color: #18221c;">Payment &amp; Confirmation Code Webhook</span>
+              </div>
+              <button type="button" onclick="copyWhSnippet(this, 'wh-code-pay-hook')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #18221c; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;">Copy</button>
+            </div>
+            <p style="font-size: 12.5px; color: #64748b; margin: 0 0 12px 0;">Dispatched when a customer enters an M-Pesa transaction code or completes in-chat checkout.</p>
+            <div style="background: #0f1a13; border-radius: 8px; overflow: hidden;">
+              <pre id="wh-code-pay-hook" style="margin: 0; padding: 12px 14px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; overflow-x: auto;">// Listen for verified payments
+window.addEventListener('botly:payment', async (event) => {
+  const payment = event.detail;
+  // payment: { paymentMethod: "mpesa", mpesaCode: "UIC8E69GLQ", amount: 10, status: "PAID", timestamp: "..." }
+
+  // Forward to your billing system:
+  await fetch('https://api.yourcompany.com/webhooks/payments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payment)
+  });
+});</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             PANEL 3: LIVE WEBHOOK SIMULATOR
+        =============================================== -->
+        <div class="wh-panel-section" id="whpanel-simulator" style="display: none;">
+          <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Interactive Live Webhook Simulator</h4>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 18px 0;">
+            Test your HTTP API endpoint live right now from your browser. Send test payloads, measure latency, and inspect returned JSON responses.
+          </p>
+
+          <!-- Simulator Form -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 120px 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label style="display: block; font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 4px;">Method</label>
+                <select id="sim-wh-method" class="wiz-input" style="padding: 8px 10px;">
+                  <option value="POST">POST</option>
+                  <option value="GET">GET</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 4px;">API Endpoint URL</label>
+                <input type="url" id="sim-wh-url" class="wiz-input" value="http://localhost:5000/api/chat" placeholder="http://localhost:5000/api/chat">
+              </div>
+              <div>
+                <label style="display: block; font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 4px;">Bearer Token (Optional)</label>
+                <input type="text" id="sim-wh-token" class="wiz-input" placeholder="Bearer sk-test-token...">
+              </div>
+            </div>
+
+            <!-- Quick Template Presets -->
+            <div style="margin-bottom: 12px;">
+              <span style="font-size: 11.5px; font-weight: 700; color: #475569;">Quick Test Presets:</span>
+              <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                <button type="button" class="idea-chip" onclick="setWhPreset('faq')">🏥 FAQ / Query Question</button>
+                <button type="button" class="idea-chip" onclick="setWhPreset('lead')">👤 Captured Lead Payload</button>
+                <button type="button" class="idea-chip" onclick="setWhPreset('payment')">💳 M-Pesa Payment Payload</button>
+              </div>
+            </div>
+
+            <!-- Request Body Textarea -->
+            <div style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 4px;">Request Payload (JSON Body)</label>
+              <textarea id="sim-wh-body" class="wiz-input" style="min-height: 100px; font-family: monospace; font-size: 12px;">{
+  "message": "Which hospitals are in your network?",
+  "sessionId": "sim_test_001",
+  "company": "NextAI Studios Limited"
+}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" id="btn-run-wh-test" onclick="runLiveWebhookTest()" style="background: #18221c; color: #9be553; border: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Execute Live Webhook Test
+              </button>
+              <span id="sim-wh-timing" style="font-size: 12px; color: #64748b; font-weight: 600;"></span>
+            </div>
+          </div>
+
+          <!-- Live Simulator Results Viewer -->
+          <div id="sim-wh-result-container" style="display: none; background: #0f1a13; border-radius: 12px; overflow: hidden;">
+            <div style="padding: 10px 16px; background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="sim-wh-status-badge" style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">200 OK</span>
+                <span id="sim-wh-latency" style="font-size: 11px; color: #9be553; font-family: monospace;">⏱️ 32ms</span>
+              </div>
+              <button type="button" onclick="copyWhSnippet(this, 'sim-wh-response-output')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;">Copy Output</button>
+            </div>
+            <pre id="sim-wh-response-output" style="margin: 0; padding: 16px; font-family: monospace; font-size: 12px; color: #e2e8f0; line-height: 1.6; max-height: 240px; overflow-y: auto;"></pre>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             PANEL 4: BACKEND CODE STARTERS
+        =============================================== -->
+        <div class="wh-panel-section" id="whpanel-starters" style="display: none;">
+          <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Zero-Dependency Backend Starters</h4>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
+            Both reference servers are included in this repository under <code>examples/backend-api/</code>. Run them with native Node.js or Python without installing npm or pip packages!
+          </p>
+
+          <!-- Starter Selector -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+            <button type="button" id="starter-btn-node" onclick="switchStarterCode('node')" style="padding: 7px 14px; background: #18221c; color: #ffffff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">Node.js Server (Native http)</button>
+            <button type="button" id="starter-btn-py" onclick="switchStarterCode('py')" style="padding: 7px 14px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">Python 3 Server (http.server)</button>
+          </div>
+
+          <!-- Command Box -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="starter-cmd-text" style="font-family: monospace; font-size: 12px; color: #0f172a; font-weight: 700;">node examples/backend-api/server.js</span>
+            <button type="button" onclick="copyWhSnippet(this, 'starter-cmd-text')" style="background: #ffffff; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">Copy Command</button>
+          </div>
+
+          <!-- Code Box -->
+          <div style="background: #0f1a13; border-radius: 10px; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <span id="starter-file-title" style="font-size: 11px; font-weight: 700; color: #9be553; font-family: monospace;">examples/backend-api/server.js</span>
+              <button type="button" onclick="copyWhSnippet(this, 'starter-code-block')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Copy Full Code</button>
+            </div>
+            <pre id="starter-code-block" style="margin: 0; padding: 14px 16px; font-family: monospace; font-size: 11.5px; color: #e2e8f0; line-height: 1.6; max-height: 320px; overflow-y: auto;"></pre>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="padding: 12px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #64748b;">Botly Pro Webhook Suite • Full reference in <code>examples/backend-api/</code></span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onclick="switchWhTab('simulator')" style="padding: 6px 14px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #18221c; cursor: pointer;">Open Simulator ↗</button>
+          <button onclick="closeWebhooksModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
         </div>
       </div>
     </div>
@@ -3315,9 +3642,308 @@ window.addEventListener('botly:payment', (e) => {
       if (e.key === 'Escape') {
         closeDocsModal();
         closeLeadsModal();
+        closeWebhooksModal();
         if (window.BotlyAuth) BotlyAuth.closeModal();
       }
     });
+
+    // ==================================================
+    // WEBHOOKS SANDBOX MODAL & SIMULATOR
+    // ==================================================
+    var STARTER_CODE_NODE = `import http from 'http';
+const PORT = process.env.PORT || 5000;
+
+// In-Memory Database / Knowledge Store
+const BACKEND_DATABASE = [
+  { keywords: ['hospital', 'clinic'], answer: 'Partnered with over 4,500 accredited facilities nationwide with 100% direct billing.' },
+  { keywords: ['garage', 'repair'], answer: 'You can select any certified garage nationwide with courtesy replacement cars.' },
+  { keywords: ['hours', 'time'], answer: 'We are open Monday to Friday, 8:00 AM to 6:00 PM.' }
+];
+
+const server = http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.writeHead(204).end();
+
+  if (req.url === '/api/chat' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const query = (payload.message || '').toLowerCase();
+        const match = BACKEND_DATABASE.find(item => item.keywords.some(k => query.includes(k)));
+        const reply = match ? match.answer : \`We received your query: "\${payload.message}". A representative will follow up.\`;
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          reply: reply,
+          quickReplies: [{ label: 'Pricing', payload: 'pricing' }, { label: 'Contact', payload: 'contact' }]
+        }));
+      } catch(err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+      }
+    });
+  } else {
+    res.writeHead(404).end('Not Found');
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(\`Backend API running on http://localhost:\${PORT}/api/chat\`);
+});`;
+
+    var STARTER_CODE_PY = `#!/usr/bin/env python3
+import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+PORT = 5000
+DATABASE = [
+    {"keywords": ["hospital", "clinic"], "answer": "Partnered with over 4,500 accredited facilities with 100% direct billing."},
+    {"keywords": ["garage", "repair"], "answer": "Select any certified garage nationwide with free replacement cars."},
+    {"keywords": ["hours", "time"], "answer": "We are open Monday to Friday, 8:00 AM to 6:00 PM."}
+]
+
+class ApiHandler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.end_headers()
+
+    def do_POST(self):
+        if self.path == '/api/chat':
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8')
+            try:
+                payload = json.loads(body or '{}')
+                query = payload.get('message', '').lower()
+                match = next((item['answer'] for item in DATABASE if any(k in query for k in item['keywords'])), None)
+                reply = match or f"Received query: '{payload.get('message')}'. Connected live to Python backend."
+                
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'reply': reply,
+                    'quickReplies': [{'label': 'Pricing', 'payload': 'pricing'}, {'label': 'Contact', 'payload': 'contact'}]
+                }).encode('utf-8'))
+            except Exception as e:
+                self.send_response(400)
+                self.end_headers()
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+print(f"Python Backend running on http://localhost:{PORT}/api/chat")
+HTTPServer(('', PORT), ApiHandler).serve_forever()`;
+
+    function openWebhooksModal(targetTab) {
+      var m = document.getElementById('webhooks-sandbox-modal');
+      if (m) {
+        m.style.display = 'flex';
+        switchWhTab(targetTab || 'inbound');
+        var codeBlock = document.getElementById('starter-code-block');
+        if (codeBlock && !codeBlock.textContent) {
+          codeBlock.textContent = STARTER_CODE_NODE;
+        }
+      }
+    }
+
+    function closeWebhooksModal() {
+      var m = document.getElementById('webhooks-sandbox-modal');
+      if (m) m.style.display = 'none';
+    }
+
+    function switchWhTab(tabId) {
+      document.querySelectorAll('.wh-nav-tab').forEach(function(b) {
+        b.style.background = 'transparent';
+        b.style.color = '#475569';
+        b.style.fontWeight = '600';
+      });
+      var activeBtn = document.getElementById('whtab-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.style.background = '#18221c';
+        activeBtn.style.color = '#ffffff';
+        activeBtn.style.fontWeight = '700';
+      }
+      document.querySelectorAll('.wh-panel-section').forEach(function(p) {
+        p.style.display = 'none';
+      });
+      var activePanel = document.getElementById('whpanel-' + tabId);
+      if (activePanel) {
+        activePanel.style.display = 'block';
+      }
+      var scroll = document.getElementById('webhooks-modal-scroll');
+      if (scroll) scroll.scrollTop = 0;
+    }
+
+    function setWhPreset(preset) {
+      var bodyEl = document.getElementById('sim-wh-body');
+      if (!bodyEl) return;
+      if (preset === 'faq') {
+        bodyEl.value = JSON.stringify({
+          message: "Which hospitals are in your network?",
+          sessionId: "sim_test_001",
+          company: "NextAI Studios Limited"
+        }, null, 2);
+      } else if (preset === 'lead') {
+        bodyEl.value = JSON.stringify({
+          event: "botly:lead",
+          lead: {
+            name: "Jane Wanjiku",
+            phone: "+254712345678",
+            need: "Enterprise Automation Setup",
+            goal: "lead_generation",
+            timestamp: new Date().toISOString()
+          }
+        }, null, 2);
+      } else if (preset === 'payment') {
+        bodyEl.value = JSON.stringify({
+          event: "botly:payment",
+          payment: {
+            paymentMethod: "mpesa",
+            mpesaCode: "UIC8E69GLQ",
+            amount: 10,
+            status: "PAID",
+            timestamp: new Date().toISOString()
+          }
+        }, null, 2);
+      }
+    }
+
+    function switchStarterCode(lang) {
+      var btnNode = document.getElementById('starter-btn-node');
+      var btnPy = document.getElementById('starter-btn-py');
+      var cmd = document.getElementById('starter-cmd-text');
+      var title = document.getElementById('starter-file-title');
+      var code = document.getElementById('starter-code-block');
+
+      if (lang === 'node') {
+        if (btnNode) { btnNode.style.background = '#18221c'; btnNode.style.color = '#ffffff'; }
+        if (btnPy) { btnPy.style.background = '#f1f5f9'; btnPy.style.color = '#475569'; }
+        if (cmd) cmd.textContent = 'node examples/backend-api/server.js';
+        if (title) title.textContent = 'examples/backend-api/server.js';
+        if (code) code.textContent = STARTER_CODE_NODE;
+      } else {
+        if (btnPy) { btnPy.style.background = '#18221c'; btnPy.style.color = '#ffffff'; }
+        if (btnNode) { btnNode.style.background = '#f1f5f9'; btnNode.style.color = '#475569'; }
+        if (cmd) cmd.textContent = 'python3 examples/backend-api/server.py';
+        if (title) title.textContent = 'examples/backend-api/server.py';
+        if (code) code.textContent = STARTER_CODE_PY;
+      }
+    }
+
+    function runLiveWebhookTest() {
+      var url = (document.getElementById('sim-wh-url')?.value || '').trim();
+      var method = document.getElementById('sim-wh-method')?.value || 'POST';
+      var token = (document.getElementById('sim-wh-token')?.value || '').trim();
+      var bodyStr = document.getElementById('sim-wh-body')?.value || '{}';
+      var timingEl = document.getElementById('sim-wh-timing');
+      var container = document.getElementById('sim-wh-result-container');
+      var badge = document.getElementById('sim-wh-status-badge');
+      var latencyEl = document.getElementById('sim-wh-latency');
+      var outputEl = document.getElementById('sim-wh-response-output');
+      var runBtn = document.getElementById('btn-run-wh-test');
+
+      if (!url) {
+        alert('Please enter an endpoint URL.');
+        return;
+      }
+
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.innerHTML = 'Testing endpoint...';
+      }
+      if (timingEl) timingEl.textContent = 'Connecting...';
+
+      var startTime = performance.now();
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = token.startsWith('Bearer ') ? token : 'Bearer ' + token;
+
+      var fetchOptions = {
+        method: method,
+        headers: headers
+      };
+      if (method === 'POST') {
+        fetchOptions.body = bodyStr;
+      }
+
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 5000);
+      fetchOptions.signal = controller.signal;
+
+      fetch(url, fetchOptions)
+        .then(function(res) {
+          clearTimeout(timeoutId);
+          var elapsed = Math.round(performance.now() - startTime);
+          return res.text().then(function(text) {
+            return { status: res.status, statusText: res.statusText, elapsed: elapsed, body: text };
+          });
+        })
+        .then(function(result) {
+          if (container) container.style.display = 'block';
+          if (latencyEl) latencyEl.textContent = '⏱️ ' + result.elapsed + 'ms';
+          if (timingEl) timingEl.textContent = 'Completed in ' + result.elapsed + 'ms';
+          
+          if (badge) {
+            badge.textContent = result.status + ' ' + (result.statusText || 'OK');
+            badge.style.background = result.status >= 200 && result.status < 300 ? '#15803d' : '#b91c1c';
+            badge.style.color = '#ffffff';
+          }
+
+          var formatted = result.body;
+          try {
+            var parsed = JSON.parse(result.body);
+            formatted = JSON.stringify(parsed, null, 2);
+          } catch(e) {}
+          if (outputEl) outputEl.textContent = formatted;
+        })
+        .catch(function(err) {
+          clearTimeout(timeoutId);
+          var elapsed = Math.round(performance.now() - startTime);
+          if (container) container.style.display = 'block';
+          if (latencyEl) latencyEl.textContent = '⏱️ ' + elapsed + 'ms';
+          if (timingEl) timingEl.textContent = 'Connection error';
+          if (badge) {
+            badge.textContent = err.name === 'AbortError' ? 'TIMEOUT (5s)' : 'CONNECTION FAILED';
+            badge.style.background = '#dc2626';
+            badge.style.color = '#ffffff';
+          }
+          if (outputEl) {
+            outputEl.textContent = '❌ ' + (err.message || 'Network request failed') + '\n\n' +
+              '💡 Tip: If testing locally with http://localhost:5000/api/chat, make sure your server is running:\n' +
+              '  node examples/backend-api/server.js\n' +
+              'or:\n' +
+              '  python3 examples/backend-api/server.py';
+          }
+        })
+        .finally(function() {
+          if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute Live Webhook Test';
+          }
+        });
+    }
+
+    function copyWhSnippet(btn, id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var text = el.innerText || el.textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#15803d';
+        btn.style.color = '#ffffff';
+        setTimeout(function() {
+          btn.textContent = orig;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
 
     // ==================================================
     // FIREBASE AUTH UI LOGIC
@@ -3517,6 +4143,16 @@ window.addEventListener('botly:payment', (e) => {
           updateSandboxAuthGate(user);
         });
       }
+
+      // Check URL query parameters or hash for direct Webhooks access
+      try {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
+          setTimeout(function() {
+            openWebhooksModal();
+          }, 200);
+        }
+      } catch(e) {}
     });
   </script>
 </body>
