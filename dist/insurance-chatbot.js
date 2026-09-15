@@ -1470,6 +1470,7 @@
     if (t.primaryGradient) root.style.setProperty('--ins-primary-gradient', t.primaryGradient);
     if (t.primaryHover) root.style.setProperty('--ins-primary-hover', t.primaryHover);
     if (t.accentColor) root.style.setProperty('--ins-accent', t.accentColor);
+    if (t.backgroundColor) root.style.setProperty('--ins-bg', t.backgroundColor);
     if (t.headerBg) root.style.setProperty('--ins-header-bg', t.headerBg);
     if (t.userBubbleBg) root.style.setProperty('--ins-user-bubble', t.userBubbleBg);
   };

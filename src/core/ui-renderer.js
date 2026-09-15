@@ -39,6 +39,7 @@ export class UIRenderer {
     if (theme.primaryGradient) root.style.setProperty('--ins-primary-gradient', theme.primaryGradient);
     if (theme.primaryHover) root.style.setProperty('--ins-primary-hover', theme.primaryHover);
     if (theme.accentColor) root.style.setProperty('--ins-accent', theme.accentColor);
+    if (theme.backgroundColor) root.style.setProperty('--ins-bg', theme.backgroundColor);
     if (theme.headerBg) root.style.setProperty('--ins-header-bg', theme.headerBg);
     if (theme.userBubbleBg) root.style.setProperty('--ins-user-bubble', theme.userBubbleBg);
     if (theme.fontFamily) root.style.setProperty('--ins-font', theme.fontFamily);

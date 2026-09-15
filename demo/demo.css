@@ -2282,12 +2282,259 @@ html, body {
     border-radius: 14px;
   }
 
+/* Base Studio Header & Navigation Styles */
+.customizer-brand-title .brand-short {
+  display: none;
+}
+.customizer-new-bot-btn {
+  background: #18221c;
+  color: #9be553;
+  border: 1.5px solid #18221c;
+  border-radius: 9999px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.customizer-new-bot-btn:hover {
+  background: #27362d;
+  border-color: #27362d;
+  color: #bbf779;
+  box-shadow: 0 3px 10px rgba(24, 34, 28, 0.2);
+  transform: translateY(-1px);
+}
+
+.customizer-mobile-actions {
+  display: none;
+}
+
+/* Studio Hamburger Button */
+.studio-hamburger-btn {
+  display: none;
+  width: 38px;
+  height: 38px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4.5px;
+  padding: 0;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+.studio-hamburger-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.studio-hamburger-btn .ham-line {
+  width: 18px;
+  height: 2px;
+  background: #18221c;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+.studio-hamburger-btn.active .ham-line-1 {
+  transform: translateY(6.5px) rotate(45deg);
+}
+.studio-hamburger-btn.active .ham-line-2 {
+  opacity: 0;
+}
+.studio-hamburger-btn.active .ham-line-3 {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+/* Mobile Hamburger Drawer Overlay */
+.studio-mobile-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.studio-mobile-drawer.open {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+.studio-mobile-drawer-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 310px;
+  max-width: 86vw;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.studio-mobile-drawer.open .studio-mobile-drawer-content {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+.drawer-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.drawer-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.drawer-new-bot-cta {
+  width: 100%;
+  background: #18221c;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(24, 34, 28, 0.25);
+  transition: all 0.15s ease;
+}
+.drawer-new-bot-cta:hover {
+  background: #24342a;
+  transform: translateY(-1px);
+}
+
+.drawer-menu-list {
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.drawer-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+  text-align: left;
+}
+.drawer-menu-item:hover {
+  background: #f8fafc;
+}
+.drawer-menu-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #18221c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.drawer-menu-text {
+  flex: 1;
+}
+.drawer-menu-title {
+  font-size: 13px;
+  font-weight: 750;
+  color: #18221c;
+  line-height: 1.2;
+}
+.drawer-menu-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.studio-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #18221c;
+  color: #9be553;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 750;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  z-index: 9999999;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+}
+.studio-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
   /* Navbar in Customizer Studio */
   .customizer-header nav {
-    padding: 8px 12px !important;
-    height: 54px !important;
-    min-height: 54px !important;
+    padding: 8px 16px !important;
+    height: 56px !important;
+    min-height: 56px !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .customizer-nav-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+  #nav-brand-logo {
+    width: 28px !important;
+    height: 28px !important;
   }
   .customizer-brand-title {
     font-size: 15px !important;
@@ -2304,57 +2551,28 @@ html, body {
   .customizer-subtext {
     display: none !important;
   }
-  .customizer-docs-link,
-  .customizer-embed-link {
+
+  /* Hide Desktop Nav Actions on Mobile */
+  .customizer-nav-actions {
     display: none !important;
   }
-  .customizer-header .nav-auth-profile-pill {
-    height: 32px !important;
-    padding: 2px 8px 2px 4px !important;
-    gap: 5px !important;
-    box-sizing: border-box !important;
-    flex-shrink: 0 !important;
+
+  /* Show Mobile Header Actions (Leads + Hamburger) */
+  .customizer-mobile-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
-  .customizer-header .nav-user-name {
-    display: none !important;
-  }
-  .customizer-header .nav-user-avatar {
-    width: 22px !important;
-    height: 22px !important;
-    flex-shrink: 0 !important;
-  }
-  .customizer-header .nav-sign-out-btn {
-    font-size: 11px !important;
-    white-space: nowrap !important;
-    line-height: 1 !important;
-    padding: 2px 4px !important;
-  }
-  .customizer-header #nav-auth-login-btn {
-    height: 32px !important;
+  .mobile-quick-leads {
+    display: flex !important;
+    height: 34px !important;
     padding: 0 10px !important;
     font-size: 12px !important;
-    flex-shrink: 0 !important;
-  }
-  .customizer-leads-btn {
-    height: 32px !important;
-    padding: 4px 9px !important;
-    font-size: 11.5px !important;
-    flex-shrink: 0 !important;
     border-radius: 9999px !important;
+    gap: 5px !important;
   }
-  .customizer-copy-btn {
-    height: 32px !important;
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-    flex-shrink: 0 !important;
-    border-radius: 9999px !important;
-    white-space: nowrap !important;
-  }
-  .customizer-copy-btn .btn-long {
-    display: none !important;
-  }
-  .customizer-copy-btn .btn-short {
-    display: inline !important;
+  .studio-hamburger-btn {
+    display: flex !important;
   }
 }
 
@@ -2369,8 +2587,30 @@ html, body {
   .panel-subtitle {
     font-size: 12px;
   }
+  .customizer-header nav {
+    padding: 6px 12px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    gap: 6px !important;
+  }
   .customizer-brand-title {
     font-size: 14px !important;
+  }
+  #nav-brand-logo {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  .customizer-mobile-actions {
+    gap: 6px !important;
+  }
+  .mobile-quick-leads {
+    height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+  }
+  .studio-hamburger-btn {
+    width: 35px !important;
+    height: 35px !important;
   }
   .step-pill span:not(.snum) {
     display: none;
