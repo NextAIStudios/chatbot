@@ -273,4 +273,4 @@ chatbot/
 
 ## 📄 License
 
-MIT License © 2026 Botly / NextAI Studios.
+MIT License © 2026 NextAI Studios Limited. Botly Pro is a product of NextAI Studios Limited.
