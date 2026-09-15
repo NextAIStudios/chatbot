@@ -1,8 +1,8 @@
 /**
- * Botly Firebase Authentication Helper
+ * Botly Pro Firebase Authentication Helper
  * -------------------------------------------------------------
  * Provides Google Sign-in, Email/Password auth, and session
- * management for the Botly Sandbox Studio & Checkout access.
+ * management for the Botly Pro Sandbox Studio & Checkout access.
  */
 
 (function(window) {

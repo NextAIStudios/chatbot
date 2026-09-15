@@ -137,10 +137,10 @@ export const DEFAULT_CONFIG = {
 
   // 🤖 Bot Persona & Tone
   bot: {
-    name: 'Botly',
+    name: 'Botly Pro',
     title: 'AI Assistant',
     avatar: 'demo/botly-icon.svg',
-    greeting: "Hello! I am **Botly**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
+    greeting: "Hello! I am **Botly Pro**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
     initialQuickReplies: [
       { label: 'Auto Quote', payload: 'intent_quote_auto' },
       { label: 'Health Plans', payload: 'intent_quote_health' },

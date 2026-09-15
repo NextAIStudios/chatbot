@@ -1,4 +1,4 @@
-# ⚡ Botly | Conversational AI Platform for Every Company
+# ⚡ Botly Pro | Conversational AI Platform for Every Company
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success.svg)](package.json)
@@ -6,9 +6,9 @@
 [![White-Label](https://img.shields.io/badge/White--Label-100%25%20Customizable-purple.svg)](demo/customizer.html)
 [![Quick Embed Guide](https://img.shields.io/badge/Guide-Quick%20Embed-brightgreen.svg)](QUICK_EMBED_GUIDE.md)
 
-Botly is a modern, plug-and-play conversational AI chatbot widget designed for **every company** that needs an intelligent assistant. Features deep natural language understanding, **proactive lead capture** (names, phones, unlisted requests), **seamless in-chat payment checkout** (Card, Apple Pay, Google Pay, M-Pesa), human follow-up triage, and a live **White-Label Customizer Studio**.
+Botly Pro is a modern, plug-and-play conversational AI chatbot widget designed for **every company** that needs an intelligent assistant. Features deep natural language understanding, **proactive lead capture** (names, phones, unlisted requests), **seamless in-chat payment checkout** (Card, Apple Pay, Google Pay, M-Pesa), human follow-up triage, and a live **White-Label Customizer Studio**.
 
-> 📖 **Looking to embed Botly quickly?** Check out the comprehensive **[⚡ Quick Embed Guide (QUICK_EMBED_GUIDE.md)](QUICK_EMBED_GUIDE.md)** or explore the interactive **[Integration Playground](demo/embed-example.html)**.
+> 📖 **Looking to embed Botly Pro quickly?** Check out the comprehensive **[⚡ Quick Embed Guide (QUICK_EMBED_GUIDE.md)](QUICK_EMBED_GUIDE.md)** or explore the interactive **[Integration Playground](demo/embed-example.html)**.
 
 ---
 

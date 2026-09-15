@@ -270,7 +270,7 @@ export class IntentEngine {
       }
 
       const compName = this.config.company?.name;
-      const teamLabel = compName && compName !== 'Botly' ? `the ${compName} team` : 'the team';
+      const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';
       const quickReplies = isSaas ? [
         { label: 'Our Services', payload: 'What services do you offer?' },
         { label: 'Get started', payload: 'How do I get started?' },
@@ -292,7 +292,7 @@ export class IntentEngine {
     // 8. If SaaS mode and asked about pricing / cost / how much
     if (isSaas && /\b(price|pricing|cost|how\s*much|fee|rate|\$10|ten\s*dollars|plan|plans|charge|pay|purchase|buy)\b/i.test(lower)) {
       const compName = this.config.company?.name;
-      const isBotlySelf = !compName || compName.toLowerCase() === 'botly' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
+      const isBotlySelf = !compName || compName.toLowerCase() === 'botly' || compName.toLowerCase() === 'botly pro' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
 
       if (isBotlySelf) {
         return {

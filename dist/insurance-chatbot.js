@@ -1,10 +1,10 @@
-/** Botly — Plug & Play AI Chatbot Platform
+/** Botly Pro — Plug & Play AI Chatbot Platform
  * Commercial License. All rights reserved. NextAI Studios.
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.BotlyChatbot = global.InsuranceChatbot = global.Botly = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.BotlyProChatbot = global.BotlyChatbot = global.InsuranceChatbot = global.Botly = factory());
 })(this, (function () { 'use strict';
 
   // 1. COMPANY GOALS CATALOG
@@ -131,10 +131,10 @@
       licenseNumber: 'INS-LIC-2026-882190'
     },
     bot: {
-      name: 'Botly',
+      name: 'Botly Pro',
       title: 'AI Assistant',
       avatar: 'demo/botly-icon.svg',
-      greeting: "Hello! I am **Botly**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
+      greeting: "Hello! I am **Botly Pro**, your 24/7 digital assistant. How can I help you today? You can explore our catalog, request a quote, or process payments securely.",
       initialQuickReplies: [
         { label: 'Auto Quote', payload: 'intent_quote_auto' },
         { label: 'Health Plans', payload: 'intent_quote_health' },
@@ -698,7 +698,7 @@
     if (isNegative && lower.length < 35) {
       memory.lastFollowUp = null;
       var compName = (config && config.company && config.company.name) ? config.company.name : '';
-      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
       return {
         intent: 'dismiss',
         reply: "No problem at all! 😊 Take your time. Feel free to ask any other questions about our services, or let me know whenever you'd like to explore further.",
@@ -781,7 +781,7 @@
 
     // 1. Direct Greetings
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
-      var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly';
+      var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly Pro';
       var greetMsg = (config.bot && config.bot.greeting)
         ? config.bot.greeting
         : (isSaasMode
@@ -905,7 +905,7 @@
 
       var goals = cfg.goals || (cfg.goal ? [cfg.goal] : ['lead_generation']);
       var compName = (cfg.company && cfg.company.name) ? cfg.company.name : '';
-      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'our team';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'our team';
       var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '+1 (800) 555-0199';
 
       var candidateList = [];
@@ -1214,7 +1214,7 @@
 
       var faqQuickReplies = [];
       var compName = (config && config.company && config.company.name) ? config.company.name : '';
-      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
 
       if (isSaasMode) {
         var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
@@ -1263,20 +1263,20 @@
     // 6. In SaaS mode, handle pricing/cost/plan queries if not caught by custom FAQ
     if (isSaasMode && /\b(price|pricing|cost|how\s*much|fee|rate|\$10|ten\s*dollars|plan|plans|charge|pay|purchase|buy)\b/i.test(lower)) {
       var compName = (config && config.company && config.company.name) ? config.company.name : '';
-      var isBotlySelf = !compName || compName.toLowerCase() === 'botly' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
+      var isBotlySelf = !compName || compName.toLowerCase() === 'botly' || compName.toLowerCase() === 'botly pro' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
 
       if (isBotlySelf) {
         var priceFollowUp = (memory && memory.goalStage > 0)
-          ? "💬 Ready to deploy Botly for your business today?"
+          ? "💬 Ready to deploy Botly Pro for your business today?"
           : "💬 Would you like help getting started?";
         if (memory) {
           memory.lastFollowUp = {
             type: 'lead_generation',
-            topic: 'Botly $10 Plan Deployment',
+            topic: 'Botly Pro $10 Plan Deployment',
             text: priceFollowUp,
             stage: memory.goalStage || 0
           };
-          memory.lastTopic = 'Botly $10 Chatbot Pricing';
+          memory.lastTopic = 'Botly Pro $10 Chatbot Pricing';
           if (memory.askedFollowUps) memory.askedFollowUps.push(priceFollowUp);
           memory.goalStage = (memory.goalStage || 0) + 1;
         }
@@ -1289,7 +1289,7 @@
             { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
           ],
           lastFollowUp: memory ? memory.lastFollowUp : null,
-          topic: 'Botly Pricing'
+          topic: 'Botly Pro Pricing'
         };
       } else {
         var supportEmail = (config && config.company && config.company.supportEmail) ? config.company.supportEmail : 'our team';
@@ -1482,8 +1482,8 @@
     var launcher = document.createElement('button');
     launcher.className = 'ins-chatbot-launcher';
     launcher.id = 'ins-widget-launcher';
-    launcher.setAttribute('aria-label', 'Open Botly Assistant');
-    launcher.innerHTML = '<div class="ins-launcher-teaser">Need assistance? Chat with Botly</div>' +
+    launcher.setAttribute('aria-label', 'Open Botly Pro Assistant');
+    launcher.innerHTML = '<div class="ins-launcher-teaser">Need assistance? Chat with Botly Pro</div>' +
       '<div class="ins-launcher-icon"><svg width="34" height="34" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M28 2C41.2548 2 52 12.7452 52 26C52 36.8835 44.7573 46.0688 34.8213 48.9712L34.12 55.48C33.95 57.08 32.22 57.94 30.85 57.07L22.61 51.82C10.66 50.15 2 39.11 2 26C2 12.7452 12.7452 2 28 2Z" fill="#ffffff"/>' +
         '<path d="M28 11C28 11 39 14.5 39 24.5C39 34.5 28 41 28 41C28 41 17 34.5 17 24.5C17 14.5 28 11 28 11Z" fill="#9be553"/>' +
@@ -1498,7 +1498,7 @@
     container.innerHTML = '<div class="ins-header">' +
       '<div class="ins-header-profile">' +
         '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
-        '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
+        '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly Pro') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
       '</div>' +
       '<div class="ins-header-actions">' +
         '<button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button>' +
@@ -1544,7 +1544,7 @@
     var accent = t.accentColor || '#9be553';
 
     if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.indexOf('http') === 0 || bot.avatar.indexOf('/') === 0 || bot.avatar.indexOf('./') === 0 || bot.avatar.indexOf('data:') === 0)) {
-      return '<img src="' + this.escape(bot.avatar) + '" alt="' + this.escape(bot.name || 'Botly') + '" class="ins-avatar-img">';
+      return '<img src="' + this.escape(bot.avatar) + '" alt="' + this.escape(bot.name || 'Botly Pro') + '" class="ins-avatar-img">';
     }
 
     return '<svg class="ins-avatar-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -1578,7 +1578,7 @@
       '<div class="ins-header">' +
         '<div class="ins-header-profile">' +
           '<div class="ins-avatar-wrapper">' + this.renderAvatarHtml() + '<span class="ins-status-dot"></span></div>' +
-          '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
+          '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(bot.name || 'Botly Pro') + '</span><span class="ins-bot-role">' + this.escape(bot.title || company.name || 'AI Assistant') + '</span></div>' +
         '</div>' +
         '<div class="ins-header-actions"><button class="ins-btn-icon btn-reset" title="Restart Chat">🔄</button></div>' +
       '</div>' +
@@ -1912,7 +1912,7 @@
       this.leadState.active = false;
       this.leadState.step = 'idle';
       var compName = (this.config.company && this.config.company.name) ? this.config.company.name : '';
-      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
       var isSaasCancel = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
       this.appendBot("No problem! What else can I help with?", {
         quickReplies: isSaasCancel ? [
@@ -1991,7 +1991,7 @@
 
       var isSaasConfirmMode = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
       var compName = (this.config.company && this.config.company.name) ? this.config.company.name : '';
-      var teamLabel = compName && compName !== 'Botly' ? 'the ' + compName + ' team' : 'the team';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
       var followUp = (this.config.leadCapture && this.config.leadCapture.followUpQuestion) ||
         (isSaasConfirmMode
           ? "💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services."

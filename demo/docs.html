@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Botly Docs — Sandbox Developer Integration Guide</title>
-  <meta name="description" content="Complete developer documentation for Botly — the plug-and-play AI chatbot platform. Embed in 2 lines of code.">
+  <title>Botly Pro Docs — Sandbox Developer Integration Guide</title>
+  <meta name="description" content="Complete developer documentation for Botly Pro — the plug-and-play AI chatbot platform. Embed in 2 lines of code.">
   <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
   <link rel="stylesheet" href="../dist/insurance-chatbot.css">
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -106,7 +106,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       Menu
     </button>
-    <a href="../index.html" class="docs-logo"><img src="botly-logo.svg" alt="Botly"></a>
+    <a href="../index.html" class="docs-logo"><img src="botly-logo.svg" alt="Botly Pro"></a>
     <span class="docs-badge">Sandbox Docs</span>
   </div>
   <div class="docs-search">
@@ -154,7 +154,7 @@
   <main class="docs-content">
     <div id="quickstart">
       <div class="docs-eyebrow">Sandbox Developer Documentation</div>
-      <h1 class="docs-h1">Build with Botly in minutes.</h1>
+      <h1 class="docs-h1">Build with Botly Pro in minutes.</h1>
       <p class="docs-lead">One CSS link. One script tag. Two lines of JavaScript. Your fully branded AI chatbot is live on any site, any stack, zero external dependencies.</p>
 
       <div class="quick-links">
@@ -192,14 +192,14 @@
 
       <div class="callout callout-tip">
         <div class="callout-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-        <div class="callout-text"><strong>Live Interactive Studio:</strong> Test, brand, and configure your chatbot visually inside the <a href="customizer.html">Botly Customizer Studio</a>, then copy your production embed code in 1 click.</div>
+        <div class="callout-text"><strong>Live Interactive Studio:</strong> Test, brand, and configure your chatbot visually inside the <a href="customizer.html">Botly Pro Customizer Studio</a>, then copy your production embed code in 1 click.</div>
       </div>
     </div>
 
     <hr class="docs-divider">
 
     <h2 class="docs-h2" id="installation">Installation</h2>
-    <p>Add Botly to any website using the jsDelivr CDN. No npm, no build step, no framework required.</p>
+    <p>Add Botly Pro to any website using the jsDelivr CDN. No npm, no build step, no framework required.</p>
 
     <div class="code-block">
       <div class="code-block-header"><span class="code-block-lang">HTML</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -211,7 +211,7 @@
 &lt;script&gt;
   BotlyChatbot.init({
     company: { name: "Your Company", supportPhone: "+254 700 000 000" },
-    bot: { name: "Botly", title: "AI Assistant" },
+    bot: { name: "Botly Pro", title: "AI Assistant" },
     goal: "lead_generation"
   });
 &lt;/script&gt;</pre>
@@ -300,7 +300,7 @@
     <h2 class="docs-h2" id="bot">bot</h2>
     <table class="prop-table">
       <tr><th>Property</th><th>Type</th><th>Status</th><th>Description</th></tr>
-      <tr><td><code>name</code></td><td>string</td><td><span class="prop-optional">Optional</span></td><td>Bot display name. Default: "Botly"</td></tr>
+      <tr><td><code>name</code></td><td>string</td><td><span class="prop-optional">Optional</span></td><td>Bot display name. Default: "Botly Pro"</td></tr>
       <tr><td><code>title</code></td><td>string</td><td><span class="prop-optional">Optional</span></td><td>Subtitle below name. Default: "AI Assistant"</td></tr>
       <tr><td><code>avatar</code></td><td>string (URL)</td><td><span class="prop-optional">Optional</span></td><td>URL to bot avatar image (SVG or PNG). Stays isolated from site logo.</td></tr>
       <tr><td><code>greeting</code></td><td>string</td><td><span class="prop-optional">Optional</span></td><td>Opening message. Supports **markdown bold**.</td></tr>
@@ -365,7 +365,7 @@
 
     <div class="callout callout-info">
       <div class="callout-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-      <div class="callout-text">Use the <a href="customizer.html">Botly Customizer Studio</a> — <strong>Step 4: Teach Your Bot</strong> — to input knowledge visually without writing code.</div>
+      <div class="callout-text">Use the <a href="customizer.html">Botly Pro Customizer Studio</a> — <strong>Step 4: Teach Your Bot</strong> — to input knowledge visually without writing code.</div>
     </div>
 
     <h3 class="docs-h3" id="memory-api">3. Live Backend API</h3>
@@ -433,7 +433,7 @@ export default function RootLayout({ children }) {
   &lt;script&gt;
     BotlyChatbot.init({
       company: { name: "&lt;?php bloginfo('name'); ?&gt;", supportPhone: "+254 700 000 000" },
-      bot: { name: "Botly", title: "AI Assistant" },
+      bot: { name: "Botly Pro", title: "AI Assistant" },
       goal: "customer_support"
     });
   &lt;/script&gt;
@@ -606,7 +606,7 @@ window.addEventListener('botly:intent', (e) =&gt; {
     <ul>
       <li>Bot memory: paste data, website URL, live API modes</li>
       <li>Logo isolation — custom bot logo stays separate from site logo</li>
-      <li>Botly Customizer Studio 5-step wizard redesign</li>
+      <li>Botly Pro Customizer Studio 5-step wizard redesign</li>
     </ul>
   </main>
 

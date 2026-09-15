@@ -461,6 +461,7 @@ if (typeof window !== 'undefined') {
       }
     }
   };
+  window.BotlyProChatbot = window.BotlyChatbot;
 }
 
 export default BotlyChatbotWidget;

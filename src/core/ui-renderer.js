@@ -52,9 +52,9 @@ export class UIRenderer {
     const launcher = document.createElement('button');
     launcher.className = 'ins-chatbot-launcher';
     launcher.id = 'ins-widget-launcher';
-    launcher.setAttribute('aria-label', 'Open Botly Assistant');
+    launcher.setAttribute('aria-label', 'Open Botly Pro Assistant');
     launcher.innerHTML = `
-      <div class="ins-launcher-teaser">Need assistance? Chat with Botly</div>
+      <div class="ins-launcher-teaser">Need assistance? Chat with Botly Pro</div>
       <div class="ins-launcher-icon">
         <svg width="34" height="34" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Outer Shield-Bubble Contour -->
@@ -82,7 +82,7 @@ export class UIRenderer {
             <span class="ins-status-dot"></span>
           </div>
           <div class="ins-profile-info">
-            <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly')}</span>
+            <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly Pro')}</span>
             <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'AI Assistant')}</span>
           </div>
         </div>
@@ -128,7 +128,7 @@ export class UIRenderer {
     const accent = theme.accentColor || '#9be553';
 
     if (bot.avatar && typeof bot.avatar === 'string' && (bot.avatar.startsWith('http') || bot.avatar.startsWith('/') || bot.avatar.startsWith('./') || bot.avatar.startsWith('data:'))) {
-      return `<img src="${bot.avatar}" alt="${this.escapeHtml(bot.name || 'Botly')}" class="ins-avatar-img" />`;
+      return `<img src="${bot.avatar}" alt="${this.escapeHtml(bot.name || 'Botly Pro')}" class="ins-avatar-img" />`;
     }
 
     return `
@@ -168,7 +168,7 @@ export class UIRenderer {
               <span class="ins-status-dot"></span>
             </div>
             <div class="ins-profile-info">
-              <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly')}</span>
+              <span class="ins-bot-name">${this.escapeHtml(bot.name || 'Botly Pro')}</span>
               <span class="ins-bot-role">${this.escapeHtml(bot.title || company.name || 'AI Assistant')}</span>
             </div>
           </div>
