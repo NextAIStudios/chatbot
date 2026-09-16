@@ -611,7 +611,8 @@
 ]</pre>
     </div>
 
-    <h3 class="docs-h3" id="memory-url">2. Website URL Knowledge (customKnowledge)</h3>
+    <h3 class="docs-h3" id="memory-url">2. Website Sitemap Crawler &amp; Multi-Page Indexing (customKnowledge)</h3>
+    <p>Botly Pro can scan your company website link, discover all key pages (Home, Services, Pricing, FAQ, Support, Policies), and allow you to select which pages to train into bot memory. When trained, the bot automatically tunes its persona, greeting, and adaptive quick replies around the website's content.</p>
     <div class="code-block">
       <div class="code-block-header"><span class="code-block-lang">JavaScript</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
       <pre class="code-pre">customKnowledge: [
@@ -621,13 +622,20 @@
     question: "What does Acme do?",
     answer: "Acme helps businesses automate customer communication with AI.",
     keywords: ["acme", "about", "services", "what do you do"]
+  },
+  {
+    source: "website",
+    sourceUrl: "https://acme.com/pricing",
+    question: "What are Acme's pricing packages?",
+    answer: "Sprint packages start at $3,500 with ongoing monthly retainer options.",
+    keywords: ["pricing", "plans", "cost", "rates"]
   }
 ]</pre>
     </div>
 
     <div class="callout callout-info">
       <div class="callout-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-      <div class="callout-text">Use the <a href="customizer.html">Botly Pro Customizer Studio</a> — <strong>Step 4: Teach Your Bot</strong> — to input knowledge visually without writing code.</div>
+      <div class="callout-text">In the <a href="customizer.html">Botly Pro Customizer Studio</a> (<strong>Step 4: Teach Your Bot &gt; Website Link</strong>), paste your website link to scan the sitemap, check/uncheck pages to train, and auto-tune the bot's greeting and quick replies in 1 click.</div>
     </div>
 
     <h3 class="docs-h3" id="memory-api">3. Live Backend API</h3>

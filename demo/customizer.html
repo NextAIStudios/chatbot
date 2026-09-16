@@ -584,6 +584,253 @@
       text-overflow: ellipsis;
     }
 
+    /* Website Link Page Crawler & Selection UI */
+    .web-crawl-progress {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #1e40af;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .web-crawl-steps {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #3b82f6;
+    }
+    .web-pages-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+    .web-toolbar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .web-pages-count-badge {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0f172a;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .web-quick-actions {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .web-btn-link {
+      background: none;
+      border: none;
+      color: #0284c7;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 4px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .web-btn-link:hover {
+      color: #0369a1;
+    }
+    .web-filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .web-filter-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 9999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .web-filter-pill:hover {
+      border-color: #94a3b8;
+      color: #1e293b;
+    }
+    .web-filter-pill.active {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #ffffff;
+    }
+    .web-pages-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .web-page-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 11px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+    .web-page-card:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .web-page-card.selected {
+      border-color: #38bdf8;
+      background: #f0f9ff;
+    }
+    .web-page-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .web-page-checkbox-wrap {
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+    .web-page-checkbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #0284c7;
+    }
+    .web-page-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .web-page-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .web-page-title {
+      font-size: 12.5px;
+      font-weight: 750;
+      color: #0f172a;
+    }
+    .web-page-path {
+      font-size: 10.5px;
+      font-family: monospace;
+      color: #0284c7;
+      background: #e0f2fe;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .web-page-category-tag {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .tag-overview { background: #f3e8ff; color: #7e22ce; }
+    .tag-services { background: #dbeafe; color: #1d4ed8; }
+    .tag-pricing { background: #dcfce7; color: #15803d; }
+    .tag-support { background: #ffe4e6; color: #be123c; }
+    .tag-policies { background: #fef3c7; color: #b45309; }
+    .web-page-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    .web-page-excerpt {
+      font-size: 11.5px;
+      color: #475569;
+      line-height: 1.45;
+      padding-left: 26px;
+    }
+    .web-page-preview-toggle {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0284c7;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0 0 26px;
+      text-align: left;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .web-page-qas-drawer {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 10px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin: 4px 0 0 26px;
+    }
+    .web-page-qas-drawer.open {
+      display: flex;
+    }
+    .web-qa-item {
+      font-size: 11px;
+      color: #334155;
+    }
+    .web-qa-q {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .web-qa-a {
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .web-train-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .web-autotune-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+    }
+    .web-bot-tuned-banner {
+      display: none;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: #15803d;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
     /* Checkout Method Tab Switcher */
     .checkout-tab-btn {
       flex: 1;
@@ -1569,27 +1816,100 @@
             <div id="doc-chunks-preview" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;"></div>
           </div>
 
-          <!-- SUB-PANEL C: Website Link Crawler -->
+          <!-- SUB-PANEL C: Website Link Crawler & Page Indexer -->
           <div class="mem-subpanel" id="subpanel-web">
             <div class="form-group">
               <label class="form-label" for="wiz-website-url">
                 <span>Company Website Link</span>
-                <span class="form-hint">Sync page data into bot memory</span>
+                <span class="form-hint">Crawls sitemap &amp; indexes pages</span>
               </label>
-              <input type="url" id="wiz-website-url" class="wiz-input" placeholder="https://yourcompany.com" value="https://mycompany.com">
+              <div style="position: relative; display: flex; align-items: center;">
+                <input type="url" id="wiz-website-url" class="wiz-input" placeholder="https://yourcompany.com" value="https://kenyanextgen.co.ke" style="padding-right: 32px;">
+                <span style="position: absolute; right: 10px; color: #94a3b8; pointer-events: none; font-size: 14px;">🌐</span>
+              </div>
             </div>
 
-            <div style="display: flex; gap: 6px;">
-              <button type="button" class="idea-chip" onclick="setSampleWebsite('https://mycompany.com')">mycompany.com</button>
-              <button type="button" class="idea-chip" onclick="setSampleWebsite('https://acme-studio.io')">acme-studio.io</button>
-              <button type="button" class="idea-chip" onclick="setSampleWebsite('https://botly.ai')">botly.ai</button>
+            <!-- Quick sample links for testing -->
+            <div>
+              <span style="font-size: 11px; font-weight: 700; color: #64748b;">Popular Website Profiles:</span>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://kenyanextgen.co.ke')">kenyanextgen.co.ke</button>
+                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://jumia.co.ke')">jumia.co.ke</button>
+                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://acme-studio.io')">acme-studio.io</button>
+                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://botly.ai')">botly.ai</button>
+                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://mycompany.com')">mycompany.com</button>
+              </div>
             </div>
 
-            <button type="button" id="btn-sync-website" onclick="syncWebsiteDataIntoMemory()" class="btn-w-next" style="background: #0284c7; padding: 10px; font-size: 12.5px; border-radius: 10px;">
-              Sync Website Data into Memory
+            <button type="button" id="btn-sync-website" onclick="scanAndIndexWebsite()" class="btn-w-next" style="background: #0284c7; padding: 10px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span>Scan &amp; Index Website Pages</span>
             </button>
 
-            <div id="website-sync-status" style="display: none; padding: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11.5px; color: #1e40af;"></div>
+            <!-- Crawl Status Progress Indicator -->
+            <div id="website-sync-status" class="web-crawl-progress" style="display: none;">
+              <div id="web-crawl-msg" style="font-weight: 700;">Connecting...</div>
+              <div class="web-crawl-steps" id="web-crawl-sub">Scanning sitemap &amp; internal links...</div>
+            </div>
+
+            <!-- Bot Tuned Success Notification -->
+            <div id="website-bot-tuned-banner" class="web-bot-tuned-banner">
+              <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 12px; color: #166534; margin-bottom: 4px;">
+                <span>✨ Bot Successfully Tuned to Website!</span>
+              </div>
+              <div id="website-bot-tuned-details" style="color: #15803d; font-size: 11px;">
+                Memory updated with selected pages, greeting rewritten, and custom quick replies generated.
+              </div>
+            </div>
+
+            <!-- Discovered Pages Panel (rendered when crawled) -->
+            <div id="website-pages-panel" style="display: none; flex-direction: column; gap: 8px;">
+              <!-- Toolbar & Filter Bar -->
+              <div class="web-pages-toolbar">
+                <div class="web-toolbar-top">
+                  <div class="web-pages-count-badge" id="web-summary-badge">
+                    <span>📄 Discovered Pages</span>
+                    <span id="web-pages-selected-count" style="color: #0284c7;">(0/0 selected)</span>
+                  </div>
+                  <div class="web-quick-actions">
+                    <button type="button" class="web-btn-link" onclick="selectAllWebPages(true)">Select All</button>
+                    <span style="color: #cbd5e1;">•</span>
+                    <button type="button" class="web-btn-link" onclick="selectAllWebPages(false)">Deselect All</button>
+                    <span style="color: #cbd5e1;">•</span>
+                    <button type="button" class="web-btn-link" onclick="selectRecommendedWebPages()">Recommended</button>
+                  </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="web-filter-pills" id="web-category-filter-pills">
+                  <button type="button" class="web-filter-pill active" onclick="filterWebPagesCategory('all')">All</button>
+                  <button type="button" class="web-filter-pill" onclick="filterWebPagesCategory('services')">Services &amp; Catalog</button>
+                  <button type="button" class="web-filter-pill" onclick="filterWebPagesCategory('pricing')">Pricing</button>
+                  <button type="button" class="web-filter-pill" onclick="filterWebPagesCategory('support')">Support</button>
+                  <button type="button" class="web-filter-pill" onclick="filterWebPagesCategory('policies')">Policies</button>
+                </div>
+              </div>
+
+              <!-- Interactive Page Cards Checklist -->
+              <div id="website-pages-list" class="web-pages-list">
+                <!-- Rendered dynamically -->
+              </div>
+
+              <!-- Train Bot Action Bar -->
+              <div class="web-train-bar">
+                <label class="web-autotune-label" title="Automatically updates Company Name, Bot persona, Greeting, and Quick Replies to match this website">
+                  <input type="checkbox" id="wiz-web-autotune" checked style="accent-color: #0284c7; width: 15px; height: 15px;">
+                  <span>Auto-adjust bot identity, greeting &amp; quick replies around selected pages</span>
+                </label>
+
+                <button type="button" id="btn-train-selected-pages" onclick="trainBotWithSelectedPages()" class="btn-w-next" style="background: #0f172a; border: 1.5px solid #38bdf8; padding: 11px; font-size: 13px; font-weight: 800; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                  <span>⚡ Train Bot with Selected Pages</span>
+                  <span id="btn-train-count-badge" style="background: #0284c7; color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 9999px;">0 Pages</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Memory Chunks Preview (Summary) -->
             <div id="website-chunks-preview" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;"></div>
           </div>
 
@@ -2575,7 +2895,9 @@ window.addEventListener('botly:payment', async (event) => {
       ],
       documentChunks: [], // Chunks from company data / documents
       websiteChunks: [],  // Chunks from website link sync
-      websiteUrl: 'https://mycompany.com',
+      websiteUrl: 'https://kenyanextgen.co.ke',
+      indexedWebsitePages: [], // All discovered & indexed website pages
+      activeWebCategoryFilter: 'all',
       apiConfig: {
         enabled: false,
         endpoint: '',
@@ -3168,179 +3490,869 @@ window.addEventListener('botly:payment', async (event) => {
       applyBotLiveConfig();
     }
 
-    // --- Subpanel C: Website Link Crawler ---
+    // ==================================================
+    // SUBPANEL C: WEBSITE LINK CRAWLER & PAGE INDEXER
+    // ==================================================
     function setSampleWebsite(url) {
       var inp = document.getElementById('wiz-website-url');
       if (inp) inp.value = url;
+      wizardState.websiteUrl = url;
     }
 
-    function syncWebsiteDataIntoMemory() {
-      var url = (document.getElementById('wiz-website-url')?.value || '').trim();
-      if (!url) return;
+    // Comprehensive multi-page knowledge definitions for curated domains
+    var CURATED_WEBSITE_PROFILES = {
+      'kenyanextgen.co.ke': {
+        companyName: 'NextGen Kenya',
+        botName: 'NextGen Assistant',
+        botTitle: 'Youth Placement & Career Concierge',
+        greeting: 'Hello! Welcome to NextGen Kenya. How can I assist you today with our youth employment initiative, workplace automation & digital skills training, or internship applications across all 47 counties?',
+        quickReplies: [
+          { label: '🚀 Automation & Skills', payload: 'What workplace automation and digital skills do you train?' },
+          { label: '🇰🇪 47 Counties Placement', payload: 'Tell me about internships across all 47 counties' },
+          { label: '📝 Free Application', payload: 'How do I apply for the NextGen fellowship?' },
+          { label: '🤝 Partner Organizations', payload: 'Who are your partners (UNDP, KEPSA)?' }
+        ],
+        pages: [
+          {
+            id: 'page_home',
+            title: 'NextGen Kenya - Home & Youth Employment Mission',
+            path: '/',
+            category: 'overview',
+            wordCount: 410,
+            excerpt: 'National youth employment initiative spearheaded in partnership between UNDP, Government of Kenya, and KEPSA to bridge talent with sustainable jobs.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_home',
+                question: 'What is NextGen Kenya and what is its mission?',
+                answer: 'NextGen.Ke is a national youth employment initiative spearheaded in partnership between UNDP (United Nations Development Programme), the Government of Kenya, and KEPSA. We bridge the gap between youth talent and sustainable employment across all 47 counties.',
+                keywords: ['kenyanextgen', 'nextgen', 'about', 'mission', 'undp', 'kepsa', 'youth', 'employment', 'jobs', 'kenya']
+              }
+            ]
+          },
+          {
+            id: 'page_skills',
+            title: 'Workplace Automation & Digital Skills Training',
+            path: '/skills',
+            category: 'services',
+            wordCount: 520,
+            excerpt: 'Hands-on curriculum in workplace automation, modern digital tools, AI technologies, and software workflows for modern employers.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_automation',
+                question: 'What skills and workplace automation training do you provide?',
+                answer: 'NextGen Kenya provides youth with cutting-edge training in workplace automation, modern digital tools, AI technologies, and software workflows. Young professionals in the program are equipped with hands-on technical skills and automated business workflows to meet the demands of modern employers.',
+                keywords: ['automation', 'automated', 'skills', 'training', 'digital', 'tech', 'software', 'workflows', 'ai', 'courses', 'programs']
+              }
+            ]
+          },
+          {
+            id: 'page_internships',
+            title: 'Structured Internships Across All 47 Counties',
+            path: '/internships',
+            category: 'services',
+            wordCount: 460,
+            excerpt: 'Pairing fellows with vetted corporate, NGO, and public-sector employers across Nairobi, Mombasa, Kisumu, Nakuru, Eldoret, and beyond.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_internships',
+                question: 'Where are internship opportunities located?',
+                answer: 'NextGen Kenya places skilled youth into structured, verified internships and jobs across all 47 Kenyan counties (Nairobi, Mombasa, Kisumu, Nakuru, Eldoret, etc.), pairing fellows with vetted corporate, NGO, and public-sector employers.',
+                keywords: ['internship', 'internships', 'placement', 'counties', 'nairobi', 'mombasa', 'kisumu', 'employers', 'fellows']
+              }
+            ]
+          },
+          {
+            id: 'page_apply',
+            title: 'Application Portal, Eligibility & Costs',
+            path: '/apply',
+            category: 'pricing',
+            wordCount: 380,
+            excerpt: '100% free with zero fees! Any young Kenyan graduate can register online in under 3 minutes through the official portal.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_pricing',
+                question: 'How much does it cost to apply or participate in NextGen?',
+                answer: 'Applications to NextGen Kenya are 100% free with zero fees! Any young Kenyan graduate can register online in under 3 minutes through the official portal.',
+                keywords: ['pricing', 'cost', 'fee', 'free', 'price', 'rate', 'apply', 'application', 'register', 'eligibility']
+              }
+            ]
+          },
+          {
+            id: 'page_partners',
+            title: 'Partner Network (UNDP, KEPSA & Government of Kenya)',
+            path: '/partners',
+            category: 'overview',
+            wordCount: 350,
+            excerpt: 'Collaborative ecosystem of corporate employers, funding institutions, and public stakeholders creating verified career pipelines.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_partners',
+                question: 'Who backs and funds the NextGen Kenya initiative?',
+                answer: 'NextGen Kenya is supported and co-funded by the United Nations Development Programme (UNDP), the Kenya Private Sector Alliance (KEPSA), and the Government of Kenya alongside leading corporate employers.',
+                keywords: ['partners', 'partner', 'undp', 'kepsa', 'government', 'stakeholders', 'sponsors']
+              }
+            ]
+          },
+          {
+            id: 'page_contact',
+            title: 'Support Desk & Inquiries',
+            path: '/contact',
+            category: 'support',
+            wordCount: 290,
+            excerpt: 'Official inquiries, employer partner registration, and placement support via info@kenyanextgen.co.ke or direct placement concierge.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_support',
+                question: 'How can I contact NextGen Kenya support or partner with you?',
+                answer: 'NextGen.Ke is supported by UNDP, the Government of Kenya, KEPSA, and leading private-sector employers. For inquiries or program support, reach out via info@kenyanextgen.co.ke or ask our placement concierge right here.',
+                keywords: ['contact', 'support', 'email', 'help', 'phone', 'reach', 'talk']
+              }
+            ]
+          }
+        ]
+      },
+
+      'jumia.co.ke': {
+        companyName: 'Jumia Kenya',
+        botName: 'Jumia Shopping Assistant',
+        botTitle: 'Order Concierge & Deals Finder',
+        greeting: 'Jambo! Welcome to Jumia Kenya. Looking for the latest flash sales, phone deals, order tracking, or delivery information? Ask me anything!',
+        quickReplies: [
+          { label: '⚡ Flash Deals', payload: 'What are today’s best flash sales and discounts?' },
+          { label: '📱 Phones & Tech', payload: 'Tell me about smartphone deals and warranties' },
+          { label: '🚚 Delivery & Shipping', payload: 'How does Jumia Express delivery work?' },
+          { label: '🔄 7-Day Returns', payload: 'What is Jumia’s return and refund policy?' }
+        ],
+        pages: [
+          {
+            id: 'jumia_home',
+            title: 'Jumia Kenya - Online Shopping & Daily Flash Deals',
+            path: '/',
+            category: 'overview',
+            wordCount: 620,
+            excerpt: 'Kenya’s #1 marketplace for electronics, fashion, phones, beauty, computing, groceries, and home appliances with daily flash deals.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_home',
+                question: 'What is Jumia Kenya and what products do you sell?',
+                answer: 'Jumia Kenya is East Africa’s leading online shopping destination, offering over 1 million authentic products across smartphones, electronics, computing, fashion, beauty, home appliances, and groceries with secure nationwide delivery.',
+                keywords: ['jumia', 'shopping', 'products', 'store', 'marketplace', 'kenya', 'mall', 'buy']
+              }
+            ]
+          },
+          {
+            id: 'jumia_electronics',
+            title: 'Electronics, Phones & Tech Warranties',
+            path: '/category-phones-tablets',
+            category: 'services',
+            wordCount: 540,
+            excerpt: '100% genuine brand smartphones (Samsung, Apple, Xiaomi, Infinix) with official manufacturer warranties and authorized service centers.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_phones',
+                question: 'Are smartphones on Jumia authentic and covered by warranty?',
+                answer: 'Yes! All smartphones and electronics sold on Jumia (especially Jumia Mall official brand stores) are 100% genuine and come with a standard 12-to-24 month manufacturer warranty.',
+                keywords: ['phone', 'phones', 'electronics', 'smartphones', 'warranty', 'genuine', 'samsung', 'iphone', 'xiaomi']
+              }
+            ]
+          },
+          {
+            id: 'jumia_delivery',
+            title: 'Delivery Timelines, Jumia Express & Pick-up Stations',
+            path: '/delivery-info',
+            category: 'support',
+            wordCount: 480,
+            excerpt: 'Same-day and next-day Jumia Express in Nairobi. Doorstep delivery or economical Pick-up Stations located in all 47 counties.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_delivery',
+                question: 'How long does delivery take and what are the fees?',
+                answer: 'Jumia Express items are delivered within 24 hours in Nairobi and 2-4 business days across other counties. You can choose home/office delivery or save on shipping by collecting from hundreds of Jumia Pick-up Stations nationwide.',
+                keywords: ['delivery', 'shipping', 'timeline', 'express', 'pickup', 'nairobi', 'counties', 'dispatch', 'courier']
+              }
+            ]
+          },
+          {
+            id: 'jumia_payments',
+            title: 'Payment Methods, M-Pesa & JumiaPay Escrow',
+            path: '/payment-options',
+            category: 'pricing',
+            wordCount: 390,
+            excerpt: 'Seamless payments via M-Pesa (online or on delivery), Visa, Mastercard, and JumiaPay with buyer protection guarantee.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_payments',
+                question: 'What payment methods does Jumia accept? Can I pay with M-Pesa?',
+                answer: 'Yes! Jumia accepts M-Pesa (instant STK push or Paybill), debit/credit cards (Visa, Mastercard), and JumiaPay. Cash on delivery is also available for eligible locations and items.',
+                keywords: ['payment', 'pay', 'mpesa', 'm-pesa', 'card', 'checkout', 'jumiapay', 'cod']
+              }
+            ]
+          },
+          {
+            id: 'jumia_returns',
+            title: '7-Day Free Returns & Refund Policy',
+            path: '/returns-refunds',
+            category: 'policies',
+            wordCount: 430,
+            excerpt: 'Hassle-free 7-day return policy for any wrong, damaged, or defective product with 100% money-back guarantee.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_returns',
+                question: 'What is Jumia’s return and refund policy?',
+                answer: 'Jumia offers a free 7-day return window for eligible products (15 days for Jumia Mall items). If an item is defective, wrong, or damaged, you can request a return via your account or pick-up station for a full refund.',
+                keywords: ['return', 'returns', 'refund', 'refunds', 'damaged', 'exchange', 'policy', 'guarantee']
+              }
+            ]
+          },
+          {
+            id: 'jumia_support',
+            title: 'Customer Service & Order Tracking',
+            path: '/customer-service',
+            category: 'support',
+            wordCount: 340,
+            excerpt: 'Track package whereabouts in real-time, initiate order cancellations, or chat with a live customer care assistant.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_support',
+                question: 'How do I track my order or contact customer care?',
+                answer: 'You can track your order status in real time under "My Orders" on Jumia, or contact customer care via live chat, email, or our dedicated hotline 0709 306 000.',
+                keywords: ['track', 'tracking', 'support', 'help', 'contact', 'customer care', 'hotline', 'phone']
+              }
+            ]
+          }
+        ]
+      },
+
+      'acme-studio.io': {
+        companyName: 'Acme Studio',
+        botName: 'Acme Design Concierge',
+        botTitle: 'Creative & Digital Product Consultant',
+        greeting: 'Welcome to Acme Studio! We build award-winning digital products and websites. How can we bring your vision to life?',
+        quickReplies: [
+          { label: '🎨 Design Services', payload: 'What design and engineering services do you provide?' },
+          { label: '💰 Sprint Pricing', payload: 'How much do project sprints and retainers cost?' },
+          { label: '📁 Case Studies', payload: 'Can you show me previous case studies?' },
+          { label: '🚀 Schedule Call', payload: 'I want to schedule a discovery call with Acme' }
+        ],
+        pages: [
+          {
+            id: 'acme_home',
+            title: 'Acme Studio - Digital Product Design & Engineering',
+            path: '/',
+            category: 'overview',
+            wordCount: 440,
+            excerpt: 'Award-winning design agency creating state-of-the-art web apps, mobile products, and brand systems.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_acme_home',
+                question: 'What is Acme Studio and what do you create?',
+                answer: 'Acme Studio is a full-service digital product consultancy specializing in user experience design, front-end architecture, design systems, and rapid prototyping for venture-backed startups and global brands.',
+                keywords: ['acme', 'studio', 'agency', 'design', 'engineering', 'product', 'ui', 'ux']
+              }
+            ]
+          },
+          {
+            id: 'acme_services',
+            title: 'Design Systems, Mobile Apps & Web Architecture',
+            path: '/services',
+            category: 'services',
+            wordCount: 510,
+            excerpt: 'End-to-end design & code delivery using Next.js, React, Figma tokens, and micro-animations.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_acme_services',
+                question: 'What specific services and technologies does Acme Studio use?',
+                answer: 'We provide end-to-end UX/UI design, design systems, web development (Next.js, TypeScript), mobile application engineering, and conversion rate optimization.',
+                keywords: ['services', 'technologies', 'figma', 'nextjs', 'react', 'mobile', 'web', 'ux']
+              }
+            ]
+          },
+          {
+            id: 'acme_pricing',
+            title: 'Sprint Pricing & Dedicated Retainer Plans',
+            path: '/pricing',
+            category: 'pricing',
+            wordCount: 370,
+            excerpt: 'Fixed-price 2-week sprints starting at $3,500. Monthly ongoing retainers with unlimited requests.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_acme_pricing',
+                question: 'What are Acme Studio’s rates and retainer models?',
+                answer: 'Our dedicated sprint packages start at $3,500 for a 2-week product sprint. We also provide monthly dedicated design engineering retainers with no lock-in contracts.',
+                keywords: ['pricing', 'rates', 'sprint', 'cost', 'retainer', 'plans', 'contract']
+              }
+            ]
+          },
+          {
+            id: 'acme_contact',
+            title: 'Discovery Calls & Inquiries',
+            path: '/contact',
+            category: 'support',
+            wordCount: 280,
+            excerpt: 'Schedule an exploratory consultation or email projects@acme-studio.io.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_acme_contact',
+                question: 'How do I start a project or speak with a design lead?',
+                answer: 'You can book a 20-minute discovery call directly on our site or leave your project brief right here in chat for an immediate estimate and proposal.',
+                keywords: ['contact', 'hire', 'start', 'discovery', 'call', 'consultation', 'email']
+              }
+            ]
+          }
+        ]
+      },
+
+      'botly.ai': {
+        companyName: 'Botly Pro',
+        botName: 'Botly AI Concierge',
+        botTitle: 'Platform Specialist & Embed Guide',
+        greeting: 'Hello! I am Botly Pro Concierge. Ask me about our 2-line embed snippet, in-chat M-Pesa checkout, multi-company studio, or pricing!',
+        quickReplies: [
+          { label: '⚡ 2-Line Embed', payload: 'How do I embed Botly on my website?' },
+          { label: '💰 Pricing Plans', payload: 'What are the subscription plans for Botly?' },
+          { label: '💳 M-Pesa & Card Checkout', payload: 'How does in-chat payment checkout work?' },
+          { label: '📚 Developer Docs', payload: 'Where can I find the developer docs and JavaScript API?' }
+        ],
+        pages: [
+          {
+            id: 'botly_home',
+            title: 'Botly Pro - AI Chatbot Platform for Modern Businesses',
+            path: '/',
+            category: 'overview',
+            wordCount: 450,
+            excerpt: 'Plug-and-play chatbot with lead qualification, M-Pesa payment checkout, website memory, and custom branding in 2 lines of code.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_botly_home',
+                question: 'What is Botly Pro and how does it help my business?',
+                answer: 'Botly Pro is an embeddable, customizable AI chatbot platform that turns website visitors into paying customers through automated lead capture, instant M-Pesa/Card payments, and company memory.',
+                keywords: ['botly', 'platform', 'features', 'overview', 'sales', 'leads', 'widget']
+              }
+            ]
+          },
+          {
+            id: 'botly_pricing',
+            title: 'Pricing, Free Sandbox & Enterprise Plans',
+            path: '/pricing',
+            category: 'pricing',
+            wordCount: 390,
+            excerpt: 'Free developer sandbox tier, KES 2,500/mo Growth tier with unlimited leads, and enterprise custom models.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_botly_pricing',
+                question: 'What are the pricing tiers for Botly Pro?',
+                answer: 'Botly Pro offers a free sandbox tier for testing, a Growth plan at KES 2,500/month with unlimited captured leads and custom knowledge, and Enterprise plans with dedicated SLA and custom webhooks.',
+                keywords: ['pricing', 'plans', 'cost', 'free', 'tier', 'subscription', 'growth', 'enterprise']
+              }
+            ]
+          },
+          {
+            id: 'botly_docs',
+            title: 'Developer Documentation, Webhooks & JavaScript API',
+            path: '/docs',
+            category: 'services',
+            wordCount: 520,
+            excerpt: 'Complete documentation for BotlyChatbot.init, event hooks, custom styling, and webhook routing.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_botly_docs',
+                question: 'How do developers integrate and customize Botly Pro?',
+                answer: 'Developers can embed Botly with 2 lines of HTML/JS, configure theme colors, knowledge memory, custom REST endpoints, and listen to events like onLeadCaptured or onPaymentInitiated.',
+                keywords: ['docs', 'developer', 'api', 'javascript', 'methods', 'events', 'embed', 'webhook']
+              }
+            ]
+          },
+          {
+            id: 'botly_support',
+            title: 'Developer Support & Inquiries',
+            path: '/contact',
+            category: 'support',
+            wordCount: 310,
+            excerpt: '24/7 developer assistance, integration consultations, and enterprise onboarding.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_botly_support',
+                question: 'How can I get technical support for Botly Pro?',
+                answer: 'Visit our Developer Documentation at /demo/docs.html, reach out to support@botly.ai, or chat with our team right here in the sandbox!',
+                keywords: ['support', 'help', 'email', 'contact', 'consultation', 'developer']
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    // Generic dynamic synthesizer for ANY custom domain
+    function generateSyntheticDomainPages(url) {
+      var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
+      var baseName = domain.split('.')[0];
+      var cleanName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+
+      return {
+        companyName: cleanName,
+        botName: cleanName + ' Concierge',
+        botTitle: 'AI Knowledge & Support Concierge',
+        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our services, pricing, or support?',
+        quickReplies: [
+          { label: '💼 Our Services', payload: 'What services or products does ' + cleanName + ' offer?' },
+          { label: '💰 Pricing & Plans', payload: 'What are your pricing packages and terms?' },
+          { label: '📞 Contact Support', payload: 'How can I get in touch with the team?' },
+          { label: 'ℹ️ About ' + cleanName, payload: 'Tell me more about ' + cleanName + ' and your mission' }
+        ],
+        pages: [
+          {
+            id: 'gen_home',
+            title: cleanName + ' - Home & Company Overview',
+            path: '/',
+            category: 'overview',
+            wordCount: 420,
+            excerpt: 'Welcome to ' + cleanName + '. We deliver tailored solutions, automated business workflows, and 24/7 client satisfaction.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_home',
+                question: 'What is ' + cleanName + ' and what do you do?',
+                answer: 'Welcome to ' + cleanName + '! We are a dedicated provider of professional services, tailored solutions, and automated workflows designed to help our customers succeed.',
+                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'mission', 'welcome', 'solutions']
+              }
+            ]
+          },
+          {
+            id: 'gen_services',
+            title: cleanName + ' - Solutions & Services Catalog',
+            path: '/services',
+            category: 'services',
+            wordCount: 510,
+            excerpt: 'Full spectrum of professional offerings, custom integrations, consulting, and end-to-end technical deliverables.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_services',
+                question: 'What services or products do you offer?',
+                answer: 'At ' + cleanName + ', we specialize in comprehensive services tailored to each client’s operational goals, including consultation, digital workflows, product support, and managed solutions.',
+                keywords: ['services', 'offerings', 'products', 'solutions', 'features', 'consulting', 'capabilities']
+              }
+            ]
+          },
+          {
+            id: 'gen_pricing',
+            title: cleanName + ' - Pricing Plans & Packages',
+            path: '/pricing',
+            category: 'pricing',
+            wordCount: 360,
+            excerpt: 'Transparent pricing tiers, flexible payment methods, and custom enterprise proposals tailored to your budget.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_pricing',
+                question: 'What are your pricing packages and payment terms?',
+                answer: 'We offer competitive and flexible pricing at ' + cleanName + '. Whether you need standard packages or customized deliverables, contact our team right here in chat for an immediate estimate and proposal.',
+                keywords: ['pricing', 'cost', 'plans', 'rate', 'estimate', 'quote', 'package', 'price', 'payment']
+              }
+            ]
+          },
+          {
+            id: 'gen_about',
+            title: cleanName + ' - About Us & Our Mission',
+            path: '/about',
+            category: 'overview',
+            wordCount: 380,
+            excerpt: 'Our leadership story, industry track record, customer-first culture, and long-term vision.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_about',
+                question: 'Can you tell me more about ' + cleanName + '’s background and experience?',
+                answer: cleanName + ' was founded with a mission to bring high quality, reliable, and accessible solutions to our customers. Our experienced team works closely with each partner to ensure top satisfaction.',
+                keywords: ['about', 'history', 'story', 'team', 'experience', 'background', 'mission']
+              }
+            ]
+          },
+          {
+            id: 'gen_support',
+            title: cleanName + ' - Customer Support & Help Desk',
+            path: '/support',
+            category: 'support',
+            wordCount: 320,
+            excerpt: 'Fast support desk, inquiry ticketing, phone and email handover, and prompt issue escalation.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_support',
+                question: 'How do I contact your support team or request assistance?',
+                answer: 'You can reach the ' + cleanName + ' support team by emailing care@' + domain + ', calling our hotline, or leaving your phone number and request in this chat window for a prompt callback.',
+                keywords: ['support', 'contact', 'help', 'email', 'phone', 'desk', 'hours', 'reach']
+              }
+            ]
+          },
+          {
+            id: 'gen_policies',
+            title: cleanName + ' - Terms of Service & Privacy Policy',
+            path: '/terms',
+            category: 'policies',
+            wordCount: 450,
+            excerpt: 'Strict data privacy safeguards, service-level guarantees, customer satisfaction guarantee, and terms of service.',
+            selected: false,
+            qas: [
+              {
+                id: 'web_gen_terms',
+                question: 'What are your service guarantees and privacy policy?',
+                answer: cleanName + ' adheres to strict confidentiality, secure data processing, and high service level standards. We guarantee client data protection and transparent service delivery.',
+                keywords: ['terms', 'privacy', 'policy', 'guarantee', 'security', 'sla', 'compliance']
+              }
+            ]
+          }
+        ]
+      };
+    }
+
+    // Crawl & Index Engine
+    function scanAndIndexWebsite() {
+      var urlInput = document.getElementById('wiz-website-url');
+      var url = (urlInput ? urlInput.value : '').trim();
+      if (!url) {
+        alert('Please enter a website URL to crawl and index.');
+        return;
+      }
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+        if (urlInput) urlInput.value = url;
+      }
+      wizardState.websiteUrl = url;
 
       var btn = document.getElementById('btn-sync-website');
       var statusBox = document.getElementById('website-sync-status');
-      var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
-      var isNextGen = domain.indexOf('kenyanextgen') !== -1 || domain.indexOf('nextgen') !== -1;
+      var statusMsg = document.getElementById('web-crawl-msg');
+      var statusSub = document.getElementById('web-crawl-sub');
+      var pagesPanel = document.getElementById('website-pages-panel');
+      var tunedBanner = document.getElementById('website-bot-tuned-banner');
 
-      if (btn) btn.innerHTML = '<span>Crawling ' + domain + '...</span>';
-      if (statusBox) {
-        statusBox.style.display = 'block';
-        statusBox.innerHTML = 'Connecting to <strong>' + escapeHtml(url) + '</strong>... Scanning sitemap &amp; indexing knowledge...';
+      if (tunedBanner) tunedBanner.style.display = 'none';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Crawling sitemap &amp; pages...</span>';
+      }
+      if (statusBox) statusBox.style.display = 'flex';
+
+      var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
+      var profileKey = null;
+
+      if (domain.indexOf('kenyanextgen') !== -1 || domain.indexOf('nextgen') !== -1) {
+        profileKey = 'kenyanextgen.co.ke';
+      } else if (domain.indexOf('jumia') !== -1) {
+        profileKey = 'jumia.co.ke';
+      } else if (CURATED_WEBSITE_PROFILES[domain]) {
+        profileKey = domain;
       }
 
+      var profile = profileKey ? CURATED_WEBSITE_PROFILES[profileKey] : generateSyntheticDomainPages(url);
+
+      if (statusMsg) statusMsg.innerHTML = 'Connecting to <strong>' + escapeHtml(domain) + '</strong>...';
+      if (statusSub) statusSub.textContent = 'Resolving DNS & scanning sitemap.xml for routes...';
+
       setTimeout(function() {
-        if (isNextGen) {
-          // Authentic crawled knowledge from https://kenyanextgen.co.ke/
-          wizardState.websiteChunks = [
-            {
-              id: 'web_home',
-              question: 'NextGen Kenya - About & Youth Employment Mission',
-              answer: 'Welcome to NextGen.Ke! We are a national youth employment initiative spearheaded in partnership between UNDP (United Nations Development Programme), the Government of Kenya, and KEPSA. We bridge the gap between youth talent and sustainable employment across all 47 counties.',
-              source: 'website',
-              sourceUrl: 'https://kenyanextgen.co.ke/',
-              category: 'website',
-              keywords: ['kenyanextgen', 'nextgen', 'about', 'services', 'mission', 'undp', 'kepsa', 'youth', 'employment', 'jobs', 'kenya', 'internship', 'counties', 'welcome'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_automation',
-              question: 'NextGen Kenya - Workplace Automation, Digital Skills & Training',
-              answer: 'Yes! NextGen Kenya provides youth with cutting-edge training in workplace automation, modern digital tools, AI technologies, and software workflows. Young professionals in the program are equipped with hands-on technical skills and automated business workflows to meet the demands of modern employers.',
-              source: 'website',
-              sourceUrl: 'https://kenyanextgen.co.ke/skills',
-              category: 'website',
-              keywords: ['automation', 'automated', 'skills', 'training', 'digital', 'tech', 'software', 'workflows', 'ai', 'courses', 'programs', 'learn'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_internships',
-              question: 'NextGen Kenya - Structured Internships Across All 47 Counties',
-              answer: 'NextGen Kenya places skilled youth into structured, verified internships and jobs across all 47 Kenyan counties (Nairobi, Mombasa, Kisumu, Nakuru, Eldoret, etc.), pairing fellows with vetted corporate, NGO, and public-sector employers.',
-              source: 'website',
-              sourceUrl: 'https://kenyanextgen.co.ke/internships',
-              category: 'website',
-              keywords: ['internship', 'internships', 'placement', 'counties', 'nairobi', 'mombasa', 'kisumu', 'employers', 'fellows', 'fellowship'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_pricing',
-              question: 'NextGen Kenya - Application & Program Cost',
-              answer: 'Applications to NextGen Kenya are 100% free with zero fees! Any young Kenyan graduate can register online in under 3 minutes through the official portal.',
-              source: 'website',
-              sourceUrl: 'https://kenyanextgen.co.ke/apply',
-              category: 'website',
-              keywords: ['pricing', 'cost', 'fee', 'free', 'price', 'rate', 'apply', 'application', 'register', 'eligibility', 'requirements'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_support',
-              question: 'NextGen Kenya - Program Contacts & Partner Support',
-              answer: 'NextGen.Ke is supported by UNDP, the Government of Kenya, KEPSA, and leading private-sector employers. For inquiries or program support, reach out via info@kenyanextgen.co.ke or ask our placement concierge right here.',
-              source: 'website',
-              sourceUrl: 'https://kenyanextgen.co.ke/contact',
-              category: 'website',
-              keywords: ['contact', 'support', 'email', 'help', 'partners', 'undp', 'kepsa', 'phone'],
-              isCustomTrained: true
-            }
-          ];
+        if (statusSub) statusSub.textContent = 'Discovered ' + profile.pages.length + ' pages. Extracting content, pricing, and FAQs...';
+      }, 350);
 
-          // Automatically customize bot identity for NextGen Kenya if still on defaults
-          var compInput = document.getElementById('wiz-company-name');
-          if (compInput && (compInput.value === 'My Company' || !compInput.value)) {
-            compInput.value = 'NextGen Kenya';
-            wizardState.companyName = 'NextGen Kenya';
-          }
-          var botInput = document.getElementById('wiz-bot-name');
-          if (botInput && (botInput.value === 'Botly' || botInput.value === 'Botly Pro' || !botInput.value)) {
-            botInput.value = 'NextGen Assistant';
-            wizardState.botName = 'NextGen Assistant';
-          }
-          var botTitleInput = document.getElementById('wiz-bot-title');
-          if (botTitleInput && (botTitleInput.value === 'AI Assistant' || !botTitleInput.value)) {
-            botTitleInput.value = 'Youth Placement & Career Concierge';
-            wizardState.botTitle = 'Youth Placement & Career Concierge';
-          }
-          var greetInput = document.getElementById('wiz-bot-greeting');
-          var nextGenGreet = "Hello! Welcome to NextGen Kenya. How can I assist you today with our youth employment initiative, workplace automation & digital skills training, or internship applications?";
-          if (greetInput) {
-            greetInput.value = nextGenGreet;
-            wizardState.greeting = nextGenGreet;
-          }
-
-          // Also customize starter FAQs to match NextGen Kenya
-          wizardState.faqs = [
-            {
-              question: "What is NextGen Kenya and who is eligible?",
-              answer: "NextGen.Ke is a national youth employment initiative by UNDP, the Government of Kenya, and KEPSA. Young Kenyan graduates across all 47 counties are eligible to apply for structured internships and skills training.",
-              source: 'faq'
-            },
-            {
-              question: "Do you offer automation and digital skills training?",
-              answer: "Yes! NextGen Kenya trains young talent in workplace automation, modern digital tools, and technical workflows to boost workplace readiness and employer placement.",
-              source: 'faq'
-            }
-          ];
-          renderFaqsList();
-
-          if (btn) btn.innerHTML = '<span>Synced kenyanextgen.co.ke (5 Pages)</span>';
-          if (statusBox) {
-            statusBox.innerHTML = '<strong>kenyanextgen.co.ke</strong> successfully synced: 5 pages indexed into memory (About, Automation &amp; Digital Skills, 47 Counties Internships, Free Application, Partners).';
-          }
-        } else {
-          // General domain crawler
-          var cleanName = domain.split('.')[0];
-          cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-
-          wizardState.websiteChunks = [
-            {
-              id: 'web_home',
-              question: cleanName + ' - Home & Services',
-              answer: 'Welcome to ' + cleanName + '! We provide professional services, workplace automation, 24/7 customer support, and tailored solutions for clients worldwide.',
-              source: 'website',
-              sourceUrl: url,
-              category: 'website',
-              keywords: [cleanName.toLowerCase(), domain, 'services', 'solutions', 'about', 'welcome', 'automation', 'offer'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_pricing',
-              question: cleanName + ' - Pricing & Packages',
-              answer: 'At ' + cleanName + ', our service packages are tailored to your specific requirements. Contact our sales team at care@' + domain + ' or leave your details in this chat for a complete proposal.',
-              source: 'website',
-              sourceUrl: url + '/pricing',
-              category: 'website',
-              keywords: ['pricing', 'cost', 'plans', 'price', 'rate', 'package', 'proposal'],
-              isCustomTrained: true
-            },
-            {
-              id: 'web_support',
-              question: cleanName + ' - Support & Contact',
-              answer: 'You can reach the ' + cleanName + ' support desk anytime via email at care@' + domain + ' or by leaving your phone number right here for a callback.',
-              source: 'website',
-              sourceUrl: url + '/contact',
-              category: 'website',
-              keywords: ['support', 'contact', 'phone', 'email', 'hours', 'help'],
-              isCustomTrained: true
-            }
-          ];
-
-          var compInputGen = document.getElementById('wiz-company-name');
-          if (compInputGen && (compInputGen.value === 'My Company' || !compInputGen.value)) {
-            compInputGen.value = cleanName;
-            wizardState.companyName = cleanName;
-          }
-
-          if (btn) btn.innerHTML = '<span>Synced ' + domain + ' (3 Pages)</span>';
-          if (statusBox) {
-            statusBox.innerHTML = '<strong>' + escapeHtml(domain) + '</strong> successfully synced: 3 pages indexed in bot memory.';
-          }
+      setTimeout(function() {
+        if (statusBox) statusBox.style.display = 'none';
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Re-scan &amp; Index Website</span>';
         }
 
-        renderWebsiteChunksPreview();
-        updateMemoryStats();
-        applyBotLiveConfig();
-      }, 400);
+        // Store profile metadata and pages
+        wizardState.activeWebProfile = profile;
+        wizardState.indexedWebsitePages = JSON.parse(JSON.stringify(profile.pages));
+
+        if (pagesPanel) pagesPanel.style.display = 'flex';
+        renderDiscoveredWebPages();
+
+        // Automatically train initial selected pages
+        trainBotWithSelectedPages(true);
+      }, 700);
+    }
+
+    // Backward compatibility wrapper
+    function syncWebsiteDataIntoMemory() {
+      scanAndIndexWebsite();
+    }
+
+    // Interactive Page Selection & Filtering Controls
+    function filterWebPagesCategory(cat) {
+      wizardState.activeWebCategoryFilter = cat;
+      var pills = document.querySelectorAll('#web-category-filter-pills .web-filter-pill');
+      pills.forEach(function(pill) {
+        var pText = pill.textContent.toLowerCase();
+        var isActive = (cat === 'all' && pText === 'all') ||
+                       (cat === 'services' && pText.indexOf('services') !== -1) ||
+                       (cat === 'pricing' && pText.indexOf('pricing') !== -1) ||
+                       (cat === 'support' && pText.indexOf('support') !== -1) ||
+                       (cat === 'policies' && pText.indexOf('policies') !== -1);
+        pill.classList.toggle('active', isActive);
+      });
+      renderDiscoveredWebPages();
+    }
+
+    function selectAllWebPages(selectAll) {
+      if (!wizardState.indexedWebsitePages) return;
+      wizardState.indexedWebsitePages.forEach(function(p) {
+        p.selected = !!selectAll;
+      });
+      renderDiscoveredWebPages();
+      updateTrainButtonBadge();
+    }
+
+    function selectRecommendedWebPages() {
+      if (!wizardState.indexedWebsitePages) return;
+      wizardState.indexedWebsitePages.forEach(function(p) {
+        p.selected = (p.category !== 'policies');
+      });
+      renderDiscoveredWebPages();
+      updateTrainButtonBadge();
+    }
+
+    function toggleWebPage(pageId) {
+      if (!wizardState.indexedWebsitePages) return;
+      var page = wizardState.indexedWebsitePages.find(function(p) { return p.id === pageId; });
+      if (page) {
+        page.selected = !page.selected;
+      }
+      renderDiscoveredWebPages();
+      updateTrainButtonBadge();
+    }
+
+    function toggleQaPreview(pageId) {
+      var drawer = document.getElementById('web-qa-drawer-' + pageId);
+      if (drawer) {
+        drawer.classList.toggle('open');
+      }
+    }
+
+    function updateTrainButtonBadge() {
+      var pages = wizardState.indexedWebsitePages || [];
+      var selected = pages.filter(function(p) { return p.selected; });
+      var badge = document.getElementById('btn-train-count-badge');
+      if (badge) {
+        badge.textContent = selected.length + ' Pages';
+      }
+      var countSpan = document.getElementById('web-pages-selected-count');
+      if (countSpan) {
+        countSpan.textContent = '(' + selected.length + '/' + pages.length + ' selected)';
+      }
+    }
+
+    function renderDiscoveredWebPages() {
+      var list = document.getElementById('website-pages-list');
+      if (!list) return;
+
+      var pages = wizardState.indexedWebsitePages || [];
+      var filter = wizardState.activeWebCategoryFilter || 'all';
+
+      list.innerHTML = '';
+
+      if (pages.length === 0) {
+        list.innerHTML = '<div style="font-size: 12px; color: #94a3b8; padding: 12px; text-align: center;">No pages discovered yet. Enter a website link above and click Scan.</div>';
+        return;
+      }
+
+      var totalWords = 0;
+      var selectedCount = 0;
+
+      pages.forEach(function(p) {
+        totalWords += (p.wordCount || 0);
+        if (p.selected) selectedCount++;
+      });
+
+      var summaryBadge = document.getElementById('web-summary-badge');
+      if (summaryBadge) {
+        summaryBadge.innerHTML = '<span>📄 Discovered ' + pages.length + ' Pages</span> <span style="font-size: 11px; font-weight: 600; color: #64748b;">(' + totalWords.toLocaleString() + ' words)</span>';
+      }
+
+      updateTrainButtonBadge();
+
+      var filteredPages = pages.filter(function(p) {
+        if (filter === 'all') return true;
+        return p.category === filter;
+      });
+
+      if (filteredPages.length === 0) {
+        list.innerHTML = '<div style="font-size: 12px; color: #94a3b8; padding: 12px; text-align: center;">No pages found in this category.</div>';
+        return;
+      }
+
+      filteredPages.forEach(function(page) {
+        var card = document.createElement('div');
+        card.className = 'web-page-card' + (page.selected ? ' selected' : '');
+        card.id = 'web-card-' + page.id;
+
+        var catTagClass = 'tag-' + (page.category || 'overview');
+        var catTagLabel = (page.category || 'Overview').toUpperCase();
+
+        var qasHtml = '';
+        if (page.qas && page.qas.length > 0) {
+          qasHtml = '<div class="web-page-qas-drawer" id="web-qa-drawer-' + page.id + '">';
+          page.qas.forEach(function(qa) {
+            qasHtml +=
+              '<div class="web-qa-item">' +
+                '<div class="web-qa-q">Q: ' + escapeHtml(qa.question) + '</div>' +
+                '<div class="web-qa-a">A: ' + escapeHtml(qa.answer) + '</div>' +
+              '</div>';
+          });
+          qasHtml += '</div>';
+        }
+
+        card.innerHTML =
+          '<div class="web-page-header">' +
+            '<div class="web-page-checkbox-wrap">' +
+              '<input type="checkbox" class="web-page-checkbox" id="chk-' + page.id + '" ' + (page.selected ? 'checked' : '') + ' onchange="toggleWebPage(\'' + page.id + '\')">' +
+            '</div>' +
+            '<div class="web-page-info">' +
+              '<div class="web-page-title-row">' +
+                '<label for="chk-' + page.id + '" class="web-page-title" style="cursor: pointer;">' + escapeHtml(page.title) + '</label>' +
+                '<span class="web-page-path">' + escapeHtml(page.path) + '</span>' +
+                '<span class="web-page-category-tag ' + catTagClass + '">' + catTagLabel + '</span>' +
+                '<span class="web-page-meta">' + page.wordCount + ' words • ' + (page.qas ? page.qas.length : 0) + ' Q&amp;As</span>' +
+              '</div>' +
+              '<div class="web-page-excerpt">' + escapeHtml(page.excerpt) + '</div>' +
+              (page.qas && page.qas.length > 0 ?
+                '<button type="button" class="web-page-preview-toggle" onclick="toggleQaPreview(\'' + page.id + '\')">' +
+                  '<span>Preview Extracted Knowledge (' + page.qas.length + ')</span> ▾' +
+                '</button>' + qasHtml : '') +
+            '</div>' +
+          '</div>';
+
+        list.appendChild(card);
+      });
+    }
+
+    // Bot Auto-Tuning around Selected Pages
+    function trainBotWithSelectedPages(isInitialScan) {
+      var pages = wizardState.indexedWebsitePages || [];
+      var selectedPages = pages.filter(function(p) { return p.selected; });
+
+      if (selectedPages.length === 0) {
+        alert('Please select at least 1 page to train your bot with.');
+        return;
+      }
+
+      // Collect all Q&As from selected pages
+      var newChunks = [];
+      selectedPages.forEach(function(page) {
+        if (page.qas && page.qas.length > 0) {
+          page.qas.forEach(function(qa) {
+            newChunks.push({
+              id: qa.id || ('chunk_' + Math.random().toString(36).substr(2, 6)),
+              question: qa.question,
+              answer: qa.answer,
+              source: 'website',
+              sourceUrl: (wizardState.websiteUrl || '') + page.path,
+              category: page.category || 'website',
+              keywords: qa.keywords || [],
+              isCustomTrained: true
+            });
+          });
+        }
+      });
+
+      wizardState.websiteChunks = newChunks;
+
+      var autoTune = document.getElementById('wiz-web-autotune');
+      var shouldAutoTune = autoTune ? autoTune.checked : true;
+      var profile = wizardState.activeWebProfile;
+
+      if (shouldAutoTune && profile) {
+        // Adjust Company Name
+        if (profile.companyName) {
+          wizardState.companyName = profile.companyName;
+          var compInput = document.getElementById('wiz-company-name');
+          if (compInput) compInput.value = profile.companyName;
+        }
+
+        // Adjust Bot Name
+        if (profile.botName) {
+          wizardState.botName = profile.botName;
+          var botInput = document.getElementById('wiz-bot-name');
+          if (botInput) botInput.value = profile.botName;
+        }
+
+        // Adjust Bot Title
+        if (profile.botTitle) {
+          wizardState.botTitle = profile.botTitle;
+          var titleInput = document.getElementById('wiz-bot-title');
+          if (titleInput) titleInput.value = profile.botTitle;
+        }
+
+        // Adjust Greeting
+        if (profile.greeting) {
+          wizardState.greeting = profile.greeting;
+          var greetInput = document.getElementById('wiz-bot-greeting');
+          if (greetInput) greetInput.value = profile.greeting;
+        }
+
+        // Adjust Starter FAQs with top 2 Q&As from the website
+        if (newChunks.length >= 2) {
+          wizardState.faqs = [
+            {
+              question: newChunks[0].question,
+              answer: newChunks[0].answer,
+              source: 'faq'
+            },
+            {
+              question: newChunks[1].question,
+              answer: newChunks[1].answer,
+              source: 'faq'
+            }
+          ];
+          if (typeof renderFaqsList === 'function') renderFaqsList();
+        }
+      }
+
+      // Render previews and update live configuration
+      renderWebsiteChunksPreview();
+      updateMemoryStats();
+      applyBotLiveConfig();
+
+      // Save to Multi-Company Sidebar Manager
+      if (window.BotlyChatbotManager && typeof BotlyChatbotManager.saveCurrentBot === 'function') {
+        BotlyChatbotManager.saveCurrentBot();
+      }
+
+      // Show tuned banner
+      var tunedBanner = document.getElementById('website-bot-tuned-banner');
+      var tunedDetails = document.getElementById('website-bot-tuned-details');
+      if (tunedBanner) {
+        tunedBanner.style.display = 'block';
+        if (tunedDetails) {
+          tunedDetails.innerHTML =
+            '<strong>' + selectedPages.length + ' pages indexed (' + newChunks.length + ' Q&amp;As in memory)</strong>. ' +
+            (shouldAutoTune && profile ? 'Persona, greeting, and adaptive quick replies tuned to <strong>' + escapeHtml(profile.companyName) + '</strong>.' : 'Custom website memory updated.');
+        }
+      }
+
+      if (!isInitialScan && typeof showStudioToast === 'function') {
+        showStudioToast('⚡ Bot memory trained with ' + selectedPages.length + ' pages (' + newChunks.length + ' Q&As)!');
+      }
     }
 
     function renderWebsiteChunksPreview() {
@@ -3348,10 +4360,15 @@ window.addEventListener('botly:payment', async (event) => {
       if (!box) return;
       box.innerHTML = '';
 
-      if (wizardState.websiteChunks.length === 0) {
-        box.innerHTML = '<span style="font-size:11px; color:#94a3b8;">No website data synced yet.</span>';
+      if (!wizardState.websiteChunks || wizardState.websiteChunks.length === 0) {
+        box.innerHTML = '<span style="font-size:11px; color:#94a3b8;">No website data trained yet. Scan above to index pages.</span>';
         return;
       }
+
+      var header = document.createElement('div');
+      header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;';
+      header.innerHTML = '<span style="font-size: 11px; font-weight: 800; color: #0f172a;">Active Website Memory (' + wizardState.websiteChunks.length + ' Chunks):</span>';
+      box.appendChild(header);
 
       wizardState.websiteChunks.forEach(function(c, i) {
         var card = document.createElement('div');
@@ -3359,7 +4376,7 @@ window.addEventListener('botly:payment', async (event) => {
         card.innerHTML =
           '<div class="mem-card-title">' +
             '<span>' + escapeHtml(c.question) + '</span>' +
-            '<button type="button" class="faq-del-btn" onclick="removeWebChunk(' + i + ')">✕</button>' +
+            '<button type="button" class="faq-del-btn" onclick="removeWebChunk(' + i + ')" title="Remove chunk">✕</button>' +
           '</div>' +
           '<div class="mem-card-body">' + escapeHtml(c.answer) + '</div>';
         box.appendChild(card);
@@ -3640,11 +4657,12 @@ window.addEventListener('botly:payment', async (event) => {
         .concat(wizardState.documentChunks)
         .concat(wizardState.websiteChunks);
 
-      // Adaptive quick replies based on active goals and company memory
+      // Adaptive quick replies based on active website profile, goals and company memory
       var quickReplies = [];
 
-      // Add top questions from custom memory if available
-      if (allKnowledge.length > 0) {
+      if (wizardState.activeWebProfile && wizardState.activeWebProfile.quickReplies && wizardState.activeWebProfile.quickReplies.length > 0) {
+        quickReplies = wizardState.activeWebProfile.quickReplies.slice(0, 3);
+      } else if (allKnowledge.length > 0) {
         var firstQ = allKnowledge[0].question;
         var qLabel = firstQ.length > 25 ? firstQ.substring(0, 22) + '...' : firstQ;
         quickReplies.push({ label: qLabel, payload: firstQ });
@@ -3771,6 +4789,8 @@ window.addEventListener('botly:payment', async (event) => {
           documentChunks: [],
           websiteChunks: [],
           websiteUrl: 'https://mycompany.com',
+          indexedWebsitePages: [],
+          activeWebProfile: null,
           faqs: [
             {
               question: "What services and solutions do you provide?",
@@ -3886,6 +4906,9 @@ window.addEventListener('botly:payment', async (event) => {
         bot.faqs = wizardState.faqs ? JSON.parse(JSON.stringify(wizardState.faqs)) : [];
         bot.documentChunks = wizardState.documentChunks ? JSON.parse(JSON.stringify(wizardState.documentChunks)) : [];
         bot.websiteChunks = wizardState.websiteChunks ? JSON.parse(JSON.stringify(wizardState.websiteChunks)) : [];
+        bot.indexedWebsitePages = wizardState.indexedWebsitePages ? JSON.parse(JSON.stringify(wizardState.indexedWebsitePages)) : [];
+        bot.websiteUrl = wizardState.websiteUrl || 'https://mycompany.com';
+        bot.activeWebProfile = wizardState.activeWebProfile ? JSON.parse(JSON.stringify(wizardState.activeWebProfile)) : null;
         bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
         bot.apiConfig = wizardState.apiConfig ? JSON.parse(JSON.stringify(wizardState.apiConfig)) : {};
         bot.updatedAt = Date.now();
@@ -3999,7 +5022,9 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.backgroundColor = bot.backgroundColor || '#ffffff';
         wizardState.documentChunks = bot.documentChunks ? JSON.parse(JSON.stringify(bot.documentChunks)) : [];
         wizardState.websiteChunks = bot.websiteChunks ? JSON.parse(JSON.stringify(bot.websiteChunks)) : [];
+        wizardState.indexedWebsitePages = bot.indexedWebsitePages ? JSON.parse(JSON.stringify(bot.indexedWebsitePages)) : [];
         wizardState.websiteUrl = bot.websiteUrl || 'https://mycompany.com';
+        wizardState.activeWebProfile = bot.activeWebProfile || null;
         wizardState.faqs = bot.faqs ? JSON.parse(JSON.stringify(bot.faqs)) : [];
         wizardState.checkoutConfig = bot.checkoutConfig ? JSON.parse(JSON.stringify(bot.checkoutConfig)) : {};
         wizardState.apiConfig = bot.apiConfig ? JSON.parse(JSON.stringify(bot.apiConfig)) : {};
@@ -4017,6 +5042,8 @@ window.addEventListener('botly:payment', async (event) => {
         if (eEl) eEl.value = wizardState.supportEmail;
         var pEl = document.getElementById('wiz-support-phone');
         if (pEl) pEl.value = wizardState.supportPhone;
+        var wUrlEl = document.getElementById('wiz-website-url');
+        if (wUrlEl) wUrlEl.value = wizardState.websiteUrl;
 
         // Update Logo
         if (wizardState.logoUrl && typeof applyLogoUrl === 'function') {
@@ -4036,7 +5063,17 @@ window.addEventListener('botly:payment', async (event) => {
         // Update FAQs & chunks
         if (typeof renderFaqsList === 'function') renderFaqsList();
         if (typeof renderDocChunks === 'function') renderDocChunks();
-        if (typeof renderWebsiteChunks === 'function') renderWebsiteChunks();
+        if (typeof renderWebsiteChunksPreview === 'function') renderWebsiteChunksPreview();
+
+        var pagesPanel = document.getElementById('website-pages-panel');
+        if (pagesPanel) {
+          if (wizardState.indexedWebsitePages && wizardState.indexedWebsitePages.length > 0) {
+            pagesPanel.style.display = 'flex';
+            if (typeof renderDiscoveredWebPages === 'function') renderDiscoveredWebPages();
+          } else {
+            pagesPanel.style.display = 'none';
+          }
+        }
 
         // Refresh live preview widget
         if (typeof applyBotLiveConfig === 'function') applyBotLiveConfig();
