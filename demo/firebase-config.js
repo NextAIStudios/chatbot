@@ -1,11 +1,9 @@
 /**
  * Botly Firebase Configuration
  * -------------------------------------------------------------
- * Obtain these values from your Firebase Project Console:
- * 1. Go to https://console.firebase.google.com
- * 2. Select or create your project (e.g. "Botly-Chatbot")
- * 3. Click Project Overview > Web App (</>)
- * 4. Copy the firebaseConfig values below:
+ * In production/hosting (e.g. Northflank), values are injected at
+ * container startup from FIREBASE_API_KEY environment variables.
+ * In local dev, credentials can be kept in demo/firebase-config.local.js (gitignored).
  */
 
 window.BOTLY_FIREBASE_CONFIG = window.BOTLY_FIREBASE_CONFIG || {

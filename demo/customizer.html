@@ -14,7 +14,7 @@
   <script src="firebase-config.js"></script>
   <script src="firebase-config.local.js" onerror="this.remove()"></script>
   <script src="firebase-auth.js"></script>
-  <script>window.BOTLY_REQUIRE_AUTH_PAGE = true;</script>
+  <script>window.BOTLY_REQUIRE_AUTH_PAGE = false;</script>
   <style>
     /* ==================================================
        WIZARD STUDIO MODERN DESIGN SYSTEM
@@ -6057,49 +6057,32 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
 
     window.handleAuthBackdropClick = function(e) {
       if (e.target.id === 'botly-auth-modal') {
-        if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
-          var card = document.querySelector('.botly-auth-card');
-          if (card) {
-            card.classList.remove('auth-shake');
-            void card.offsetWidth;
-            card.classList.add('auth-shake');
-          }
-          var hint = document.getElementById('auth-persist-hint');
-          if (hint) {
-            hint.style.display = 'block';
-            setTimeout(function() { hint.style.display = 'none'; }, 2800);
-          }
-          return;
+        if (window.BotlyAuth) {
+          window.BotlyAuth.closeModal(true);
+        } else {
+          var modal = document.getElementById('botly-auth-modal');
+          if (modal) modal.style.display = 'none';
         }
-        window.BotlyAuth.closeModal();
       }
     };
 
     window.handleAuthCloseBtn = function() {
-      if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
-        window.location.href = '../index.html';
-        return;
+      if (window.BotlyAuth) {
+        window.BotlyAuth.closeModal(true);
+      } else {
+        var modal = document.getElementById('botly-auth-modal');
+        if (modal) modal.style.display = 'none';
       }
-      window.BotlyAuth.closeModal();
     };
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        if (!window.BotlyAuth || !window.BotlyAuth.isAuthenticated()) {
-          var card = document.querySelector('.botly-auth-card');
-          if (card) {
-            card.classList.remove('auth-shake');
-            void card.offsetWidth;
-            card.classList.add('auth-shake');
-          }
-          var hint = document.getElementById('auth-persist-hint');
-          if (hint) {
-            hint.style.display = 'block';
-            setTimeout(function() { hint.style.display = 'none'; }, 2800);
-          }
-          return;
+        if (window.BotlyAuth) {
+          window.BotlyAuth.closeModal(true);
+        } else {
+          var modal = document.getElementById('botly-auth-modal');
+          if (modal) modal.style.display = 'none';
         }
-        if (window.BotlyAuth) window.BotlyAuth.closeModal();
       }
     });
 
@@ -6203,17 +6186,8 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
           }
         }
       } else {
-        // Unauthenticated: gate studio and PERSIST sign-in modal
-        if (studio) studio.classList.add('gated');
-        if (modal) {
-          modal.style.display = 'flex';
-        }
-        if (closeBtn) closeBtn.title = 'Return to Home Page';
-        var msgEl = document.getElementById('auth-modal-message');
-        if (msgEl) {
-          msgEl.textContent = 'Sign in to access your custom AI chatbot sandbox, save settings, and deploy to production.';
-        }
-
+        // Unauthenticated: update drawer and navbar controls
+        if (closeBtn) closeBtn.title = 'Close modal';
         if (drawerLoginBtn) drawerLoginBtn.style.display = 'flex';
         if (drawerProfileWrap) drawerProfileWrap.style.display = 'none';
       }

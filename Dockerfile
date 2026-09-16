@@ -10,8 +10,13 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy all project files into nginx html directory
 COPY . /usr/share/nginx/html
 
+# Setup runtime entrypoint script for environment variable injection
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port 8080 (standard for Northflank services)
 EXPOSE 8080
 
-# Start nginx in foreground
+# Execute entrypoint to inject env vars, then launch nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
