@@ -2354,6 +2354,97 @@
       return;
     }
 
+    // Default Insurance flow fallback
+    var quote = this.activeQuote || {
+      quoteId: 'QT-DIRECT',
+      productName: 'Comprehensive Shield Policy',
+      tierName: 'Comprehensive Shield',
+      deductible: 'KSh 10,000',
+      coverageLimit: 'KSh 3,000,000',
+      annualTotal: 48000,
+      currencySymbol: this.config.currency?.symbol || 'KSh ',
+      currency: this.config.currency?.code || 'KES'
+    };
+
+    var sym = quote.currencySymbol;
+    var cardId = 'chk-' + Math.random().toString(36).substring(2, 7);
+
+    // Promo code applied initially
+    var discountRate = 0.15;
+    var discountedTotal = Math.round(quote.annualTotal * (1 - discountRate));
+
+    var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
+      '<div class="checkout-header"><div class="checkout-title"><span class="lock-icon">🔒</span><strong>Secure In-Chat Policy Checkout</strong></div><span class="pci-badge">PCI-DSS Level 1</span></div>' +
+      '<div class="checkout-summary-bar">' +
+        '<div class="plan-info"><span class="plan-name">' + quote.productName + '</span><span class="plan-sub">' + quote.tierName + ' • Ded: ' + quote.deductible + '</span></div>' +
+        '<div class="plan-price" id="' + cardId + '-price">' + sym + discountedTotal.toLocaleString() + '</div>' +
+      '</div>' +
+      '<div class="payment-tabs">' +
+        '<button type="button" class="tab-btn active" data-tab="mpesa">📱 M-Pesa</button>' +
+        '<button type="button" class="tab-btn" data-tab="card">💳 Card (Visa/Mastercard)</button>' +
+      '</div>' +
+      '<div class="tab-content" id="' + cardId + '-mpesa-box">' +
+        '<div class="form-group"><label>M-Pesa Mobile Number</label><input type="tel" class="input-field f-phone" value="+254 712 345 678" /><small class="helper-text">You will receive an instant STK push prompt on your phone to enter your M-Pesa PIN.</small></div>' +
+      '</div>' +
+      '<div class="tab-content hidden" id="' + cardId + '-card-box">' +
+        '<div class="form-group"><label>Cardholder Name</label><input type="text" class="input-field f-name" value="Sarah Jenkins" /></div>' +
+        '<div class="form-group"><label>Card Number</label><div class="card-input-wrapper"><input type="text" class="input-field f-num" value="4000 1234 5678 9010" /><span class="card-icon">💳</span></div></div>' +
+        '<div class="form-row">' +
+          '<div class="form-group half"><label>Expiry</label><input type="text" class="input-field f-exp" value="08/28" /></div>' +
+          '<div class="form-group half"><label>CVV</label><input type="password" class="input-field f-cvv" value="882" /></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="promo-code-section">' +
+        '<div class="promo-input-row"><input type="text" class="input-promo" value="SAVE15" /><button type="button" class="btn-apply-promo">Apply</button></div>' +
+        '<div class="promo-message" style="color:#10b981;">✅ Promo "SAVE15" active! 15% discount applied.</div>' +
+      '</div>' +
+      '<button type="button" class="btn-submit-payment" id="' + cardId + '-pay-btn"><span>🔒 Pay ' + sym + discountedTotal.toLocaleString() + ' & Issue Policy</span></button>' +
+      '<div class="payment-processing-overlay hidden" id="' + cardId + '-proc">' +
+        '<div class="processing-spinner"></div>' +
+        '<div class="processing-step" id="' + cardId + '-step">Connecting to M-Pesa Gateway...</div>' +
+        '<div class="processing-sub">Authorizing transaction securely</div>' +
+      '</div>' +
+    '</div>';
+
+    this.appendBot("💳 **Review your policy & complete checkout below to activate instant coverage:**", {
+      html: checkoutHtml
+    });
+
+    // Attach checkout interaction
+    setTimeout(function() {
+      var cardEl = document.getElementById(cardId);
+      if (!cardEl) return;
+
+      var tabs = cardEl.querySelectorAll('.tab-btn');
+      tabs.forEach(function(t) {
+        t.addEventListener('click', function() {
+          tabs.forEach(function(tb) { tb.classList.remove('active'); });
+          t.classList.add('active');
+          var method = t.getAttribute('data-tab');
+          cardEl.querySelector('#' + cardId + '-card-box').classList.toggle('hidden', method !== 'card');
+          cardEl.querySelector('#' + cardId + '-mpesa-box').classList.toggle('hidden', method !== 'mpesa');
+        });
+      });
+
+      var payBtn = cardEl.querySelector('#' + cardId + '-pay-btn');
+      var overlay = cardEl.querySelector('#' + cardId + '-proc');
+      var step = cardEl.querySelector('#' + cardId + '-step');
+
+      function executePayment() {
+        overlay.classList.remove('hidden');
+        setTimeout(function() { step.textContent = 'Sending STK Prompt to Mobile Phone...'; }, 800);
+        setTimeout(function() { step.textContent = 'PIN Verified! Processing Underwriting...'; }, 1600);
+        setTimeout(function() { step.textContent = '✅ Payment Verified! Generating Certificate...'; }, 2400);
+        setTimeout(function() {
+          overlay.classList.add('hidden');
+          self.renderPolicyCertificate(quote, discountedTotal);
+        }, 3200);
+      }
+
+      if (payBtn) payBtn.addEventListener('click', executePayment);
+    }, 100);
+  };
+
   BotlyChatbotController.prototype.renderMpesaCheckoutCard = function(customItem, customAmount, customCurrency) {
     var self = this;
     var chk = this.config.checkout || {};
@@ -2576,97 +2667,6 @@
           }
         });
       }
-    }, 100);
-  };
-
-    var quote = this.activeQuote || {
-      quoteId: 'QT-DIRECT',
-      productName: 'Comprehensive Shield Policy',
-      tierName: 'Comprehensive Shield',
-      deductible: 'KSh 10,000',
-      coverageLimit: 'KSh 3,000,000',
-      annualTotal: 48000,
-      currencySymbol: this.config.currency?.symbol || 'KSh ',
-      currency: this.config.currency?.code || 'KES'
-    };
-
-    var sym = quote.currencySymbol;
-    var cardId = 'chk-' + Math.random().toString(36).substring(2, 7);
-    var self = this;
-
-    // Promo code applied initially
-    var discountRate = 0.15;
-    var discountedTotal = Math.round(quote.annualTotal * (1 - discountRate));
-
-    var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
-      '<div class="checkout-header"><div class="checkout-title"><span class="lock-icon">🔒</span><strong>Secure In-Chat Policy Checkout</strong></div><span class="pci-badge">PCI-DSS Level 1</span></div>' +
-      '<div class="checkout-summary-bar">' +
-        '<div class="plan-info"><span class="plan-name">' + quote.productName + '</span><span class="plan-sub">' + quote.tierName + ' • Ded: ' + quote.deductible + '</span></div>' +
-        '<div class="plan-price" id="' + cardId + '-price">' + sym + discountedTotal.toLocaleString() + '</div>' +
-      '</div>' +
-      '<div class="payment-tabs">' +
-        '<button type="button" class="tab-btn active" data-tab="mpesa">📱 M-Pesa</button>' +
-        '<button type="button" class="tab-btn" data-tab="card">💳 Card (Visa/Mastercard)</button>' +
-      '</div>' +
-      '<div class="tab-content" id="' + cardId + '-mpesa-box">' +
-        '<div class="form-group"><label>M-Pesa Mobile Number</label><input type="tel" class="input-field f-phone" value="+254 712 345 678" /><small class="helper-text">You will receive an instant STK push prompt on your phone to enter your M-Pesa PIN.</small></div>' +
-      '</div>' +
-      '<div class="tab-content hidden" id="' + cardId + '-card-box">' +
-        '<div class="form-group"><label>Cardholder Name</label><input type="text" class="input-field f-name" value="Sarah Jenkins" /></div>' +
-        '<div class="form-group"><label>Card Number</label><div class="card-input-wrapper"><input type="text" class="input-field f-num" value="4000 1234 5678 9010" /><span class="card-icon">💳</span></div></div>' +
-        '<div class="form-row">' +
-          '<div class="form-group half"><label>Expiry</label><input type="text" class="input-field f-exp" value="08/28" /></div>' +
-          '<div class="form-group half"><label>CVV</label><input type="password" class="input-field f-cvv" value="882" /></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="promo-code-section">' +
-        '<div class="promo-input-row"><input type="text" class="input-promo" value="SAVE15" /><button type="button" class="btn-apply-promo">Apply</button></div>' +
-        '<div class="promo-message" style="color:#10b981;">✅ Promo "SAVE15" active! 15% discount applied.</div>' +
-      '</div>' +
-      '<button type="button" class="btn-submit-payment" id="' + cardId + '-pay-btn"><span>🔒 Pay ' + sym + discountedTotal.toLocaleString() + ' & Issue Policy</span></button>' +
-      '<div class="payment-processing-overlay hidden" id="' + cardId + '-proc">' +
-        '<div class="processing-spinner"></div>' +
-        '<div class="processing-step" id="' + cardId + '-step">Connecting to M-Pesa Gateway...</div>' +
-        '<div class="processing-sub">Authorizing transaction securely</div>' +
-      '</div>' +
-    '</div>';
-
-    this.appendBot("💳 **Review your policy & complete checkout below to activate instant coverage:**", {
-      html: checkoutHtml
-    });
-
-    // Attach checkout interaction
-    setTimeout(function() {
-      var cardEl = document.getElementById(cardId);
-      if (!cardEl) return;
-
-      var tabs = cardEl.querySelectorAll('.tab-btn');
-      tabs.forEach(function(t) {
-        t.addEventListener('click', function() {
-          tabs.forEach(function(tb) { tb.classList.remove('active'); });
-          t.classList.add('active');
-          var method = t.getAttribute('data-tab');
-          cardEl.querySelector('#' + cardId + '-card-box').classList.toggle('hidden', method !== 'card');
-          cardEl.querySelector('#' + cardId + '-mpesa-box').classList.toggle('hidden', method !== 'mpesa');
-        });
-      });
-
-      var payBtn = cardEl.querySelector('#' + cardId + '-pay-btn');
-      var overlay = cardEl.querySelector('#' + cardId + '-proc');
-      var step = cardEl.querySelector('#' + cardId + '-step');
-
-      function executePayment() {
-        overlay.classList.remove('hidden');
-        setTimeout(function() { step.textContent = 'Sending STK Prompt to Mobile Phone...'; }, 800);
-        setTimeout(function() { step.textContent = 'PIN Verified! Processing Underwriting...'; }, 1600);
-        setTimeout(function() { step.textContent = '✅ Payment Verified! Generating Certificate...'; }, 2400);
-        setTimeout(function() {
-          overlay.classList.add('hidden');
-          self.renderPolicyCertificate(quote, discountedTotal);
-        }, 3200);
-      }
-
-      if (payBtn) payBtn.addEventListener('click', executePayment);
     }, 100);
   };
 
