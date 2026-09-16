@@ -11,9 +11,26 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--brand:#18221c;--accent:#9be553;--accent-dim:rgba(155,229,83,0.12);--surface:#faf9f7;--white:#ffffff;--border:#e5e7eb;--text:#18221c;--muted:#6b7280;--sidebar-w:260px;--topbar-h:62px;--code-bg:#0f1a13}
-    html{scroll-behavior:smooth;scroll-padding-top:calc(var(--topbar-h) + 20px)}
-    body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--surface);color:var(--text);line-height:1.65;font-size:15px;overflow-x:hidden}
-    .docs-topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:rgba(255,255,255,0.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100}
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      position: relative;
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: calc(var(--topbar-h) + 20px);
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+    .docs-topbar{position:fixed;top:0;left:0;right:0;width:100%;max-width:100%;box-sizing:border-box;height:var(--topbar-h);background:rgba(255,255,255,0.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100;overflow:hidden}
     .docs-topbar-left{display:flex;align-items:center;gap:16px}
     .docs-topbar a{text-decoration:none}
     .docs-logo img{height:30px;display:block}
@@ -122,72 +139,184 @@
     /* ── Responsive Tablet & Mobile (≤900px) ── */
     @media(max-width:900px){
       :root{--topbar-h:56px}
-      .docs-topbar{height:var(--topbar-h);padding:0 16px}
-      .docs-topbar-left{gap:10px}
-      .docs-logo img{height:26px}
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+      }
+      .docs-topbar{
+        height: var(--topbar-h) !important;
+        padding: 0 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+      }
+      .docs-topbar-left{
+        gap: 10px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+      .docs-logo {
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+      }
+      .docs-logo img{
+        height: 25px !important;
+        width: auto !important;
+        max-width: 120px !important;
+        object-fit: contain !important;
+      }
+      .docs-badge {
+        flex-shrink: 0 !important;
+      }
+      .docs-topbar-right{
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
+      }
       .docs-topbar-right .topbar-link{display:none !important}
-      .topbar-cta{padding:6px 13px;font-size:12px;font-weight:750}
-      .sidebar-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;height:34px;padding:0 10px;background:#ffffff;border:1.5px solid var(--border);border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+      .topbar-cta{
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        font-weight: 750 !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+      }
+      .sidebar-toggle{
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        height: 34px !important;
+        padding: 0 10px !important;
+        background: #ffffff !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+        flex-shrink: 0 !important;
+      }
       .sidebar-toggle:hover{background:#f8fafc}
       .docs-search{display:none !important}
 
       .docs-sidebar{
-        width:min(320px, 86vw);
-        position:fixed;
-        top:0;
-        left:0;
-        bottom:0;
-        z-index:99999;
-        background:#ffffff;
-        box-shadow:8px 0 32px rgba(0,0,0,0.16);
-        transform:translateX(-100%);
-        transition:transform 0.25s cubic-bezier(0.16,1,0.3,1);
-        padding:0 0 40px 0;
-        display:flex;
-        flex-direction:column;
+        width:min(320px, 86vw) !important;
+        position:fixed !important;
+        top:0 !important;
+        left:0 !important;
+        bottom:0 !important;
+        z-index:99999 !important;
+        background:#ffffff !important;
+        box-shadow:8px 0 32px rgba(0,0,0,0.16) !important;
+        transform:translateX(-100%) !important;
+        transition:transform 0.25s cubic-bezier(0.16,1,0.3,1) !important;
+        padding:0 0 40px 0 !important;
+        display:flex !important;
+        flex-direction:column !important;
       }
-      .docs-sidebar.open{transform:translateX(0)}
-      .sidebar-mobile-header{display:flex}
-      .sidebar-mobile-nav{display:flex}
-      .sidebar-search-wrap{display:block}
-      .sidebar-scroll-area{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-bottom:30px}
+      .docs-sidebar.open{transform:translateX(0) !important}
+      .sidebar-mobile-header{display:flex !important}
+      .sidebar-mobile-nav{display:flex !important}
+      .sidebar-search-wrap{display:block !important}
+      .sidebar-scroll-area{overflow-y:auto !important;flex:1 !important;-webkit-overflow-scrolling:touch !important;padding-bottom:30px !important}
 
-      .docs-content{margin-left:0;padding:32px 20px 80px;max-width:100%}
-      h1.docs-h1{font-size:32px;line-height:1.15;letter-spacing:-0.5px}
+      .docs-layout{
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+        padding-top: var(--topbar-h) !important;
+      }
+      .docs-content{
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 28px 18px 80px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+      }
+      .docs-toc{display:none !important}
+      .code-block{
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+      pre.code-pre{
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: auto !important;
+        white-space: pre !important;
+        word-break: normal !important;
+        word-wrap: normal !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .quick-links{
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .quick-link-card{
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+      .table-responsive{
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+
+      h1.docs-h1{font-size:30px;line-height:1.15;letter-spacing:-0.5px}
       .docs-lead{font-size:15px;line-height:1.55;margin-bottom:28px}
       h2.docs-h2{font-size:22px;margin:38px 0 12px;padding-top:14px}
     }
 
     /* ── Mobile Phones (≤640px) ── */
     @media(max-width:640px){
-      .docs-content{padding:24px 16px 70px}
-      h1.docs-h1{font-size:28px;letter-spacing:-0.4px}
-      h2.docs-h2{font-size:20px;margin:32px 0 10px}
-      h3.docs-h3{font-size:15.5px;margin:20px 0 8px}
-      .docs-lead{font-size:14.5px;margin-bottom:24px}
-      .quick-links{grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 24px}
-      .quick-link-card{padding:14px 12px;border-radius:12px}
-      .code-block{border-radius:10px;margin:14px 0 20px}
-      .code-block-header{padding:8px 14px}
-      pre.code-pre{padding:14px 14px;font-size:12px;line-height:1.6;-webkit-overflow-scrolling:touch}
-      .code-copy-btn{height:28px;font-size:11.5px;padding:0 10px}
-      .step-card{padding:14px;gap:12px;border-radius:12px}
-      .step-num{width:28px;height:28px;font-size:13px}
-      .callout{padding:12px 14px;gap:10px;border-radius:10px}
-      .callout-text{font-size:13px}
-      .docs-divider{margin:28px 0}
+      .docs-content{padding:22px 14px 70px !important}
+      h1.docs-h1{font-size:26px !important;letter-spacing:-0.4px !important}
+      h2.docs-h2{font-size:20px !important;margin:30px 0 10px !important}
+      h3.docs-h3{font-size:15px !important;margin:18px 0 8px !important}
+      .docs-lead{font-size:14px !important;margin-bottom:22px !important}
+      .quick-links{grid-template-columns:1fr 1fr !important;gap:8px !important;margin:16px 0 24px !important}
+      .quick-link-card{padding:12px 10px !important;border-radius:12px !important}
+      .code-block{border-radius:10px !important;margin:14px 0 20px !important}
+      .code-block-header{padding:8px 12px !important}
+      pre.code-pre{padding:12px 12px !important;font-size:11.5px !important;line-height:1.55 !important}
+      .code-copy-btn{height:28px !important;font-size:11px !important;padding:0 9px !important}
+      .step-card{padding:12px !important;gap:10px !important;border-radius:12px !important}
+      .step-num{width:26px !important;height:26px !important;font-size:12px !important}
+      .callout{padding:12px 12px !important;gap:10px !important;border-radius:10px !important}
+      .callout-text{font-size:12.5px !important}
+      .docs-divider{margin:24px 0 !important}
     }
 
     /* ── Small Phones (≤440px) ── */
     @media(max-width:440px){
       .docs-badge{display:none !important}
-      .docs-topbar{padding:0 10px}
-      .sidebar-toggle{width:34px;padding:0;justify-content:center}
-      .sidebar-toggle span.toggle-text{display:none}
-      .topbar-cta{padding:5px 11px;font-size:11.5px}
-      .quick-links{grid-template-columns:1fr;gap:8px}
-      .quick-link-card{display:flex;align-items:center;gap:12px;padding:12px 14px}
-      .ql-icon{margin-bottom:0;flex-shrink:0}
+      .docs-topbar{padding:0 8px !important}
+      .sidebar-toggle{width:34px !important;padding:0 !important;justify-content:center !important}
+      .sidebar-toggle span.toggle-text{display:none !important}
+      .topbar-cta{padding:5px 9px !important;font-size:11px !important}
+      .quick-links{grid-template-columns:1fr !important;gap:8px !important}
+      .quick-link-card{display:flex !important;align-items:center !important;gap:12px !important;padding:12px 14px !important}
+      .ql-icon{margin-bottom:0 !important;flex-shrink:0 !important}
+      .docs-content{padding:18px 12px 60px !important}
     }
   </style>
 </head>
@@ -778,6 +907,18 @@ window.addEventListener('botly:intent', (e) =&gt; {
 </button>
 
 <script>
+  // Ensure horizontal scroll is locked at 0 on mobile/responsive devices
+  function resetHorizontalScroll() {
+    if (window.scrollX !== 0 || document.documentElement.scrollLeft !== 0 || document.body.scrollLeft !== 0) {
+      window.scrollTo({ left: 0 });
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+    }
+  }
+  window.addEventListener('load', resetHorizontalScroll);
+  window.addEventListener('resize', resetHorizontalScroll);
+  window.addEventListener('orientationchange', resetHorizontalScroll);
+
   function toggleSidebar(forceState) {
     var sidebar = document.getElementById('docs-sidebar');
     var backdrop = document.getElementById('docs-sidebar-backdrop');
