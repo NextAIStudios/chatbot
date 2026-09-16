@@ -454,6 +454,53 @@ const insTurn1 = insEngine.classify('What is a deductible?');
 const insTurn2 = insEngine.classify('What is the difference between comprehensive and third party?');
 assert(insEngine.memory.askedFollowUps.length >= 2, 'Insurance mode tracks asked follow-up questions in memory');
 
+console.log(`\n--- 🛍️ 15. Testing Intuitive Product Checkout & Multi-Category Knowledge ---`);
+
+const catalogEngine = new IntentEngine({
+  mode: 'saas',
+  company: {
+    name: 'Jumia Kenya',
+    websiteUrl: 'https://www.jumia.co.ke'
+  },
+  customKnowledge: [
+    {
+      question: 'Do you sell wristwatches, luxury watches, and smartwatches on Jumia?',
+      answer: "Yes! Jumia Kenya offers 10,000+ watches and smart accessories across all budgets:\n• **Curren Men's Luxury Chronograph Watch** — **KES 2,499** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Casio Vintage Digital Gold Watch** — **KES 3,850** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Smart Fitness Band 8 Water Resistant** — **KES 1,950** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Apple Watch Series 9 GPS 45mm** — **KES 64,000** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))",
+      keywords: ['watch', 'watches', 'smartwatch', 'curren', 'casio', 'apple watch', 'wrist watch', 'jewelry'],
+      source: 'website',
+      sourceUrl: 'https://www.jumia.co.ke/watches-sunglasses/',
+      category: 'website'
+    },
+    {
+      question: 'What are Botly Pro SaaS pricing plans, features, and API integrations?',
+      answer: "Botly Pro offers flexible SaaS subscription tiers:\n• **Starter Plan** — **$15/month** — 1 Chatbot, 1,000 chats/mo, basic customizer.\n• **Growth Plan** — **$49/month** — 5 Chatbots, unlimited chats, M-Pesa + Card checkout, crawler, Webhooks.\n• **Enterprise Plan** — **$199/month** — Dedicated server, custom AI fine-tuning, SLA, priority support.",
+      keywords: ['saas', 'pricing', 'plans', 'features', 'growth plan', 'enterprise', 'api', 'webhooks'],
+      source: 'website',
+      sourceUrl: 'https://botly.ai/pricing',
+      category: 'website'
+    }
+  ]
+});
+
+// Test 15.1: Product search query matches watch catalog chunk and doesn't default to lead capture
+const watchQuery = catalogEngine.classify('I am looking for a watch');
+assert(watchQuery.intent === 'faq' && watchQuery.reply.includes('Curren'), 'Product query "I am looking for a watch" accurately matches watch catalog FAQ');
+
+// Test 15.2: Watch query generates dynamic quick replies with product name and price
+const watchReplies = watchQuery.quickReplies || [];
+const hasBuyWatchBtn = watchReplies.some(r => r.label.includes('Buy') && r.label.includes('Curren') && r.label.includes('2,499'));
+assert(hasBuyWatchBtn, 'Generates dynamic quick reply button with exact product name and price');
+
+// Test 15.3: Quick reply payload contains checkout_item format with name, amount, currency, and URL
+const buyWatchReply = watchReplies.find(r => r.label.includes('Buy') && r.label.includes('Curren'));
+assert(buyWatchReply && buyWatchReply.payload.startsWith('checkout_item:'), 'Checkout quick reply uses checkout_item format');
+assert(buyWatchReply.payload.includes('2499') && buyWatchReply.payload.includes('KES'), 'Checkout quick reply encodes amount (2499) and currency (KES)');
+assert(buyWatchReply.payload.includes(encodeURIComponent('https://www.jumia.co.ke/watches-sunglasses/')), 'Checkout quick reply encodes direct product URL');
+
+// Test 15.4: SaaS pricing and features query accurately matches SaaS tier chunk
+const saasQuery = catalogEngine.classify('What are your SaaS pricing plans and features?');
+assert(saasQuery.intent === 'faq' && saasQuery.reply.includes('Growth Plan') && saasQuery.reply.includes('$49'), 'SaaS query accurately returns multi-tier pricing and features');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);

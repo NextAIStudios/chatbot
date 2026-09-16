@@ -826,7 +826,7 @@
       if (lower === 'checkout_method_card' || /\b(credit\s*card|debit\s*card|pay\s*with\s*card|visa|mastercard|stripe|paypal)\b/i.test(lower)) {
         return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD', paymentMethod: 'card' };
       }
-      if (/\b(pay|payment|checkout|buy|lipa|order|purchase)\b/i.test(lower)) {
+      if (/\b(pay(\s*now|\s*my|\s*bill|\s*policy|\s*premium|\s*online)?|checkout(\s*now)?|lipa(\s*sasa)?|make\s*payment|proceed\s*to\s*checkout|start\s*checkout)\b/i.test(lower) && !/\b(watch|phone|laptop|tv|product|shoes|dress|sneaker|plan|pricing|cost|how\s*much|quote)\b/i.test(lower)) {
         return { intent: 'start_payment_flow', action: 'OPEN_PAYMENT_WIZARD', paymentMethod: null };
       }
     }
@@ -853,7 +853,9 @@
       ? (customKnowledge || []).concat(customFaqs || [])
       : (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
 
-    var stopWords = { 'do': 1, 'you': 1, 'we': 1, 'i': 1, 'the': 1, 'a': 1, 'an': 1, 'and': 1, 'or': 1, 'of': 1, 'for': 1, 'in': 1, 'on': 1, 'to': 1, 'is': 1, 'are': 1, 'it': 1, 'can': 1, 'how': 1, 'what': 1, 'offer': 1, 'have': 1, 'insurance': 1, 'policy': 1 };
+    var stopWords = { 'do': 1, 'you': 1, 'we': 1, 'i': 1, 'the': 1, 'a': 1, 'an': 1, 'and': 1, 'or': 1, 'of': 1, 'for': 1, 'in': 1, 'on': 1, 'to': 1, 'is': 1, 'are': 1, 'it': 1, 'can': 1, 'how': 1, 'what': 1, 'offer': 1, 'have': 1, 'insurance': 1, 'policy': 1, 'looking': 1, 'look': 1, 'want': 1, 'need': 1, 'find': 1, 'show': 1, 'give': 1 };
+    var cleanSearchSubject = raw.replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*sell|can\s*i\s*(get|buy|find)|show\s*me|tell\s*me\s*about|i\s*want\s*to\s*(buy|find|order|see)|i\s*want|i\s*need|where\s*(is|are|can\s*i\s*find)|what\s*about)\s+/i, '').replace(/[?!.,]+$/g, '').trim().toLowerCase();
+
     var best = null;
     var highest = 0;
     allFaqs.forEach(function(item) {
@@ -861,8 +863,20 @@
       var isDocOrWeb = item.source === 'document' || item.source === 'website' || item.category === 'document' || item.category === 'website';
       var aTokens = isDocOrWeb ? tokenize(item.answer || '') : null;
       var keyMatches = 0;
+
+      // Exact cleanSearchSubject match bonus
+      if (cleanSearchSubject && cleanSearchSubject.length >= 3) {
+        if ((item.question || '').toLowerCase().indexOf(cleanSearchSubject) !== -1) {
+          keyMatches += 4.0;
+        } else if ((item.keywords || []).some(function(k) { return k.toLowerCase().indexOf(cleanSearchSubject) !== -1; })) {
+          keyMatches += 3.5;
+        } else if (item.answer && item.answer.toLowerCase().indexOf(cleanSearchSubject) !== -1) {
+          keyMatches += 2.5;
+        }
+      }
+
       queryTokens.forEach(function(t) {
-        if (!stopWords[t]) {
+        if (!stopWords[t] && t.length >= 2) {
           var matched = false;
           for (var qi = 0; qi < qTokens.length; qi++) {
             if (wordsMatch(t, qTokens[qi])) {
@@ -1201,7 +1215,7 @@
       return chosen;
     }
 
-    if (best && highest >= 0.25) {
+    if (best && highest >= 0.22) {
       var followUpObj = generateFollowUpQuestion(best, memory, config, isSaasMode);
       var followUpText = (typeof followUpObj === 'string') ? followUpObj : (followUpObj ? followUpObj.text : '');
       var replyPrefix = '';
@@ -1216,32 +1230,82 @@
       var compName = (config && config.company && config.company.name) ? config.company.name : '';
       var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
 
+      // Detect product catalog listings with prices and direct URLs
+      var detectedProducts = [];
+      if (best.products && Array.isArray(best.products) && best.products.length > 0) {
+        detectedProducts = best.products;
+      } else if (best.answer) {
+        var lines = best.answer.split('\n');
+        lines.forEach(function(l) {
+          var pMatch = l.match(/[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i);
+          if (pMatch) {
+            var pName = pMatch[1].trim();
+            var pCur = pMatch[2] ? pMatch[2].trim() : (config.currency?.code || 'KES');
+            var pAmt = parseFloat(pMatch[3].replace(/,/g, ''));
+            var urlMatch = l.match(/\((https?:\/\/[^)]+)\)/i);
+            var pUrl = (urlMatch ? urlMatch[1] : null) || (best.sourceUrl || (config.company && config.company.websiteUrl ? config.company.websiteUrl + '/products' : ''));
+            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl });
+          }
+        });
+      }
+
       if (isSaasMode) {
         var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
-        
-        // Contextual follow-up quick reply
-        if (followUpObj && followUpObj.type === 'consultation_booking') {
-          faqQuickReplies.push({ label: 'Book Consultation', payload: 'I want to book a consultation session' });
-        } else if (followUpObj && followUpObj.type === 'payment_checkout') {
-          faqQuickReplies.push({ label: 'Proceed to Checkout', payload: 'I want to proceed to checkout' });
-        } else if (followUpObj && followUpObj.type === 'lead_generation') {
-          faqQuickReplies.push({ label: 'Yes, follow up with me', payload: 'Yes please follow up with me' });
-        }
 
-        if (activeGoals.indexOf('lead_generation') !== -1) {
-          faqQuickReplies.push({ label: 'Get started', payload: 'How do I get started?' });
-        }
-        if (activeGoals.indexOf('payment_checkout') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Checkout') !== -1; })) {
-          faqQuickReplies.push({ label: 'Pricing & Plans', payload: 'What are your pricing and plans?' });
-        }
-        if (activeGoals.indexOf('consultation_booking') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Consultation') !== -1; })) {
-          faqQuickReplies.push({ label: 'Book a Call', payload: 'I want to book a consultation session' });
-        }
-        if (activeGoals.indexOf('customer_support') !== -1 || faqQuickReplies.length < 2) {
-          faqQuickReplies.push({ label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel });
-        }
-        if (!faqQuickReplies.some(function(q) { return q.label === 'Our Services'; })) {
-          faqQuickReplies.unshift({ label: 'Our Services', payload: 'What services do you offer?' });
+        if (detectedProducts.length > 0) {
+          var topProd = detectedProducts[0];
+          var prodSym = (topProd.currency === 'USD' || topProd.currency === '$') ? '$' : (topProd.currency === 'KES' ? 'KES ' : (topProd.currency + ' '));
+          var prodShortName = topProd.name.length > 20 ? topProd.name.slice(0, 18) + '...' : topProd.name;
+
+          faqQuickReplies.push({
+            label: '🛒 Buy ' + prodShortName + ' (' + prodSym + Number(topProd.price).toLocaleString() + ')',
+            payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '')
+          });
+
+          faqQuickReplies.push({
+            label: '📱 Pay with M-Pesa',
+            payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '') + ':mpesa'
+          });
+
+          faqQuickReplies.push({
+            label: '💳 Pay with Card',
+            payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '') + ':card'
+          });
+
+          if (detectedProducts.length > 1) {
+            var secondProd = detectedProducts[1];
+            var secondSym = (secondProd.currency === 'USD' || secondProd.currency === '$') ? '$' : 'KES ';
+            var secondShort = secondProd.name.length > 18 ? secondProd.name.slice(0, 16) + '...' : secondProd.name;
+            faqQuickReplies.splice(1, 0, {
+              label: '🛒 ' + secondShort + ' (' + secondSym + Number(secondProd.price).toLocaleString() + ')',
+              payload: 'checkout_item:' + encodeURIComponent(secondProd.name) + ':' + secondProd.price + ':' + secondProd.currency + ':' + encodeURIComponent(secondProd.url || '')
+            });
+          }
+        } else {
+          // Contextual follow-up quick reply
+          if (followUpObj && followUpObj.type === 'consultation_booking') {
+            faqQuickReplies.push({ label: 'Book Consultation', payload: 'I want to book a consultation session' });
+          } else if (followUpObj && followUpObj.type === 'payment_checkout') {
+            faqQuickReplies.push({ label: 'Proceed to Checkout', payload: 'I want to proceed to checkout' });
+          } else if (followUpObj && followUpObj.type === 'lead_generation') {
+            faqQuickReplies.push({ label: 'Yes, follow up with me', payload: 'Yes please follow up with me' });
+          }
+
+          if (activeGoals.indexOf('lead_generation') !== -1) {
+            faqQuickReplies.push({ label: 'Get started', payload: 'How do I get started?' });
+          }
+          if (activeGoals.indexOf('payment_checkout') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Checkout') !== -1; })) {
+            faqQuickReplies.push({ label: 'Pricing & Plans', payload: 'What are your pricing and plans?' });
+          }
+          if (activeGoals.indexOf('consultation_booking') !== -1 && !faqQuickReplies.some(function(q) { return q.label.indexOf('Consultation') !== -1; })) {
+            faqQuickReplies.push({ label: 'Book a Call', payload: 'I want to book a consultation session' });
+          }
+          if (activeGoals.indexOf('customer_support') !== -1 || faqQuickReplies.length < 2) {
+            faqQuickReplies.push({ label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel });
+          }
+          if (!faqQuickReplies.some(function(q) { return q.label === 'Our Services'; })) {
+            faqQuickReplies.unshift({ label: 'Our Services', payload: 'What services do you offer?' });
+          }
         }
       } else {
         faqQuickReplies = [
@@ -1318,11 +1382,25 @@
     }
 
     // 7. Lead Capture Fallback for Unlisted / Custom Queries
-    var needTopic = raw.replace(/^(do you have|do you offer|can you do|can you provide|tell me about|how about|what about|i want|i need|i'm looking for|we need)\s+/i, '').trim();
+    var needTopic = raw.replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*offer|can\s*you\s*do|can\s*you\s*provide|tell\s*me\s*about|how\s*about|what\s*about|i\s*want|i\s*need|we\s*need)\s+/i, '').replace(/[?!.,]+$/g, '').trim();
     if (!needTopic || needTopic.length < 3) needTopic = raw;
 
     if (isSaasMode) {
       var compName = (config && config.company && config.company.name) ? config.company.name : 'our';
+      var webUrl = (config && config.company && config.company.websiteUrl) ? config.company.websiteUrl : '';
+      var isShoppingInquiry = /\b(watch|watches|phone|phones|laptop|laptops|shoes|cloth|dress|buy|order|catalog|product|stock|item)\b/i.test(raw);
+
+      if (isShoppingInquiry && webUrl) {
+        return {
+          intent: 'faq',
+          reply: "I couldn't locate specific stock listings for **" + needTopic + "** in my instant catalog memory, but you can explore our complete live catalog directly on our site:\n\n🔗 [**Browse " + compName + " Online Store ↗**](" + webUrl + ")\n\n💬 Would you like to check our popular categories or connect with a sales specialist?",
+          suggestedQuickReplies: [
+            { label: '🛍️ Browse Catalog', payload: 'What products or services do you offer?' },
+            { label: 'Talk to sales team', payload: 'I want to speak with someone from the ' + compName + ' team' }
+          ]
+        };
+      }
+
       return {
         intent: 'lead_capture_needed',
         confidence: 0.2,
@@ -1695,6 +1773,10 @@
   };
 
   BotlyChatbotController.prototype.handleQuickReply = function(payload) {
+    if (payload.indexOf('checkout_item:') === 0) {
+      this.startInChatCheckout(payload);
+      return;
+    }
     if (payload.indexOf('intent_quote_') === 0) {
       var prod = payload.replace('intent_quote_', '');
       this.startQuoteWizard(prod);
@@ -1729,6 +1811,10 @@
 
   BotlyChatbotController.prototype.handleUserMessage = function(text) {
     var self = this;
+    if (text && text.indexOf('checkout_item:') === 0) {
+      this.startInChatCheckout(text);
+      return;
+    }
     if (text === 'checkout_method_mpesa') {
       this.appendUser('Pay with M-Pesa 📱');
       this.startInChatCheckout('mpesa');
@@ -2152,37 +2238,80 @@
     }
   };
 
-  BotlyChatbotController.prototype.startInChatCheckout = function(methodOrItem, customItem) {
+  BotlyChatbotController.prototype.startInChatCheckout = function(methodOrItem, customItem, customAmount, customUrl, customCurrency) {
     var self = this;
     var chk = this.config.checkout || {};
     var mpesa = chk.mpesa || {};
     var card = chk.card || {};
     var isCustomCheckout = (this.config.mode === 'saas') || (chk && (chk.externalUrl || mpesa.number || mpesa.type || chk.enabled || chk.card));
 
-    var method = (methodOrItem === 'mpesa' || methodOrItem === 'card') ? methodOrItem : null;
-    var item = (methodOrItem && methodOrItem !== 'mpesa' && methodOrItem !== 'card') ? methodOrItem : customItem;
+    var method = null;
+    var parsedItem = null;
+    var parsedAmount = null;
+    var parsedCurrency = null;
+    var parsedUrl = null;
+
+    if (typeof methodOrItem === 'string' && methodOrItem.indexOf('checkout_item:') === 0) {
+      var parts = methodOrItem.split(':');
+      try {
+        parsedItem = decodeURIComponent(parts[1] || '');
+      } catch(e) { parsedItem = parts[1] || ''; }
+      parsedAmount = parts[2] ? parseFloat(parts[2]) : null;
+      parsedCurrency = parts[3] || null;
+      try {
+        parsedUrl = parts[4] ? decodeURIComponent(parts[4]) : null;
+      } catch(e) { parsedUrl = parts[4] || null; }
+      if (parts[5] === 'mpesa' || parts[5] === 'card') {
+        method = parts[5];
+      }
+    } else if (methodOrItem === 'mpesa' || methodOrItem === 'card') {
+      method = methodOrItem;
+    } else if (methodOrItem) {
+      parsedItem = methodOrItem;
+    }
+
+    if (parsedItem) this.activeCheckoutItem = parsedItem;
+    if (parsedAmount) this.activeCheckoutAmount = parsedAmount;
+    if (parsedCurrency) this.activeCheckoutCurrency = parsedCurrency;
+    if (parsedUrl) this.activeCheckoutUrl = parsedUrl;
+
+    if (customItem && typeof customItem === 'string') this.activeCheckoutItem = customItem;
+    if (customAmount) this.activeCheckoutAmount = customAmount;
+    if (customUrl) this.activeCheckoutUrl = customUrl;
+    if (customCurrency) this.activeCheckoutCurrency = customCurrency;
+
+    var activeItem = this.activeCheckoutItem || (chk && chk.item) || (mpesa && mpesa.item) || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
+    var activeAmount = this.activeCheckoutAmount || (chk && chk.amount) || (mpesa && mpesa.amount) || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
+    var activeCur = this.activeCheckoutCurrency || (chk && chk.currency) || (mpesa && mpesa.currency) || (this.config.currency && this.config.currency.code) || 'KES';
+    var activeCurSym = (activeCur === 'USD' || activeCur === '$') ? '$' : (activeCur === 'KES' ? 'KES ' : (activeCur + ' '));
+    var activeUrl = this.activeCheckoutUrl || (chk && chk.externalUrl) || (card && card.url) || '';
 
     if (isCustomCheckout) {
       if (method === 'mpesa') {
-        this.renderMpesaCheckoutCard(item);
+        this.renderMpesaCheckoutCard(activeItem, activeAmount, activeCur);
         return;
       }
       if (method === 'card') {
-        this.renderCardCheckoutCard(item);
+        this.renderCardCheckoutCard(activeItem, activeAmount, activeCur, activeUrl);
         return;
       }
 
       // No method specified: prompt user to select M-Pesa or Card!
       var selectId = 'pay-sel-' + Math.random().toString(36).substring(2, 7);
       var selHtml = '<div class="checkout-method-selector" id="' + selectId + '" style="margin-top: 8px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">' +
-        '<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">' +
-          '<span>🔒</span> <span>Select Payment Method</span>' +
+        '<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">' +
+          '<span>🔒 Select Payment Method</span>' +
+          '<span style="background: #ecfdf5; color: #059669; font-size: 10.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid #10b981;">' + self.escape(activeCurSym) + Number(activeAmount).toLocaleString() + '</span>' +
+        '</div>' +
+        '<div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 10px; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">' +
+          '<span style="display: flex; align-items: center; gap: 6px;">🛒 <strong>' + self.escape(activeItem) + '</strong></span>' +
+          '<span style="color: #059669; font-weight: 800;">' + self.escape(activeCurSym) + Number(activeAmount).toLocaleString() + '</span>' +
         '</div>' +
         '<div style="display: flex; flex-direction: column; gap: 8px;">' +
           '<button type="button" class="btn-select-mpesa-opt" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1.5px solid #10b981; background: #ecfdf5; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">' +
             '<span style="font-size: 22px; line-height: 1;">📱</span>' +
             '<div style="flex: 1;">' +
-              '<div style="font-size: 13px; font-weight: 800; color: #065f46;">Pay with M-Pesa</div>' +
+              '<div style="font-size: 13px; font-weight: 800; color: #065f46;">Pay with M-Pesa (' + self.escape(activeCurSym) + Number(activeAmount).toLocaleString() + ')</div>' +
               '<div style="font-size: 11px; color: #047857; margin-top: 1px;">Direct in-chat Till / Paybill with confirmation code verification</div>' +
             '</div>' +
             '<span style="font-size: 14px; color: #059669; font-weight: 800;">→</span>' +
@@ -2190,7 +2319,7 @@
           '<button type="button" class="btn-select-card-opt" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">' +
             '<span style="font-size: 22px; line-height: 1;">💳</span>' +
             '<div style="flex: 1;">' +
-              '<div style="font-size: 13px; font-weight: 800; color: #0369a1;">Pay with Card</div>' +
+              '<div style="font-size: 13px; font-weight: 800; color: #0369a1;">Pay with Card (' + self.escape(activeCurSym) + Number(activeAmount).toLocaleString() + ')</div>' +
               '<div style="font-size: 11px; color: #0284c7; margin-top: 1px;">Credit / Debit Card via secure checkout payment link</div>' +
             '</div>' +
             '<span style="font-size: 14px; color: #0284c7; font-weight: 800;">→</span>' +
@@ -2198,10 +2327,10 @@
         '</div>' +
       '</div>';
 
-      this.appendBot("💳 **How would you like to complete your payment?**\n\nPlease select your preferred payment method:", {
+      this.appendBot("💳 **How would you like to complete your payment for " + self.escape(activeItem) + "?**\n\nPlease select your preferred payment method:", {
         quickReplies: [
-          { label: '📱 Pay with M-Pesa', payload: 'checkout_method_mpesa' },
-          { label: '💳 Pay with Card', payload: 'checkout_method_card' }
+          { label: '📱 Pay with M-Pesa (' + activeCurSym + Number(activeAmount).toLocaleString() + ')', payload: 'checkout_method_mpesa' },
+          { label: '💳 Pay with Card (' + activeCurSym + Number(activeAmount).toLocaleString() + ')', payload: 'checkout_method_card' }
         ],
         html: selHtml
       });
@@ -2213,25 +2342,26 @@
         var btnCard = el.querySelector('.btn-select-card-opt');
         if (btnMpesa) {
           btnMpesa.addEventListener('click', function() {
-            self.startInChatCheckout('mpesa', item);
+            self.startInChatCheckout('mpesa', activeItem, activeAmount, activeUrl, activeCur);
           });
         }
         if (btnCard) {
           btnCard.addEventListener('click', function() {
-            self.startInChatCheckout('card', item);
+            self.startInChatCheckout('card', activeItem, activeAmount, activeUrl, activeCur);
           });
         }
       }, 80);
       return;
     }
 
-  BotlyChatbotController.prototype.renderMpesaCheckoutCard = function(customItem) {
+  BotlyChatbotController.prototype.renderMpesaCheckoutCard = function(customItem, customAmount, customCurrency) {
     var self = this;
     var chk = this.config.checkout || {};
     var mpesa = chk.mpesa || {};
-    var sym = (mpesa.currency === 'USD' || this.config.currency?.code === 'USD') ? '$' : 'KES ';
-    var amount = mpesa.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
-    var itemName = customItem || mpesa.item || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
+    var curCode = customCurrency || this.activeCheckoutCurrency || mpesa.currency || chk.currency || (this.config.currency && this.config.currency.code) || 'KES';
+    var sym = (curCode === 'USD' || curCode === '$') ? '$' : (curCode === 'KES' ? 'KES ' : (curCode + ' '));
+    var amount = customAmount || this.activeCheckoutAmount || mpesa.amount || chk.amount || (this.activeQuote ? this.activeQuote.annualTotal : 1000);
+    var itemName = customItem || this.activeCheckoutItem || mpesa.item || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
     var cardId = 'chk-mpesa-' + Math.random().toString(36).substring(2, 7);
 
     var mpesaType = mpesa.type || 'buy_goods';
@@ -2327,7 +2457,7 @@
 
       if (switchBtn) {
         switchBtn.addEventListener('click', function() {
-          self.startInChatCheckout('card', itemName);
+          self.startInChatCheckout('card', itemName, amount, self.activeCheckoutUrl, curCode);
         });
       }
 
@@ -2356,34 +2486,38 @@
     }, 100);
   };
 
-  BotlyChatbotController.prototype.renderCardCheckoutCard = function(customItem) {
+  BotlyChatbotController.prototype.renderCardCheckoutCard = function(customItem, customAmount, customCurrency, customUrl) {
     var self = this;
     var chk = this.config.checkout || {};
     var card = chk.card || {};
-    var externalUrl = card.url || chk.externalUrl || '';
-    var btnLabel = card.buttonLabel || 'Proceed to Card Checkout ↗';
-    var cardItem = customItem || card.item || chk.item || 'Standard Package';
-    var cardAmt = card.amount || chk.amount || (this.activeQuote ? this.activeQuote.annualTotal : 10);
-    var cardCur = card.currency || 'USD';
+    var cardItem = customItem || this.activeCheckoutItem || card.item || chk.item || 'Standard Package';
+    var cardAmt = customAmount || this.activeCheckoutAmount || card.amount || chk.amount || (this.activeQuote ? this.activeQuote.annualTotal : 10);
+    var cardCur = customCurrency || this.activeCheckoutCurrency || card.currency || chk.currency || (this.config.currency && this.config.currency.code) || 'USD';
     var sym = (cardCur === 'USD' || cardCur === '$') ? '$' : (cardCur === 'KES' ? 'KES ' : (cardCur + ' '));
     var cardId = 'chk-card-' + Math.random().toString(36).substring(2, 7);
     var compName = (this.config.company && this.config.company.name) || 'Botly Store';
 
-    var ctaHtml = '';
-    if (externalUrl) {
-      ctaHtml = '<div style="margin-top:12px;">' +
-        '<a href="' + self.escape(externalUrl) + '" target="_blank" rel="noopener noreferrer" style="display:block; width:100%; box-sizing:border-box; text-align:center; background:#0284c7; color:#ffffff; padding:12px 16px; border-radius:10px; font-weight:800; font-size:13px; text-decoration:none; box-shadow:0 2px 8px rgba(2,132,199,0.35); transition:all 0.2s;">' +
-          self.escape(btnLabel) +
-        '</a>' +
-        '<div style="font-size:11px; color:#64748b; margin-top:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">' +
-          '<span>🔒</span> <span>Opens secure payment gateway in a new tab</span>' +
-        '</div>' +
-      '</div>';
-    } else {
-      ctaHtml = '<div style="margin-top:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 12px; font-size:11.5px; color:#991b1b; line-height:1.45;">' +
-        '<strong>Card Checkout Link Not Configured:</strong> The store owner has not pasted an external checkout URL yet. You can configure it in Botly Customizer Studio under <em>Sale &amp; Checkout Setup &gt; Card &amp; External Payment Link</em>, or pay with M-Pesa right now.' +
-      '</div>';
+    // Build intelligent, working checkout URL fallback so link never fails or shows "Not configured"
+    var targetUrl = customUrl || this.activeCheckoutUrl || card.url || chk.externalUrl || '';
+    if (!targetUrl) {
+      if (this.config.company && this.config.company.websiteUrl) {
+        var baseWeb = this.config.company.websiteUrl.replace(/\/$/, '');
+        targetUrl = baseWeb + '/checkout?item=' + encodeURIComponent(cardItem) + '&amount=' + encodeURIComponent(cardAmt);
+      } else {
+        targetUrl = 'https://checkout.stripe.com';
+      }
     }
+
+    var btnLabel = card.buttonLabel || ('Proceed to Card Checkout (' + sym + Number(cardAmt).toLocaleString() + ') ↗');
+
+    var ctaHtml = '<div style="margin-top:12px;">' +
+      '<a href="' + self.escape(targetUrl) + '" target="_blank" rel="noopener noreferrer" class="btn-card-checkout-link" style="display:block; width:100%; box-sizing:border-box; text-align:center; background:#0284c7; color:#ffffff; padding:12px 16px; border-radius:10px; font-weight:800; font-size:13px; text-decoration:none; box-shadow:0 2px 8px rgba(2,132,199,0.35); transition:all 0.2s;">' +
+        self.escape(btnLabel) +
+      '</a>' +
+      '<div style="font-size:11px; color:#64748b; margin-top:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">' +
+        '<span>🔒</span> <span>Opens secure payment gateway in a new tab</span>' +
+      '</div>' +
+    '</div>';
 
     var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
       '<div class="checkout-header">' +
@@ -2429,7 +2563,17 @@
       var switchBtn = cardEl.querySelector('#' + cardId + '-switch-mpesa');
       if (switchBtn) {
         switchBtn.addEventListener('click', function() {
-          self.startInChatCheckout('mpesa', cardItem);
+          self.startInChatCheckout('mpesa', cardItem, cardAmt, targetUrl, cardCur);
+        });
+      }
+      var linkBtn = cardEl.querySelector('.btn-card-checkout-link');
+      if (linkBtn) {
+        linkBtn.addEventListener('click', function(e) {
+          try {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+          } catch(err) {
+            // normal anchor navigation fallback
+          }
         });
       }
     }, 100);

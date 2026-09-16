@@ -3622,13 +3622,22 @@ window.addEventListener('botly:payment', async (event) => {
         companyName: 'Jumia Kenya',
         botName: 'Jumia Shopping Assistant',
         botTitle: 'Order Concierge & Deals Finder',
-        greeting: 'Jambo! Welcome to Jumia Kenya. Looking for the latest flash sales, phone deals, order tracking, or delivery information? Ask me anything!',
+        greeting: 'Jambo! Welcome to Jumia Kenya. Looking for the latest flash sales, watches, phone deals, order tracking, or delivery information? Ask me anything!',
         quickReplies: [
-          { label: '⚡ Flash Deals', payload: 'What are today’s best flash sales and discounts?' },
-          { label: '📱 Phones & Tech', payload: 'Tell me about smartphone deals and warranties' },
-          { label: '🚚 Delivery & Shipping', payload: 'How does Jumia Express delivery work?' },
-          { label: '🔄 7-Day Returns', payload: 'What is Jumia’s return and refund policy?' }
+          { label: '⌚ Watches & Accessories', payload: 'I am looking for a watch' },
+          { label: '📱 Phones & Tablets', payload: 'What smartphone deals and discounts do you have?' },
+          { label: '💻 Laptops & Tech', payload: 'Tell me about laptops and MacBooks available' },
+          { label: '🚚 Delivery & Pick-up', payload: 'How does Jumia Express delivery work across Kenya?' }
         ],
+        checkoutConfig: {
+          itemName: "Curren Men's Luxury Chronograph Watch",
+          amount: 2499,
+          currency: 'KES',
+          externalUrl: 'https://www.jumia.co.ke/watches-sunglasses/',
+          mpesaBusinessName: 'Jumia Kenya',
+          mpesaNumber: '898989',
+          mpesaType: 'buy_goods'
+        },
         pages: [
           {
             id: 'jumia_home',
@@ -3642,25 +3651,76 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_jumia_home',
                 question: 'What is Jumia Kenya and what products do you sell?',
-                answer: 'Jumia Kenya is East Africa’s leading online shopping destination, offering over 1 million authentic products across smartphones, electronics, computing, fashion, beauty, home appliances, and groceries with secure nationwide delivery.',
-                keywords: ['jumia', 'shopping', 'products', 'store', 'marketplace', 'kenya', 'mall', 'buy']
+                answer: 'Jumia Kenya is East Africa’s leading online shopping destination, offering over 1 million authentic products across smartphones, electronics, watches, computing, fashion, beauty, home appliances, and groceries with secure nationwide delivery.',
+                keywords: ['jumia', 'shopping', 'products', 'store', 'marketplace', 'kenya', 'mall', 'buy', 'online shopping']
+              }
+            ]
+          },
+          {
+            id: 'jumia_watches',
+            title: 'Watches, Sunglasses & Fashion Jewelry',
+            path: '/watches-sunglasses',
+            category: 'services',
+            wordCount: 680,
+            excerpt: 'Curren Chronograph (KES 2,499), Casio Vintage (KES 3,850), Smart Fitness Tracker (KES 1,950), Apple Watch Series 9 (KES 64,000).',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_watches',
+                question: 'What watches, smartwatches and luxury timepieces do you have on Jumia?',
+                answer: 'Jumia offers Kenya’s largest selection of authentic watches with official warranties and doorstep delivery:\n\n• **Curren Men\'s Luxury Chronograph Watch** (Waterproof Stainless Steel) — **KES 2,499** [View on Jumia ↗](https://www.jumia.co.ke/watches-sunglasses/)\n• **Casio Vintage Digital Unisex Gold Watch** (A168WG) — **KES 3,850** [View on Jumia ↗](https://www.jumia.co.ke/watches-sunglasses/)\n• **Smart Fitness Band 8** (Heart Rate, AMOLED, 14-day battery) — **KES 1,950** [View on Jumia ↗](https://www.jumia.co.ke/smart-watches/)\n• **Apple Watch Series 9 GPS 45mm** — **KES 64,000** [View on Jumia ↗](https://www.jumia.co.ke/smart-watches/)\n• **Naviforce Dual Display Military Leather Watch** — **KES 2,999** [View on Jumia ↗](https://www.jumia.co.ke/watches-sunglasses/)\n\nAll watches are covered by a 7-day free return guarantee and can be paid via M-Pesa or Card checkout.',
+                keywords: ['watch', 'watches', 'smartwatch', 'smartwatches', 'curren', 'casio', 'wrist', 'timepiece', 'chronograph', 'fitness tracker', 'apple watch', 'naviforce', 'leather watch', 'gold watch', 'looking for a watch', 'buy watch', 'men watch', 'women watch']
               }
             ]
           },
           {
             id: 'jumia_electronics',
-            title: 'Electronics, Phones & Tech Warranties',
-            path: '/category-phones-tablets',
+            title: 'Electronics, Smartphones & Tablets',
+            path: '/smartphones',
             category: 'services',
-            wordCount: 540,
-            excerpt: '100% genuine brand smartphones (Samsung, Apple, Xiaomi, Infinix) with official manufacturer warranties and authorized service centers.',
+            wordCount: 590,
+            excerpt: 'Samsung Galaxy A15 (KES 18,999), iPhone 15 Pro (KES 149,000), Xiaomi Redmi Note 13 (KES 22,500), Tecno Spark 20 (KES 14,200).',
             selected: true,
             qas: [
               {
                 id: 'web_jumia_phones',
-                question: 'Are smartphones on Jumia authentic and covered by warranty?',
-                answer: 'Yes! All smartphones and electronics sold on Jumia (especially Jumia Mall official brand stores) are 100% genuine and come with a standard 12-to-24 month manufacturer warranty.',
-                keywords: ['phone', 'phones', 'electronics', 'smartphones', 'warranty', 'genuine', 'samsung', 'iphone', 'xiaomi']
+                question: 'What smartphone deals, warranties and mobile brands do you have?',
+                answer: 'All smartphones on Jumia are 100% genuine with official 12-24 month manufacturer warranties:\n\n• **Samsung Galaxy A15** (128GB, 4GB RAM, Super AMOLED) — **KES 18,999** [View on Jumia ↗](https://www.jumia.co.ke/smartphones/)\n• **Apple iPhone 15 Pro 128GB Titanium** — **KES 149,000** [View on Jumia ↗](https://www.jumia.co.ke/smartphones/)\n• **Xiaomi Redmi Note 13** (256GB, 8GB RAM, 108MP) — **KES 22,500** [View on Jumia ↗](https://www.jumia.co.ke/smartphones/)\n• **Tecno Spark 20** (128GB, 8GB RAM) — **KES 14,200** [View on Jumia ↗](https://www.jumia.co.ke/smartphones/)\n• **Infinix Hot 40i** (128GB) — **KES 13,800** [View on Jumia ↗](https://www.jumia.co.ke/smartphones/)\n\nFast delivery in Nairobi within 24 hours and 48 hours upcountry.',
+                keywords: ['phone', 'phones', 'electronics', 'smartphones', 'warranty', 'genuine', 'samsung', 'iphone', 'xiaomi', 'redmi', 'tecno', 'infinix', 'android', 'apple', 'mobile', 'buy phone']
+              }
+            ]
+          },
+          {
+            id: 'jumia_laptops',
+            title: 'Laptops, MacBooks & Computing Workstations',
+            path: '/laptops',
+            category: 'services',
+            wordCount: 520,
+            excerpt: 'HP 15 Intel Core i5 (KES 48,000), MacBook Air M2 (KES 145,000), Lenovo IdeaPad 3 (KES 35,000).',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_laptops',
+                question: 'What laptops, MacBooks and computers are available on Jumia?',
+                answer: 'We feature brand new computing laptops from verified Jumia Mall stores:\n\n• **HP 15 Intel Core i5** (8GB RAM, 512GB NVMe SSD, 15.6" FHD) — **KES 48,000** [View on Jumia ↗](https://www.jumia.co.ke/laptops/)\n• **Apple MacBook Air M2 13.6"** (8GB RAM, 256GB SSD) — **KES 145,000** [View on Jumia ↗](https://www.jumia.co.ke/laptops/)\n• **Lenovo IdeaPad 3 Core i3** (8GB RAM, 256GB SSD) — **KES 35,000** [View on Jumia ↗](https://www.jumia.co.ke/laptops/)\n• **Dell Latitude Core i5 Refurbished Grade A** — **KES 26,500** [View on Jumia ↗](https://www.jumia.co.ke/laptops/)\n\nPre-installed with genuine Windows/macOS and full warranty.',
+                keywords: ['laptop', 'laptops', 'computer', 'computers', 'hp', 'macbook', 'lenovo', 'computing', 'pc', 'core i5', 'core i7', 'dell']
+              }
+            ]
+          },
+          {
+            id: 'jumia_tvs',
+            title: 'Smart TVs, Audio Systems & Home Entertainment',
+            path: '/tvs',
+            category: 'services',
+            wordCount: 460,
+            excerpt: 'Hisense 43" Frameless Smart TV (KES 24,999), Vitron 32" Smart Android TV (KES 12,800), Sony 2.1ch Soundbar (KES 16,500).',
+            selected: true,
+            qas: [
+              {
+                id: 'web_jumia_tvs',
+                question: 'What smart TVs and soundbars are on offer?',
+                answer: 'Upgrade your home entertainment with top brand TVs and audio systems:\n\n• **Hisense 43" Smart Frameless Full HD TV** (VIDAA OS, YouTube, Netflix) — **KES 24,999** [View on Jumia ↗](https://www.jumia.co.ke/tvs/)\n• **Vitron 32" Smart Android TV** (Built-in WiFi, DVB-T2) — **KES 12,800** [View on Jumia ↗](https://www.jumia.co.ke/tvs/)\n• **Sony 2.1ch Bluetooth Soundbar with Subwoofer** — **KES 16,500** [View on Jumia ↗](https://www.jumia.co.ke/tvs/)\n\nAvailable with doorstep delivery or pick-up station collection nationwide.',
+                keywords: ['tv', 'tvs', 'television', 'audio', 'soundbar', 'hisense', 'vitron', 'sony', 'smart tv', 'screen']
               }
             ]
           },
@@ -3676,7 +3736,7 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_jumia_delivery',
                 question: 'How long does delivery take and what are the fees?',
-                answer: 'Jumia Express items are delivered within 24 hours in Nairobi and 2-4 business days across other counties. You can choose home/office delivery or save on shipping by collecting from hundreds of Jumia Pick-up Stations nationwide.',
+                answer: 'Jumia Express items are delivered within 24 hours in Nairobi and 2-4 business days across other counties. You can choose home/office delivery or save on shipping by collecting from hundreds of Jumia Pick-up Stations nationwide in all 47 counties.',
                 keywords: ['delivery', 'shipping', 'timeline', 'express', 'pickup', 'nairobi', 'counties', 'dispatch', 'courier']
               }
             ]
@@ -3693,7 +3753,7 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_jumia_payments',
                 question: 'What payment methods does Jumia accept? Can I pay with M-Pesa?',
-                answer: 'Yes! Jumia accepts M-Pesa (instant STK push or Paybill), debit/credit cards (Visa, Mastercard), and JumiaPay. Cash on delivery is also available for eligible locations and items.',
+                answer: 'Yes! Jumia accepts M-Pesa (instant STK push or Till/Paybill), debit/credit cards (Visa, Mastercard), and JumiaPay escrow. You can also checkout right here in chat with in-chat M-Pesa verification.',
                 keywords: ['payment', 'pay', 'mpesa', 'm-pesa', 'card', 'checkout', 'jumiapay', 'cod']
               }
             ]
@@ -3746,6 +3806,15 @@ window.addEventListener('botly:payment', async (event) => {
           { label: '📁 Case Studies', payload: 'Can you show me previous case studies?' },
           { label: '🚀 Schedule Call', payload: 'I want to schedule a discovery call with Acme' }
         ],
+        checkoutConfig: {
+          itemName: 'Acme 2-Week Sprint Package',
+          amount: 3500,
+          currency: 'USD',
+          externalUrl: 'https://acme-studio.io/pricing',
+          mpesaBusinessName: 'Acme Studio',
+          mpesaNumber: '776655',
+          mpesaType: 'buy_goods'
+        },
         pages: [
           {
             id: 'acme_home',
@@ -3793,7 +3862,7 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_acme_pricing',
                 question: 'What are Acme Studio’s rates and retainer models?',
-                answer: 'Our dedicated sprint packages start at $3,500 for a 2-week product sprint. We also provide monthly dedicated design engineering retainers with no lock-in contracts.',
+                answer: 'Our dedicated sprint packages start at $3,500 for a 2-week product sprint. We also provide monthly dedicated design engineering retainers at $6,500/month with no lock-in contracts.',
                 keywords: ['pricing', 'rates', 'sprint', 'cost', 'retainer', 'plans', 'contract']
               }
             ]
@@ -3822,13 +3891,22 @@ window.addEventListener('botly:payment', async (event) => {
         companyName: 'Botly Pro',
         botName: 'Botly AI Concierge',
         botTitle: 'Platform Specialist & Embed Guide',
-        greeting: 'Hello! I am Botly Pro Concierge. Ask me about our 2-line embed snippet, in-chat M-Pesa checkout, multi-company studio, or pricing!',
+        greeting: 'Hello! I am Botly Pro Concierge. Ask me about our 2-line embed snippet, in-chat M-Pesa checkout, multi-company studio, or pricing plans!',
         quickReplies: [
-          { label: '⚡ 2-Line Embed', payload: 'How do I embed Botly on my website?' },
-          { label: '💰 Pricing Plans', payload: 'What are the subscription plans for Botly?' },
+          { label: '💰 Subscription Plans', payload: 'What are the subscription plans and pricing for Botly Pro?' },
           { label: '💳 M-Pesa & Card Checkout', payload: 'How does in-chat payment checkout work?' },
+          { label: '⚡ 2-Line Embed', payload: 'How do I embed Botly on my website?' },
           { label: '📚 Developer Docs', payload: 'Where can I find the developer docs and JavaScript API?' }
         ],
+        checkoutConfig: {
+          itemName: 'Botly Pro Growth Plan (Monthly)',
+          amount: 49,
+          currency: 'USD',
+          externalUrl: 'https://botly.ai/checkout?plan=growth',
+          mpesaBusinessName: 'Botly AI',
+          mpesaNumber: '543210',
+          mpesaType: 'buy_goods'
+        },
         pages: [
           {
             id: 'botly_home',
@@ -3842,25 +3920,42 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_botly_home',
                 question: 'What is Botly Pro and how does it help my business?',
-                answer: 'Botly Pro is an embeddable, customizable AI chatbot platform that turns website visitors into paying customers through automated lead capture, instant M-Pesa/Card payments, and company memory.',
+                answer: 'Botly Pro is an embeddable, customizable AI chatbot platform that turns website visitors into paying customers through automated lead capture, instant M-Pesa/Card payments, and company website memory.',
                 keywords: ['botly', 'platform', 'features', 'overview', 'sales', 'leads', 'widget']
               }
             ]
           },
           {
             id: 'botly_pricing',
-            title: 'Pricing, Free Sandbox & Enterprise Plans',
+            title: 'Pricing, Subscription Plans & Checkout Tiers',
             path: '/pricing',
             category: 'pricing',
-            wordCount: 390,
-            excerpt: 'Free developer sandbox tier, KES 2,500/mo Growth tier with unlimited leads, and enterprise custom models.',
+            wordCount: 490,
+            excerpt: 'Starter $15/mo, Growth $49/mo with M-Pesa + Stripe, Enterprise $199/mo, Free Sandbox $0.',
             selected: true,
             qas: [
               {
                 id: 'web_botly_pricing',
-                question: 'What are the pricing tiers for Botly Pro?',
-                answer: 'Botly Pro offers a free sandbox tier for testing, a Growth plan at KES 2,500/month with unlimited captured leads and custom knowledge, and Enterprise plans with dedicated SLA and custom webhooks.',
-                keywords: ['pricing', 'plans', 'cost', 'free', 'tier', 'subscription', 'growth', 'enterprise']
+                question: 'What are the subscription plans and pricing for Botly Pro?',
+                answer: 'Botly Pro offers transparent plans tailored for businesses of every scale:\n\n• **Starter Plan ($15/mo)**: 1 AI chatbot, 1,000 chats/mo, standard lead capture, basic branding [View Plan ↗](https://botly.ai/checkout?plan=starter)\n• **Growth Plan ($49/mo)**: 5 AI chatbots, 15,000 chats/mo, in-chat M-Pesa + Card checkout, website crawler memory, custom styling [View Plan ↗](https://botly.ai/checkout?plan=growth)\n• **Enterprise Plan ($199/mo)**: Unlimited chatbots, custom LLM models, dedicated API, webhooks, 99.9% uptime SLA, 24/7 priority support [View Plan ↗](https://botly.ai/checkout?plan=enterprise)\n• **Free Sandbox Tier ($0)**: Unlimited testing & tuning in Botly Customizer Studio.\n\nYou can subscribe instantly via Card or M-Pesa right here in chat!',
+                keywords: ['pricing', 'plans', 'cost', 'free', 'tier', 'subscription', 'growth', 'enterprise', 'starter', 'monthly', 'rate', 'how much']
+              }
+            ]
+          },
+          {
+            id: 'botly_payments',
+            title: 'In-Chat Payments, M-Pesa STK Push & Stripe Gateway',
+            path: '/payments',
+            category: 'services',
+            wordCount: 440,
+            excerpt: 'Direct in-chat Till/Paybill M-Pesa code verification and PCI-DSS Level 1 Stripe checkout integration.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_botly_payments',
+                question: 'How does in-chat payment checkout work on Botly Pro?',
+                answer: 'Botly Pro enables businesses to sell products and services directly inside the chat window:\n\n1. **Safaricom M-Pesa**: Supports instant STK push or Till/Paybill number instructions with automated 8-12 character confirmation code verification.\n2. **Credit/Debit Card**: Secure PCI-DSS compliant checkout links (Stripe / PayPal / Paystack) that open smoothly in a verified tab.\n3. **Automated Receipts**: Instantly logs customer transactions, assigns receipt numbers, and triggers backend webhooks.',
+                keywords: ['mpesa', 'm-pesa', 'card', 'stripe', 'checkout', 'payment', 'pay', 'daraja', 'till', 'paybill']
               }
             ]
           },
@@ -3876,7 +3971,7 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_botly_docs',
                 question: 'How do developers integrate and customize Botly Pro?',
-                answer: 'Developers can embed Botly with 2 lines of HTML/JS, configure theme colors, knowledge memory, custom REST endpoints, and listen to events like onLeadCaptured or onPaymentInitiated.',
+                answer: 'Developers can embed Botly with 2 lines of HTML/JS, configure theme colors, website memory, custom REST endpoints, and listen to events like onLeadCaptured or onPaymentInitiated. Visit our developer documentation at /demo/docs.html.',
                 keywords: ['docs', 'developer', 'api', 'javascript', 'methods', 'events', 'embed', 'webhook']
               }
             ]
@@ -3902,23 +3997,38 @@ window.addEventListener('botly:payment', async (event) => {
       }
     };
 
-    // Generic dynamic synthesizer for ANY custom domain
+    // Generic dynamic synthesizer for ANY custom domain (e-commerce, SaaS, or agency)
     function generateSyntheticDomainPages(url) {
       var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
       var baseName = domain.split('.')[0];
       var cleanName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+      var isEcommerce = /shop|store|mall|mart|market|buy|fashion|retail|deal/i.test(domain);
+      var isSaasDomain = /app|io|ai|cloud|tech|soft|dev|suite|hub/i.test(domain);
+
+      var primaryItem = isEcommerce ? (cleanName + ' Premium Edition') : (cleanName + ' Professional Plan');
+      var primaryPrice = isEcommerce ? 2499 : 49;
+      var primaryCur = isEcommerce ? 'KES' : 'USD';
 
       return {
         companyName: cleanName,
         botName: cleanName + ' Concierge',
-        botTitle: 'AI Knowledge & Support Concierge',
-        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our services, pricing, or support?',
+        botTitle: isEcommerce ? 'Order & Shopping Concierge' : 'AI Knowledge & Support Concierge',
+        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our ' + (isEcommerce ? 'products, orders, or delivery' : 'services, pricing, or support') + '?',
         quickReplies: [
-          { label: '💼 Our Services', payload: 'What services or products does ' + cleanName + ' offer?' },
+          { label: isEcommerce ? '🛍️ Best Sellers' : '💼 Our Services', payload: isEcommerce ? 'What are your top products and pricing?' : 'What services or products does ' + cleanName + ' offer?' },
           { label: '💰 Pricing & Plans', payload: 'What are your pricing packages and terms?' },
-          { label: '📞 Contact Support', payload: 'How can I get in touch with the team?' },
-          { label: 'ℹ️ About ' + cleanName, payload: 'Tell me more about ' + cleanName + ' and your mission' }
+          { label: '💳 Instant Checkout', payload: 'checkout_now' },
+          { label: '📞 Contact Support', payload: 'How can I get in touch with the team?' }
         ],
+        checkoutConfig: {
+          itemName: primaryItem,
+          amount: primaryPrice,
+          currency: primaryCur,
+          externalUrl: url.replace(/\/$/, '') + '/checkout',
+          mpesaBusinessName: cleanName,
+          mpesaNumber: '123456',
+          mpesaType: 'buy_goods'
+        },
         pages: [
           {
             id: 'gen_home',
@@ -3926,65 +4036,48 @@ window.addEventListener('botly:payment', async (event) => {
             path: '/',
             category: 'overview',
             wordCount: 420,
-            excerpt: 'Welcome to ' + cleanName + '. We deliver tailored solutions, automated business workflows, and 24/7 client satisfaction.',
+            excerpt: 'Welcome to ' + cleanName + '. We deliver high-quality solutions, verified deliverables, and 24/7 client satisfaction.',
             selected: true,
             qas: [
               {
                 id: 'web_gen_home',
                 question: 'What is ' + cleanName + ' and what do you do?',
-                answer: 'Welcome to ' + cleanName + '! We are a dedicated provider of professional services, tailored solutions, and automated workflows designed to help our customers succeed.',
-                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'mission', 'welcome', 'solutions']
+                answer: 'Welcome to ' + cleanName + '! We are a leading provider of tailored products, solutions, and automated workflows designed to help our customers succeed. Browse our catalog or complete an order right here in chat.',
+                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'mission', 'welcome', 'solutions', 'store']
               }
             ]
           },
           {
             id: 'gen_services',
-            title: cleanName + ' - Solutions & Services Catalog',
-            path: '/services',
+            title: cleanName + ' - Products & Solutions Catalog',
+            path: '/products',
             category: 'services',
-            wordCount: 510,
-            excerpt: 'Full spectrum of professional offerings, custom integrations, consulting, and end-to-end technical deliverables.',
+            wordCount: 560,
+            excerpt: 'Curated products & services: Starter Package (' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '), Professional Solution (' + primaryCur + ' ' + (isEcommerce ? '2,499' : '49') + '), Enterprise (' + primaryCur + ' ' + (isEcommerce ? '6,500' : '199') + ').',
             selected: true,
             qas: [
               {
                 id: 'web_gen_services',
-                question: 'What services or products do you offer?',
-                answer: 'At ' + cleanName + ', we specialize in comprehensive services tailored to each client’s operational goals, including consultation, digital workflows, product support, and managed solutions.',
-                keywords: ['services', 'offerings', 'products', 'solutions', 'features', 'consulting', 'capabilities']
+                question: 'What products or services do you offer?',
+                answer: 'At ' + cleanName + ', we provide top-rated offerings with verified quality and direct checkout:\n\n• **' + cleanName + ' Starter Package** — **' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n• **' + cleanName + ' Professional Edition** — **' + primaryCur + ' ' + (isEcommerce ? '2,499' : '49') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n• **' + cleanName + ' Enterprise Tier** — **' + primaryCur + ' ' + (isEcommerce ? '6,500' : '199') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n\nAll items are available for instant 1-click in-chat checkout via M-Pesa or Card.',
+                keywords: ['services', 'offerings', 'products', 'solutions', 'features', 'items', 'catalog', 'capabilities', 'buy', 'order']
               }
             ]
           },
           {
             id: 'gen_pricing',
-            title: cleanName + ' - Pricing Plans & Packages',
+            title: cleanName + ' - Pricing Plans & Direct Checkout',
             path: '/pricing',
             category: 'pricing',
-            wordCount: 360,
-            excerpt: 'Transparent pricing tiers, flexible payment methods, and custom enterprise proposals tailored to your budget.',
+            wordCount: 410,
+            excerpt: 'Transparent pricing starting at ' + primaryCur + ' ' + primaryPrice + ' with immediate M-Pesa & Card payment options.',
             selected: true,
             qas: [
               {
                 id: 'web_gen_pricing',
                 question: 'What are your pricing packages and payment terms?',
-                answer: 'We offer competitive and flexible pricing at ' + cleanName + '. Whether you need standard packages or customized deliverables, contact our team right here in chat for an immediate estimate and proposal.',
-                keywords: ['pricing', 'cost', 'plans', 'rate', 'estimate', 'quote', 'package', 'price', 'payment']
-              }
-            ]
-          },
-          {
-            id: 'gen_about',
-            title: cleanName + ' - About Us & Our Mission',
-            path: '/about',
-            category: 'overview',
-            wordCount: 380,
-            excerpt: 'Our leadership story, industry track record, customer-first culture, and long-term vision.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_about',
-                question: 'Can you tell me more about ' + cleanName + '’s background and experience?',
-                answer: cleanName + ' was founded with a mission to bring high quality, reliable, and accessible solutions to our customers. Our experienced team works closely with each partner to ensure top satisfaction.',
-                keywords: ['about', 'history', 'story', 'team', 'experience', 'background', 'mission']
+                answer: 'Our pricing is 100% transparent with zero hidden fees:\n\n• **Starter Tier**: ' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '\n• **Standard / Pro Tier**: ' + primaryCur + ' ' + primaryPrice + '\n• **Custom Enterprise**: Tailored upon request.\n\nYou can complete your payment instantly via M-Pesa or Card right here in chat or at [Secure Checkout ↗](' + url.replace(/\/$/, '') + '/checkout).',
+                keywords: ['pricing', 'cost', 'plans', 'rate', 'estimate', 'quote', 'package', 'price', 'payment', 'terms', 'checkout']
               }
             ]
           },
@@ -4000,24 +4093,24 @@ window.addEventListener('botly:payment', async (event) => {
               {
                 id: 'web_gen_support',
                 question: 'How do I contact your support team or request assistance?',
-                answer: 'You can reach the ' + cleanName + ' support team by emailing care@' + domain + ', calling our hotline, or leaving your phone number and request in this chat window for a prompt callback.',
+                answer: 'You can reach the ' + cleanName + ' team at care@' + domain + ', or leave your name and phone number right here in this chat for an immediate callback.',
                 keywords: ['support', 'contact', 'help', 'email', 'phone', 'desk', 'hours', 'reach']
               }
             ]
           },
           {
             id: 'gen_policies',
-            title: cleanName + ' - Terms of Service & Privacy Policy',
+            title: cleanName + ' - Customer Guarantees & Terms',
             path: '/terms',
             category: 'policies',
-            wordCount: 450,
-            excerpt: 'Strict data privacy safeguards, service-level guarantees, customer satisfaction guarantee, and terms of service.',
+            wordCount: 380,
+            excerpt: '100% satisfaction guarantee, secure SSL encrypted payments, and fast order fulfillment.',
             selected: false,
             qas: [
               {
                 id: 'web_gen_terms',
-                question: 'What are your service guarantees and privacy policy?',
-                answer: cleanName + ' adheres to strict confidentiality, secure data processing, and high service level standards. We guarantee client data protection and transparent service delivery.',
+                question: 'What are your guarantees and policies?',
+                answer: cleanName + ' adheres to strict buyer protection, SSL encrypted payment processing, and high service quality standards. We guarantee client satisfaction on every order.',
                 keywords: ['terms', 'privacy', 'policy', 'guarantee', 'security', 'sla', 'compliance']
               }
             ]
@@ -4061,6 +4154,10 @@ window.addEventListener('botly:payment', async (event) => {
         profileKey = 'kenyanextgen.co.ke';
       } else if (domain.indexOf('jumia') !== -1) {
         profileKey = 'jumia.co.ke';
+      } else if (domain.indexOf('botly') !== -1) {
+        profileKey = 'botly.ai';
+      } else if (domain.indexOf('acme') !== -1) {
+        profileKey = 'acme-studio.io';
       } else if (CURATED_WEBSITE_PROFILES[domain]) {
         profileKey = domain;
       }
@@ -4325,6 +4422,34 @@ window.addEventListener('botly:payment', async (event) => {
             }
           ];
           if (typeof renderFaqsList === 'function') renderFaqsList();
+        }
+
+        // Auto-tune Checkout Configuration & Payment Links
+        if (profile.checkoutConfig) {
+          if (profile.checkoutConfig.itemName) wizardState.checkoutConfig.itemName = profile.checkoutConfig.itemName;
+          if (profile.checkoutConfig.amount) wizardState.checkoutConfig.amount = profile.checkoutConfig.amount;
+          if (profile.checkoutConfig.currency) wizardState.checkoutConfig.currency = profile.checkoutConfig.currency;
+          if (profile.checkoutConfig.externalUrl) wizardState.checkoutConfig.externalUrl = profile.checkoutConfig.externalUrl;
+          if (profile.checkoutConfig.mpesaBusinessName) wizardState.checkoutConfig.mpesaBusinessName = profile.checkoutConfig.mpesaBusinessName;
+          if (profile.checkoutConfig.mpesaNumber) wizardState.checkoutConfig.mpesaNumber = profile.checkoutConfig.mpesaNumber;
+
+          var chkItemEl = document.getElementById('wiz-checkout-item');
+          var chkAmtEl = document.getElementById('wiz-checkout-amount');
+          var chkCurEl = document.getElementById('wiz-checkout-currency');
+          var chkUrlEl = document.getElementById('wiz-checkout-url');
+          var chkBizEl = document.getElementById('wiz-mpesa-business');
+          var chkNumEl = document.getElementById('wiz-mpesa-number');
+
+          if (chkItemEl) chkItemEl.value = wizardState.checkoutConfig.itemName;
+          if (chkAmtEl) chkAmtEl.value = wizardState.checkoutConfig.amount;
+          if (chkCurEl) chkCurEl.value = wizardState.checkoutConfig.currency;
+          if (chkUrlEl) chkUrlEl.value = wizardState.checkoutConfig.externalUrl;
+          if (chkBizEl) chkBizEl.value = wizardState.checkoutConfig.mpesaBusinessName;
+          if (chkNumEl) chkNumEl.value = wizardState.checkoutConfig.mpesaNumber;
+        } else if (!wizardState.checkoutConfig.externalUrl && wizardState.websiteUrl) {
+          wizardState.checkoutConfig.externalUrl = wizardState.websiteUrl.replace(/\/$/, '') + '/checkout';
+          var chkUrlEl = document.getElementById('wiz-checkout-url');
+          if (chkUrlEl) chkUrlEl.value = wizardState.checkoutConfig.externalUrl;
         }
       }
 
@@ -4697,6 +4822,7 @@ window.addEventListener('botly:payment', async (event) => {
           goal: wizardState.purposes[0] || 'lead_generation',
           company: {
             name: wizardState.companyName,
+            websiteUrl: wizardState.websiteUrl || (wizardState.activeWebProfile ? ('https://' + (wizardState.activeWebProfile.domain || 'jumia.co.ke')) : ''),
             supportEmail: wizardState.supportEmail,
             supportPhone: wizardState.supportPhone || '+1 (800) 555-0199'
           },

@@ -185,10 +185,10 @@ export class IntentEngine {
           paymentMethod: 'card'
         };
       }
-      if (/\b(pay|payment|checkout|buy\s*policy|purchase|renew\s*policy|premium\s*payment|bill)\b/i.test(lower)) {
+      if (/\b(pay(\s*now|\s*my|\s*bill|\s*policy|\s*premium|\s*online)?|checkout(\s*now)?|lipa(\s*sasa)?|make\s*payment|proceed\s*to\s*checkout|start\s*checkout)\b/i.test(lower) && !/\b(watch|phone|laptop|tv|product|shoes|dress|sneaker|plan|pricing|cost|how\s*much|quote)\b/i.test(lower)) {
         // If it's a general question about payment methods or installments
         if (/methods?|accept|how\s*can\s*i\s*pay|installment|monthly/i.test(lower)) {
-          const faqMatch = this.matchKnowledgeBase(queryTokens, 'payments');
+          const faqMatch = this.matchKnowledgeBase(queryTokens, 'payments', raw);
           if (faqMatch && faqMatch.score > 0.35) {
             return {
               intent: 'faq',
@@ -213,7 +213,7 @@ export class IntentEngine {
       // 3. Claims Intents
       if (/claim|accident|stolen|theft|damage|broken|crashed|file\s*a\s*claim|report\s*(damage|loss)/i.test(lower)) {
         // Check if it's an informational claim question first
-        const faqMatch = this.matchKnowledgeBase(queryTokens, 'claims');
+        const faqMatch = this.matchKnowledgeBase(queryTokens, 'claims', raw);
         if (faqMatch && faqMatch.score > 0.45 && /difference|how\s*long|timeline|when\s*will/i.test(lower)) {
           return {
             intent: 'faq',
@@ -225,18 +225,17 @@ export class IntentEngine {
 
         return {
           intent: 'start_claim_flow',
-          confidence: 0.9,
+          confidence: 0.95,
           action: 'OPEN_CLAIMS_WIZARD'
         };
       }
 
-      // 5. Quote Calculation Intents
-      if (/\b(quote|price|cost|estimate|rate|how\s*much|calculate|premium|coverage\s*for)\b/i.test(lower)) {
+      // 4. Quote / Price Calculation Intents
+      if (/\b(quote|cost|rate|calculate|estimate|how\s*much\s*is|pricing)\b/i.test(lower)) {
         let productType = 'auto';
-        if (/car|auto|motor|vehicle|driver/i.test(lower)) productType = 'auto';
-        else if (/health|medical|doctor|hospital/i.test(lower)) productType = 'health';
-        else if (/home|house|property|apartment|renter/i.test(lower)) productType = 'home';
-        else if (/life|death|term\s*life/i.test(lower)) productType = 'life';
+        if (/health|medical|hospital/i.test(lower)) productType = 'health';
+        else if (/home|property|house|rent/i.test(lower)) productType = 'home';
+        else if (/life|funeral|term/i.test(lower)) productType = 'life';
         else if (/travel|flight|trip|vacation/i.test(lower)) productType = 'travel';
 
         return {
@@ -258,8 +257,8 @@ export class IntentEngine {
     }
 
     // 7. General Knowledge Base FAQ Search
-    const bestFaq = this.matchKnowledgeBase(queryTokens);
-    if (bestFaq && bestFaq.score >= 0.25) {
+    const bestFaq = this.matchKnowledgeBase(queryTokens, null, raw);
+    if (bestFaq && bestFaq.score >= 0.22) {
       const followUp = this.generateFollowUpQuestion(bestFaq.item);
       let replyPrefix = '';
       if (bestFaq.item.source === 'document' || bestFaq.item.category === 'document') {
@@ -271,21 +270,77 @@ export class IntentEngine {
 
       const compName = this.config.company?.name;
       const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';
-      const quickReplies = isSaas ? [
-        { label: 'Our Services', payload: 'What services do you offer?' },
-        { label: 'Get started', payload: 'How do I get started?' },
-        { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
-      ] : [
-        { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
-        { label: '💳 Proceed to Payment', payload: 'intent_pay' },
-        { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
-      ];
+
+      // Detect product catalog listings with prices and direct URLs
+      const detectedProducts = [];
+      if (bestFaq.item.products && Array.isArray(bestFaq.item.products) && bestFaq.item.products.length > 0) {
+        detectedProducts.push(...bestFaq.item.products);
+      } else if (bestFaq.item.answer) {
+        const lines = bestFaq.item.answer.split('\n');
+        for (const l of lines) {
+          const pMatch = l.match(/[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i);
+          if (pMatch) {
+            const pName = pMatch[1].trim();
+            const pCur = pMatch[2] ? pMatch[2].trim() : (this.config.currency?.code || 'KES');
+            const pAmt = parseFloat(pMatch[3].replace(/,/g, ''));
+            const urlMatch = l.match(/\((https?:\/\/[^)]+)\)/i);
+            const pUrl = (urlMatch ? urlMatch[1] : null) || (bestFaq.item.sourceUrl || (this.config.company?.websiteUrl ? this.config.company.websiteUrl + '/products' : ''));
+            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl });
+          }
+        }
+      }
+
+      let quickReplies = [];
+      if (isSaas) {
+        if (detectedProducts.length > 0) {
+          const topProd = detectedProducts[0];
+          const prodSym = (topProd.currency === 'USD' || topProd.currency === '$') ? '$' : (topProd.currency === 'KES' ? 'KES ' : `${topProd.currency} `);
+          const prodShort = topProd.name.length > 20 ? topProd.name.slice(0, 18) + '...' : topProd.name;
+
+          quickReplies.push({
+            label: `🛒 Buy ${prodShort} (${prodSym}${Number(topProd.price).toLocaleString()})`,
+            payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}`
+          });
+          quickReplies.push({
+            label: '📱 Pay with M-Pesa',
+            payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}:mpesa`
+          });
+          quickReplies.push({
+            label: '💳 Pay with Card',
+            payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}:card`
+          });
+
+          if (detectedProducts.length > 1) {
+            const secProd = detectedProducts[1];
+            const secSym = (secProd.currency === 'USD' || secProd.currency === '$') ? '$' : 'KES ';
+            const secShort = secProd.name.length > 18 ? secProd.name.slice(0, 16) + '...' : secProd.name;
+            quickReplies.splice(1, 0, {
+              label: `🛒 ${secShort} (${secSym}${Number(secProd.price).toLocaleString()})`,
+              payload: `checkout_item:${encodeURIComponent(secProd.name)}:${secProd.price}:${secProd.currency}:${encodeURIComponent(secProd.url || '')}`
+            });
+          }
+        } else {
+          quickReplies = [
+            { label: 'Our Services', payload: 'What services do you offer?' },
+            { label: 'Get started', payload: 'How do I get started?' },
+            { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
+          ];
+        }
+      } else {
+        quickReplies = [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '💳 Proceed to Payment', payload: 'intent_pay' },
+          { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+        ];
+      }
+
       return {
         intent: 'faq',
         confidence: bestFaq.score,
         matchedItem: bestFaq.item,
         reply: `${replyPrefix}${bestFaq.item.answer}\n\n${followUp}`,
-        suggestedQuickReplies: quickReplies
+        suggestedQuickReplies: quickReplies,
+        quickReplies: quickReplies
       };
     }
 
@@ -319,10 +374,24 @@ export class IntentEngine {
     }
 
     // 9. Lead Capture Flow for Undefined Queries / Custom Inquiries
-    let needTopic = raw.replace(/^(do you have|do you offer|can you do|can you provide|tell me about|how about|what about|i want|i need|i'm looking for|we need)\s+/i, '').trim();
+    let needTopic = raw.replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*offer|can\s*you\s*do|can\s*you\s*provide|tell\s*me\s*about|how\s*about|what\s*about|i\s*want|i\s*need|we\s*need)\s+/i, '').replace(/[?!.,]+$/g, '').trim();
     if (!needTopic || needTopic.length < 3) needTopic = raw;
 
     const compName = this.config.company?.name || 'our';
+    const webUrl = this.config.company?.websiteUrl || '';
+    const isShoppingInquiry = /\b(watch|watches|phone|phones|laptop|laptops|shoes|cloth|dress|buy|order|catalog|product|stock|item)\b/i.test(raw);
+
+    if (isSaas && isShoppingInquiry && webUrl) {
+      return {
+        intent: 'faq',
+        reply: `I couldn't locate specific catalog stock for **${needTopic}** in my instant memory, but you can explore our complete live catalog directly on our site:\n\n🔗 [**Browse ${compName} Online Store ↗**](${webUrl})\n\n💬 Would you like to check our popular categories or connect with a sales specialist?`,
+        suggestedQuickReplies: [
+          { label: '🛍️ Browse Catalog', payload: 'What products or services do you offer?' },
+          { label: 'Talk to sales team', payload: `I want to speak with someone from the ${compName} team` }
+        ]
+      };
+    }
+
     return {
       intent: 'lead_capture_needed',
       confidence: 0.2,
@@ -521,10 +590,12 @@ export class IntentEngine {
   /**
    * Search knowledge base for highest scoring match
    */
-  matchKnowledgeBase(queryTokens, categoryFilter = null) {
-    const stopWords = new Set(['do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in', 'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have', 'insurance', 'policy']);
+  matchKnowledgeBase(queryTokens, categoryFilter = null, rawQuery = '') {
+    const stopWords = new Set(['do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in', 'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have', 'insurance', 'policy', 'looking', 'look', 'want', 'need', 'find', 'show', 'give']);
     let best = null;
     let highestScore = 0;
+
+    const cleanSubject = (rawQuery || '').replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*sell|can\s*i\s*(get|buy|find)|show\s*me|tell\s*me\s*about|i\s*want\s*to\s*(buy|find|order|see)|i\s*want|i\s*need|where\s*(is|are|can\s*i\s*find)|what\s*about)\s+/i, '').replace(/[?!.,]+$/g, '').trim().toLowerCase();
 
     for (const item of this.knowledgeBase) {
       if (categoryFilter && item.category !== categoryFilter) continue;
@@ -534,8 +605,19 @@ export class IntentEngine {
       const aTokens = isDocOrWeb ? new Set(this.tokenize(item.answer || '')) : null;
       let keyMatches = 0;
 
+      // Exact cleanSubject match bonus
+      if (cleanSubject && cleanSubject.length >= 3) {
+        if ((item.question || '').toLowerCase().includes(cleanSubject)) {
+          keyMatches += 4.0;
+        } else if ((item.keywords || []).some(k => k.toLowerCase().includes(cleanSubject))) {
+          keyMatches += 3.5;
+        } else if (item.answer && item.answer.toLowerCase().includes(cleanSubject)) {
+          keyMatches += 2.5;
+        }
+      }
+
       for (const token of queryTokens) {
-        if (!stopWords.has(token)) {
+        if (!stopWords.has(token) && token.length >= 2) {
           let matched = false;
           for (const qt of qTokens) {
             if (this.wordsMatch(token, qt)) {
