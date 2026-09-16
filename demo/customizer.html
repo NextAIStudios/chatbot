@@ -20,6 +20,29 @@
        WIZARD STUDIO MODERN DESIGN SYSTEM
     ================================================== */
     * { box-sizing: border-box; }
+
+    /* ── Desktop: Hide mobile-only elements ── */
+    .customizer-brand-title .brand-short { display: none !important; }
+    .customizer-brand-title .brand-long  { display: inline !important; }
+    .customizer-mobile-actions           { display: none !important; }
+    .studio-hamburger-btn                { display: none !important; }
+    .studio-mobile-drawer                { display: none !important; }
+    .studio-mobile-drawer.open           { display: block !important; }
+
+    /* ── Mobile (≤768px): Switch to compact brand + hamburger ── */
+    @media (max-width: 768px) {
+      .customizer-brand-title .brand-long  { display: none !important; }
+      .customizer-brand-title .brand-short { display: inline !important; }
+      .customizer-nav-actions              { display: none !important; }
+      .customizer-mobile-actions           { display: flex !important; align-items: center; gap: 8px; }
+      .studio-hamburger-btn                { display: flex !important; }
+      .customizer-subtext                  { display: none !important; }
+    }
+
+    /* ── Small phones (≤480px) ── */
+    @media (max-width: 480px) {
+      .customizer-brand-title .brand-short { font-size: 14px !important; }
+    }
     body {
       margin: 0;
       padding: 0;
@@ -754,8 +777,7 @@
         <img id="nav-brand-logo" src="botly-icon.svg" alt="Botly Pro" width="30" height="30" style="border-radius: 8px; object-fit: contain;" />
         <div>
           <div class="customizer-brand-title" style="font-size: 16px; font-weight: 800; color: #18221c; letter-spacing: -0.3px; white-space: nowrap;">
-            <span class="brand-long">Botly Pro Customizer Studio</span>
-            <span class="brand-short">Botly Pro</span>
+            <span class="brand-long">Botly Pro</span>
           </div>
           <div class="customizer-subtext" style="font-size: 11px; color: #64748b; white-space: nowrap;">Build &amp; train your AI chatbot in minutes • $10 flat per bot</div>
         </div>
@@ -763,12 +785,21 @@
 
       <!-- Actions (Desktop View) -->
       <div class="customizer-nav-actions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-        <button type="button" id="btn-nav-new-chatbot" onclick="openNewChatbotModal()" class="customizer-new-bot-btn" title="Create a New Chatbot">
+        <!-- Chatbots Workspace Sidebar Toggle -->
+        <button type="button" id="btn-toggle-bots-sidebar" onclick="toggleBotsSidebar()" class="bots-sidebar-toggle-btn active" title="Toggle Chatbots List (View &amp; Switch previous bots)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+          <span>Chatbots (<span id="bots-count-badge">1</span>)</span>
+        </button>
+
+        <button type="button" id="btn-nav-new-chatbot" onclick="handleCreateNewCompanyBot()" class="customizer-new-bot-btn" title="Create a New Chatbot for another company">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           <span>New Chatbot</span>
         </button>
 
-        <button type="button" onclick="openWebhooksModal()" class="customizer-webhooks-btn" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Webhook & API Console in Sandbox">
+        <button type="button" onclick="openWebhooksModal()" class="customizer-webhooks-btn" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Webhook &amp; API Console in Sandbox">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Webhooks
         </button>
@@ -802,7 +833,10 @@
       </div>
 
       <!-- Actions (Mobile View: Quick Leads Badge + Hamburger Menu) -->
-      <div class="customizer-mobile-actions">
+      <div class="customizer-mobile-actions" id="customizer-mobile-actions" style="display: none;">
+        <button type="button" onclick="toggleBotsSidebar()" class="bots-sidebar-toggle-btn" style="padding: 4px 10px; font-size: 11px;" title="My Chatbots">
+          Bots (<span id="bots-count-badge-mobile">1</span>)
+        </button>
         <button type="button" onclick="openLeadsModal()" class="customizer-leads-btn mobile-quick-leads" title="Captured Leads">
           Leads <span id="nav-leads-badge-mobile" style="background: #18221c; color: #9be553; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 800;">0</span>
         </button>
@@ -816,7 +850,7 @@
   </header>
 
   <!-- Studio Mobile Hamburger Drawer -->
-  <div id="studio-mobile-drawer" class="studio-mobile-drawer" onclick="closeStudioMobileMenu(event)">
+  <div id="studio-mobile-drawer" class="studio-mobile-drawer" style="display: none;" onclick="closeStudioMobileMenu(event)">
     <div class="studio-mobile-drawer-content" onclick="event.stopPropagation()">
       <div class="drawer-header">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -828,11 +862,11 @@
 
       <!-- Quick Action: Create New Chatbot (Highlighted CTA Card) -->
       <div style="padding: 14px 16px 8px 16px;">
-        <button type="button" onclick="closeStudioMobileMenu(); openNewChatbotModal();" class="drawer-new-bot-cta">
+        <button type="button" onclick="closeStudioMobileMenu(); handleCreateNewCompanyBot();" class="drawer-new-bot-cta" style="display: flex; width: 100%; border: none;">
           <div style="width: 34px; height: 34px; border-radius: 9px; background: #9be553; color: #18221c; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0;">+</div>
           <div style="text-align: left; flex: 1;">
             <div style="font-size: 13.5px; font-weight: 800; color: #ffffff;">Create New Chatbot</div>
-            <div style="font-size: 11px; color: #94a3b8;">Start fresh bot config • $10 flat</div>
+            <div style="font-size: 11px; color: #94a3b8;">Start fresh bot for another company</div>
           </div>
           <span style="color: #9be553; font-weight: 800; font-size: 15px;">→</span>
         </button>
@@ -840,6 +874,18 @@
 
       <!-- Drawer Nav List -->
       <nav class="drawer-menu-list">
+        <button type="button" class="drawer-menu-item" onclick="closeStudioMobileMenu(); toggleBotsSidebar(true);">
+          <div class="drawer-menu-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </div>
+          <div class="drawer-menu-text">
+            <div class="drawer-menu-title" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>My Chatbots</span>
+              <span id="drawer-bots-badge" style="background: #18221c; color: #9be553; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 800;">1</span>
+            </div>
+            <div class="drawer-menu-desc">Switch between company chatbots</div>
+          </div>
+        </button>
         <button type="button" class="drawer-menu-item" onclick="closeStudioMobileMenu(); openWebhooksModal();">
           <div class="drawer-menu-icon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -914,11 +960,71 @@
     </button>
   </div>
 
+  <!-- Backdrop for Mobile Chatbots Sidebar -->
+  <div id="chatbots-sidebar-backdrop" class="chatbots-sidebar-backdrop" onclick="toggleBotsSidebar(false)"></div>
+
   <!-- Studio Main Layout (Gated until authentication resolves) -->
   <div class="studio-layout gated">
 
+    <!-- 0. Collapsible Chatbots Workspace Sidebar -->
+    <aside class="chatbots-sidebar" id="chatbots-sidebar">
+      <!-- Header -->
+      <div class="chatbots-sidebar-header">
+        <div class="chatbots-sidebar-title-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+          <h3 class="chatbots-sidebar-title">My Chatbots</h3>
+          <span class="chatbots-badge-count" id="sidebar-bots-count">1</span>
+        </div>
+        <button type="button" class="btn-collapse-sidebar" onclick="toggleBotsSidebar(false)" title="Collapse Chatbots Sidebar" aria-label="Collapse sidebar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Action Button -->
+      <div class="chatbots-sidebar-actions">
+        <button type="button" onclick="handleCreateNewCompanyBot()" class="btn-sidebar-create-bot" title="Create a new chatbot for another company">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>+ Create New Bot</span>
+        </button>
+      </div>
+
+      <!-- Chatbots List -->
+      <div class="chatbots-sidebar-list" id="chatbots-list-items">
+        <!-- Rendered dynamically by BotlyChatbotManager.renderList() -->
+      </div>
+
+      <!-- Footer -->
+      <div class="chatbots-sidebar-footer">
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+          Saved locally
+        </span>
+        <span style="font-weight: 700; color: #18221c;">$10 flat / bot</span>
+      </div>
+    </aside>
+
     <!-- Left: 5-Step Wizard Sidebar -->
     <aside class="wizard-sidebar">
+
+      <!-- Welcome Banner for New Chatbot Full Page Studio (shown when ?new=1) -->
+      <div id="new-chatbot-banner" style="display: none; margin: 12px 14px 4px 14px; background: linear-gradient(135deg, #18221c 0%, #283a2f 100%); color: #ffffff; border-radius: 12px; padding: 12px 14px; border: 1px solid rgba(155,229,83,0.3); box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 15px;">✨</span>
+            <span style="font-size: 13px; font-weight: 800; color: #9be553;">New Chatbot Studio</span>
+          </div>
+          <button type="button" onclick="document.getElementById('new-chatbot-banner').style.display='none';" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;" aria-label="Dismiss banner">✕</button>
+        </div>
+        <div style="font-size: 11.5px; color: #cbd5e1; line-height: 1.4;">Configure your fresh AI chatbot below with full 5-step controls and real-time interactive preview on the right.</div>
+      </div>
 
       <!-- Step Navigation Bar -->
       <div class="wizard-step-bar">
@@ -954,6 +1060,20 @@
           <div class="panel-header">
             <h2 class="panel-title">1. What should your bot do?</h2>
             <p class="panel-subtitle">Select one or more functions. Your bot can handle multiple roles at once!</p>
+          </div>
+
+          <!-- Quick Starter Templates (1-click setup) -->
+          <div class="quick-starter-templates" style="margin-bottom: 14px; padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 11.5px; font-weight: 800; color: #18221c; letter-spacing: 0.2px;">⚡ Quick Starter Templates</span>
+              <span style="font-size: 10.5px; font-weight: 700; color: #15803d; background: #f0fdf4; padding: 2px 8px; border-radius: 9999px; border: 1px solid #bbf7d0;">1-Click Setup</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <button type="button" class="idea-chip" onclick="applyQuickTemplate('general')">🏢 General Business</button>
+              <button type="button" class="idea-chip" onclick="applyQuickTemplate('support')">🎧 24/7 Support</button>
+              <button type="button" class="idea-chip" onclick="applyQuickTemplate('sales')">💰 Sales &amp; Leads</button>
+              <button type="button" class="idea-chip" onclick="applyQuickTemplate('mpesa')">📱 M-Pesa Checkout</button>
+            </div>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
@@ -1634,90 +1754,6 @@
       </div>
     </main>
 
-  </div>
-
-  <!-- Modal: Create New Chatbot -->
-  <div id="new-chatbot-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 16px;">
-    <div style="background: #ffffff; width: 100%; max-width: 520px; max-height: 90vh; border-radius: 18px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden;">
-      <!-- Header -->
-      <div style="padding: 16px 22px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 36px; height: 36px; border-radius: 10px; background: #18221c; display: flex; align-items: center; justify-content: center;">
-            <img src="botly-icon.svg" width="22" height="22" alt="Botly">
-          </div>
-          <div>
-            <h3 style="font-size: 16.5px; font-weight: 800; margin: 0; color: #0f172a; letter-spacing: -0.2px;">Create New Chatbot</h3>
-            <span style="font-size: 11.5px; color: #64748b;">Set up a fresh autonomous AI chatbot • $10 flat per bot</span>
-          </div>
-        </div>
-        <button type="button" onclick="closeNewChatbotModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; line-height: 1; padding: 4px;" aria-label="Close">✕</button>
-      </div>
-
-      <!-- Body Form -->
-      <div style="padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
-        
-        <!-- Quick Starter Presets -->
-        <div>
-          <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">Choose a Quick Template:</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <button type="button" class="idea-chip" onclick="applyNewBotTemplate('general')">🏢 General Business</button>
-            <button type="button" class="idea-chip" onclick="applyNewBotTemplate('support')">🎧 24/7 Support</button>
-            <button type="button" class="idea-chip" onclick="applyNewBotTemplate('sales')">💰 Sales &amp; Leads</button>
-            <button type="button" class="idea-chip" onclick="applyNewBotTemplate('mpesa')">📱 M-Pesa Checkout</button>
-          </div>
-        </div>
-
-        <!-- Company & Bot Name Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <label for="new-bot-company" style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Company / Brand Name</label>
-            <input type="text" id="new-bot-company" placeholder="e.g. Acme Corp" value="My Company" style="width: 100%; box-sizing: border-box; padding: 8px 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #0f172a; outline: none;">
-          </div>
-          <div>
-            <label for="new-bot-name" style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Bot Assistant Name</label>
-            <input type="text" id="new-bot-name" placeholder="e.g. Botly Pro" value="Botly Pro" style="width: 100%; box-sizing: border-box; padding: 8px 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #0f172a; outline: none;">
-          </div>
-        </div>
-
-        <!-- Role / Title -->
-        <div>
-          <label for="new-bot-title" style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Bot Role / Subtitle</label>
-          <input type="text" id="new-bot-title" placeholder="e.g. Customer Care Assistant" value="AI Assistant" style="width: 100%; box-sizing: border-box; padding: 8px 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: 500; color: #0f172a; outline: none;">
-        </div>
-
-        <!-- Primary Goal Selector -->
-        <div>
-          <label style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 6px;">Primary Bot Function(s):</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="new-bot-goals-grid">
-            <label style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 9px; cursor: pointer; font-size: 12px; font-weight: 700; color: #1e293b; background: #f8fafc;">
-              <input type="checkbox" value="lead_generation" checked style="accent-color: #18221c; width: 15px; height: 15px;">
-              <span>🎯 Capture Leads</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 9px; cursor: pointer; font-size: 12px; font-weight: 700; color: #1e293b; background: #f8fafc;">
-              <input type="checkbox" value="customer_support" checked style="accent-color: #18221c; width: 15px; height: 15px;">
-              <span>🎧 24/7 Support</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 9px; cursor: pointer; font-size: 12px; font-weight: 700; color: #1e293b; background: #f8fafc;">
-              <input type="checkbox" value="payment_checkout" style="accent-color: #18221c; width: 15px; height: 15px;">
-              <span>💳 In-Chat Checkout</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 9px; cursor: pointer; font-size: 12px; font-weight: 700; color: #1e293b; background: #f8fafc;">
-              <input type="checkbox" value="consultation_booking" style="accent-color: #18221c; width: 15px; height: 15px;">
-              <span>📅 Book Calls</span>
-            </label>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Footer Actions -->
-      <div style="padding: 12px 22px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-        <button type="button" onclick="closeNewChatbotModal()" style="background: none; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer;">Cancel</button>
-        <button type="button" onclick="submitCreateNewChatbot()" class="btn-primary-hero" style="background: #18221c; color: #9be553; border: none; padding: 7px 18px; border-radius: 9999px; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <span>✨ Create Chatbot</span>
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- Modal: Captured Leads & Inquiries Manager -->
@@ -3713,133 +3749,491 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     // ==================================================
-    // NEW CHATBOT MODAL & CREATION
+    // MULTI-COMPANY CHATBOT MANAGER & COLLAPSIBLE SIDEBAR
     // ==================================================
-    function openNewChatbotModal() {
-      var m = document.getElementById('new-chatbot-modal');
-      if (m) {
-        m.style.display = 'flex';
-        var comp = document.getElementById('new-bot-company');
-        var name = document.getElementById('new-bot-name');
-        var title = document.getElementById('new-bot-title');
-        if (comp) comp.value = wizardState.companyName || 'My Company';
-        if (name) name.value = wizardState.botName || 'Botly Pro';
-        if (title) title.value = wizardState.botTitle || 'AI Assistant';
-        setTimeout(function() { if (comp) comp.focus(); }, 100);
+    var BotlyChatbotManager = (function() {
+      var STORAGE_KEY = 'botly_saved_chatbots_v1';
+      var ACTIVE_KEY = 'botly_active_chatbot_id_v1';
+      var COLLAPSED_KEY = 'botly_chatbots_sidebar_collapsed';
+
+      function createDefaultBotObject(id, company, name) {
+        return {
+          id: id || ('bot_' + Date.now()),
+          companyName: company || 'My Company',
+          botName: name || 'Botly Pro',
+          botTitle: 'AI Assistant',
+          purposes: ['lead_generation', 'customer_support'],
+          greeting: "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.",
+          supportEmail: 'care@mycompany.com',
+          supportPhone: '+1 (800) 555-0199',
+          logoUrl: '',
+          primaryColor: '#18221c',
+          accentColor: '#9be553',
+          backgroundColor: '#ffffff',
+          documentChunks: [],
+          websiteChunks: [],
+          websiteUrl: 'https://mycompany.com',
+          faqs: [
+            {
+              question: "What services and solutions do you provide?",
+              answer: "We provide comprehensive professional services and custom solutions tailored to your business needs. Contact our team or ask me any question to learn more!",
+              source: 'faq'
+            },
+            {
+              question: "How can I contact your support team?",
+              answer: "You can reach our team via email or direct phone during business hours. Leave your contact details right here in chat for a rapid callback!",
+              source: 'faq'
+            }
+          ],
+          checkoutConfig: {
+            activeTab: 'mpesa',
+            externalUrl: '',
+            mpesaType: 'buy_goods',
+            mpesaNumber: '123456',
+            mpesaAccount: '',
+            mpesaBusinessName: 'NextGen Ke',
+            amount: '1000',
+            currency: 'KES',
+            itemName: 'Standard Package',
+            cardButtonLabel: 'Proceed to Card Checkout ↗',
+            cardItemName: 'Standard Package',
+            cardAmount: '10',
+            cardCurrency: 'USD'
+          },
+          apiConfig: {
+            enabled: false,
+            endpoint: '',
+            method: 'POST',
+            mode: 'hybrid',
+            authBearer: ''
+          },
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
       }
-    }
 
-    function closeNewChatbotModal() {
-      var m = document.getElementById('new-chatbot-modal');
-      if (m) m.style.display = 'none';
-    }
+      function getAllBots() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch(e) {}
+        // Seed with initial default bot from wizardState
+        var initialBot = createDefaultBotObject(
+          'bot_default',
+          wizardState.companyName || 'My Company',
+          wizardState.botName || 'Botly Pro'
+        );
+        initialBot.primaryColor = wizardState.primaryColor || '#18221c';
+        initialBot.accentColor = wizardState.accentColor || '#9be553';
+        initialBot.backgroundColor = wizardState.backgroundColor || '#ffffff';
+        initialBot.purposes = wizardState.purposes ? wizardState.purposes.slice() : ['lead_generation', 'customer_support'];
+        var list = [initialBot];
+        saveAllBots(list);
+        return list;
+      }
 
-    function applyNewBotTemplate(tpl) {
-      var compEl = document.getElementById('new-bot-company');
-      var nameEl = document.getElementById('new-bot-name');
-      var titleEl = document.getElementById('new-bot-title');
-      var checkboxes = document.querySelectorAll('#new-bot-goals-grid input[type="checkbox"]');
+      function saveAllBots(bots) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(bots));
+        } catch(e) {}
+      }
 
-      function setCheckedGoals(arr) {
-        checkboxes.forEach(function(cb) {
-          cb.checked = (arr.indexOf(cb.value) !== -1);
+      function getActiveBotId() {
+        var id = localStorage.getItem(ACTIVE_KEY);
+        var bots = getAllBots();
+        if (id && bots.some(function(b) { return b.id === id; })) return id;
+        return bots[0] ? bots[0].id : 'bot_default';
+      }
+
+      function setActiveBotId(id) {
+        try {
+          localStorage.setItem(ACTIVE_KEY, id);
+        } catch(e) {}
+      }
+
+      function syncActiveBotFromUI() {
+        var bots = getAllBots();
+        var activeId = getActiveBotId();
+        var bot = bots.find(function(b) { return b.id === activeId; });
+        if (!bot) return;
+
+        // Sync from inputs if available
+        var compEl = document.getElementById('wiz-company-name');
+        if (compEl && compEl.value.trim()) wizardState.companyName = compEl.value.trim();
+        var nameEl = document.getElementById('wiz-bot-name');
+        if (nameEl && nameEl.value.trim()) wizardState.botName = nameEl.value.trim();
+        var titleEl = document.getElementById('wiz-bot-title');
+        if (titleEl && titleEl.value.trim()) wizardState.botTitle = titleEl.value.trim();
+        var greetEl = document.getElementById('wiz-bot-greeting');
+        if (greetEl && greetEl.value.trim()) wizardState.greeting = greetEl.value.trim();
+        var emailEl = document.getElementById('wiz-support-email');
+        if (emailEl && emailEl.value.trim()) wizardState.supportEmail = emailEl.value.trim();
+        var phoneEl = document.getElementById('wiz-support-phone');
+        if (phoneEl && phoneEl.value.trim()) wizardState.supportPhone = phoneEl.value.trim();
+
+        bot.companyName = wizardState.companyName;
+        bot.botName = wizardState.botName;
+        bot.botTitle = wizardState.botTitle;
+        bot.greeting = wizardState.greeting;
+        bot.supportEmail = wizardState.supportEmail;
+        bot.supportPhone = wizardState.supportPhone;
+        bot.logoUrl = wizardState.logoUrl;
+        bot.primaryColor = wizardState.primaryColor;
+        bot.accentColor = wizardState.accentColor;
+        bot.backgroundColor = wizardState.backgroundColor;
+        bot.purposes = wizardState.purposes ? wizardState.purposes.slice() : [];
+        bot.faqs = wizardState.faqs ? JSON.parse(JSON.stringify(wizardState.faqs)) : [];
+        bot.documentChunks = wizardState.documentChunks ? JSON.parse(JSON.stringify(wizardState.documentChunks)) : [];
+        bot.websiteChunks = wizardState.websiteChunks ? JSON.parse(JSON.stringify(wizardState.websiteChunks)) : [];
+        bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
+        bot.apiConfig = wizardState.apiConfig ? JSON.parse(JSON.stringify(wizardState.apiConfig)) : {};
+        bot.updatedAt = Date.now();
+
+        saveAllBots(bots);
+        renderList();
+      }
+
+      function renderList() {
+        var bots = getAllBots();
+        var activeId = getActiveBotId();
+
+        // Update counts
+        var countEls = [
+          document.getElementById('sidebar-bots-count'),
+          document.getElementById('bots-count-badge'),
+          document.getElementById('bots-count-badge-mobile'),
+          document.getElementById('drawer-bots-badge')
+        ];
+        countEls.forEach(function(el) {
+          if (el) el.textContent = bots.length;
+        });
+
+        var container = document.getElementById('chatbots-list-items');
+        if (!container) return;
+
+        container.innerHTML = '';
+        bots.forEach(function(bot) {
+          var isActive = (bot.id === activeId);
+          var card = document.createElement('div');
+          card.className = 'chatbot-card' + (isActive ? ' active' : '');
+          card.onclick = function() {
+            switchBot(bot.id);
+          };
+
+          var goalsText = (bot.purposes && bot.purposes.length) 
+            ? (bot.purposes.length + ' active ' + (bot.purposes.length === 1 ? 'goal' : 'goals'))
+            : 'Configured';
+
+          card.innerHTML = 
+            '<div class="chatbot-card-top">' +
+              '<div class="chatbot-card-company" title="' + escapeHtml(bot.companyName) + '">' +
+                escapeHtml(bot.companyName || 'Untitled Company') +
+              '</div>' +
+              (isActive ? '<div class="chatbot-card-active-dot" title="Currently Active"></div>' : '') +
+            '</div>' +
+            '<div class="chatbot-card-meta">' +
+              '<span class="chatbot-card-botname">' + escapeHtml(bot.botName || 'Botly AI') + '</span>' +
+              '<div class="chatbot-card-colors" title="Brand: ' + escapeHtml(bot.primaryColor || '#18221c') + ' / ' + escapeHtml(bot.accentColor || '#9be553') + '">' +
+                '<span class="chatbot-color-pip" style="background: ' + escapeHtml(bot.primaryColor || '#18221c') + ';"></span>' +
+                '<span class="chatbot-color-pip" style="background: ' + escapeHtml(bot.accentColor || '#9be553') + ';"></span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="chatbot-card-footer">' +
+              '<span>' + escapeHtml(goalsText) + '</span>' +
+              (bots.length > 1 
+                ? '<button type="button" class="chatbot-card-delete-btn" title="Delete this chatbot" onclick="BotlyChatbotManager.deleteBot(\'' + bot.id + '\', event)">✕</button>'
+                : '') +
+            '</div>';
+
+          container.appendChild(card);
         });
       }
 
-      if (tpl === 'general') {
-        if (compEl) compEl.value = 'My Company';
-        if (nameEl) nameEl.value = 'Botly Pro';
-        if (titleEl) titleEl.value = 'AI Assistant';
-        setCheckedGoals(['lead_generation', 'customer_support']);
-      } else if (tpl === 'support') {
-        if (compEl) compEl.value = 'Apex Care';
-        if (nameEl) nameEl.value = 'SupportBot';
-        if (titleEl) titleEl.value = '24/7 Support Specialist';
-        setCheckedGoals(['customer_support']);
-      } else if (tpl === 'sales') {
-        if (compEl) compEl.value = 'Growth Wave';
-        if (nameEl) nameEl.value = 'SalesAI';
-        if (titleEl) titleEl.value = 'Lead & Sales Specialist';
-        setCheckedGoals(['lead_generation', 'consultation_booking']);
-      } else if (tpl === 'mpesa') {
-        if (compEl) compEl.value = 'NextGen Ke';
-        if (nameEl) nameEl.value = 'PayBot';
-        if (titleEl) titleEl.value = 'Instant Checkout Assistant';
-        setCheckedGoals(['payment_checkout', 'lead_generation']);
+      function createNewBot(customCompanyName, customBotName) {
+        // Save current active chatbot first so previous chatbot is never lost!
+        syncActiveBotFromUI();
+
+        var bots = getAllBots();
+        var num = bots.length + 1;
+        var defaultCompany = customCompanyName || ('Company ' + num);
+        var defaultBot = customBotName || 'Botly AI';
+
+        var newBot = createDefaultBotObject(
+          'bot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          defaultCompany,
+          defaultBot
+        );
+
+        bots.push(newBot);
+        saveAllBots(bots);
+        setActiveBotId(newBot.id);
+
+        // Load into editor
+        loadBotDataIntoStudio(newBot);
+
+        // Render list so both previous and new bots appear
+        renderList();
+
+        // Ensure sidebar is visible so user sees their chatbots list
+        toggleBotsSidebar(true);
+
+        // Focus Step 1
+        goStep(1);
+
+        showStudioToast('✨ New chatbot for "' + escapeHtml(defaultCompany) + '" created! Previous bot saved in sidebar.');
+        return newBot;
       }
-    }
 
-    function submitCreateNewChatbot() {
-      var compVal = (document.getElementById('new-bot-company') && document.getElementById('new-bot-company').value.trim()) || 'My Company';
-      var nameVal = (document.getElementById('new-bot-name') && document.getElementById('new-bot-name').value.trim()) || 'Botly Pro';
-      var titleVal = (document.getElementById('new-bot-title') && document.getElementById('new-bot-title').value.trim()) || 'AI Assistant';
+      function loadBotDataIntoStudio(bot) {
+        wizardState.companyName = bot.companyName || 'My Company';
+        wizardState.botName = bot.botName || 'Botly Pro';
+        wizardState.botTitle = bot.botTitle || 'AI Assistant';
+        wizardState.purposes = bot.purposes ? bot.purposes.slice() : ['lead_generation', 'customer_support'];
+        wizardState.greeting = bot.greeting || "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.";
+        wizardState.supportEmail = bot.supportEmail || 'care@mycompany.com';
+        wizardState.supportPhone = bot.supportPhone || '+1 (800) 555-0199';
+        wizardState.logoUrl = bot.logoUrl || '';
+        wizardState.primaryColor = bot.primaryColor || '#18221c';
+        wizardState.accentColor = bot.accentColor || '#9be553';
+        wizardState.backgroundColor = bot.backgroundColor || '#ffffff';
+        wizardState.documentChunks = bot.documentChunks ? JSON.parse(JSON.stringify(bot.documentChunks)) : [];
+        wizardState.websiteChunks = bot.websiteChunks ? JSON.parse(JSON.stringify(bot.websiteChunks)) : [];
+        wizardState.websiteUrl = bot.websiteUrl || 'https://mycompany.com';
+        wizardState.faqs = bot.faqs ? JSON.parse(JSON.stringify(bot.faqs)) : [];
+        wizardState.checkoutConfig = bot.checkoutConfig ? JSON.parse(JSON.stringify(bot.checkoutConfig)) : {};
+        wizardState.apiConfig = bot.apiConfig ? JSON.parse(JSON.stringify(bot.apiConfig)) : {};
 
-      var goalCheckboxes = document.querySelectorAll('#new-bot-goals-grid input[type="checkbox"]:checked');
-      var selectedGoals = [];
-      goalCheckboxes.forEach(function(cb) { selectedGoals.push(cb.value); });
-      if (selectedGoals.length === 0) selectedGoals = ['lead_generation', 'customer_support'];
+        // Update form inputs
+        var cEl = document.getElementById('wiz-company-name');
+        if (cEl) cEl.value = wizardState.companyName;
+        var nEl = document.getElementById('wiz-bot-name');
+        if (nEl) nEl.value = wizardState.botName;
+        var tEl = document.getElementById('wiz-bot-title');
+        if (tEl) tEl.value = wizardState.botTitle;
+        var gEl = document.getElementById('wiz-bot-greeting');
+        if (gEl) gEl.value = wizardState.greeting;
+        var eEl = document.getElementById('wiz-support-email');
+        if (eEl) eEl.value = wizardState.supportEmail;
+        var pEl = document.getElementById('wiz-support-phone');
+        if (pEl) pEl.value = wizardState.supportPhone;
 
-      // Reset wizardState
-      wizardState.companyName = compVal;
-      wizardState.botName = nameVal;
-      wizardState.botTitle = titleVal;
-      wizardState.purposes = selectedGoals;
-      wizardState.greeting = "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.";
-      wizardState.logoUrl = '';
-      wizardState.primaryColor = '#18221c';
-      wizardState.accentColor = '#9be553';
-      wizardState.documentChunks = [];
-      wizardState.websiteChunks = [];
-      wizardState.websiteUrl = 'https://mycompany.com';
-      wizardState.faqs = [
-        {
-          question: "What services and solutions do you provide?",
-          answer: "We provide comprehensive professional services and custom solutions tailored to your business needs. Contact our team or ask me any question to learn more!",
-          source: 'faq'
-        },
-        {
-          question: "How can I contact your support team?",
-          answer: "You can reach our team via email or direct phone during business hours. Leave your contact details right here in chat for a rapid callback!",
-          source: 'faq'
+        // Update Logo
+        if (wizardState.logoUrl && typeof applyLogoUrl === 'function') {
+          applyLogoUrl(wizardState.logoUrl);
+        } else if (typeof resetLogoToDefault === 'function') {
+          resetLogoToDefault();
         }
-      ];
 
-      // Update inputs in sidebar
-      var cEl = document.getElementById('wiz-company-name');
-      if (cEl) cEl.value = compVal;
-      var nEl = document.getElementById('wiz-bot-name');
-      if (nEl) nEl.value = nameVal;
-      var tEl = document.getElementById('wiz-bot-title');
-      if (tEl) tEl.value = titleVal;
-      var gEl = document.getElementById('wiz-bot-greeting');
-      if (gEl) gEl.value = wizardState.greeting;
+        // Update Colors
+        if (typeof setPrimaryColor === 'function') setPrimaryColor(wizardState.primaryColor, null, false);
+        if (typeof setAccentColor === 'function') setAccentColor(wizardState.accentColor, null, false);
+        if (typeof setBackgroundColor === 'function') setBackgroundColor(wizardState.backgroundColor, null, false);
 
-      // Reset Logo & Theme
-      resetLogoToDefault();
-      applyThemePreset('dark-lime');
+        // Update Purposes / Goals
+        if (typeof updatePurposeUI === 'function') updatePurposeUI();
 
-      // Update UI components
-      updatePurposeUI();
-      renderFaqsList();
-      renderDocChunks();
-      renderWebsiteChunks();
+        // Update FAQs & chunks
+        if (typeof renderFaqsList === 'function') renderFaqsList();
+        if (typeof renderDocChunks === 'function') renderDocChunks();
+        if (typeof renderWebsiteChunks === 'function') renderWebsiteChunks();
 
-      // Re-apply configuration to live preview widget
-      applyBotLiveConfig();
+        // Refresh live preview widget
+        if (typeof applyBotLiveConfig === 'function') applyBotLiveConfig();
+        if (window.BotlyChatbot && typeof window.BotlyChatbot.reset === 'function') {
+          window.BotlyChatbot.reset();
+        }
+      }
 
-      // Go to step 1
-      goStep(1);
+      function switchBot(botId) {
+        // Save current bot first
+        syncActiveBotFromUI();
 
-      // On mobile ensure customize panel is shown
+        var bots = getAllBots();
+        var target = bots.find(function(b) { return b.id === botId; });
+        if (!target) return;
+
+        setActiveBotId(target.id);
+        loadBotDataIntoStudio(target);
+        renderList();
+
+        // If on mobile, close mobile overlay
+        if (window.innerWidth <= 900) {
+          toggleBotsSidebar(false);
+        }
+
+        showStudioToast('✨ Switched to "' + escapeHtml(target.companyName) + '" (' + escapeHtml(target.botName) + ')');
+      }
+
+      function deleteBot(botId, e) {
+        if (e) e.stopPropagation();
+        var bots = getAllBots();
+        if (bots.length <= 1) {
+          showStudioToast('⚠️ You cannot delete the only remaining chatbot.');
+          return;
+        }
+
+        var target = bots.find(function(b) { return b.id === botId; });
+        var targetName = target ? target.companyName : 'this chatbot';
+        if (!confirm('Are you sure you want to delete the chatbot for "' + targetName + '"?')) return;
+
+        var activeId = getActiveBotId();
+        bots = bots.filter(function(b) { return b.id !== botId; });
+        saveAllBots(bots);
+
+        if (activeId === botId) {
+          var nextBot = bots[0];
+          setActiveBotId(nextBot.id);
+          loadBotDataIntoStudio(nextBot);
+        }
+
+        renderList();
+        showStudioToast('Chatbot deleted.');
+      }
+
+      function init() {
+        var bots = getAllBots();
+        var activeId = getActiveBotId();
+        var activeBot = bots.find(function(b) { return b.id === activeId; }) || bots[0];
+        if (activeBot) {
+          setActiveBotId(activeBot.id);
+          loadBotDataIntoStudio(activeBot);
+        }
+        renderList();
+
+        // Real-time sync listener on inputs
+        ['wiz-company-name', 'wiz-bot-name', 'wiz-bot-title'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', function() {
+              syncActiveBotFromUI();
+            });
+          }
+        });
+
+        // Restore collapsed state
+        try {
+          var isCollapsed = (localStorage.getItem(COLLAPSED_KEY) === 'true');
+          if (window.innerWidth <= 900) {
+            isCollapsed = true;
+          }
+          if (isCollapsed) {
+            toggleBotsSidebar(false, true);
+          }
+        } catch(e) {}
+      }
+
+      return {
+        init: init,
+        getAllBots: getAllBots,
+        getActiveBotId: getActiveBotId,
+        syncActiveBotFromUI: syncActiveBotFromUI,
+        createNewBot: createNewBot,
+        switchBot: switchBot,
+        deleteBot: deleteBot,
+        renderList: renderList
+      };
+    })();
+
+    window.BotlyChatbotManager = BotlyChatbotManager;
+
+    function handleCreateNewCompanyBot() {
+      BotlyChatbotManager.createNewBot();
       if (typeof switchStudioMobileTab === 'function') {
         switchStudioMobileTab('customize');
       }
+    }
+    window.handleCreateNewCompanyBot = handleCreateNewCompanyBot;
 
-      // Close modal
-      closeNewChatbotModal();
+    function toggleBotsSidebar(forceState, silent) {
+      var sidebar = document.getElementById('chatbots-sidebar');
+      var btn = document.getElementById('btn-toggle-bots-sidebar');
+      var backdrop = document.getElementById('chatbots-sidebar-backdrop');
+      if (!sidebar) return;
 
-      // Show sleek Toast
-      showStudioToast('✨ New chatbot "' + escapeHtml(nameVal) + '" initialized! You are in Step 1.');
+      var isMobile = window.innerWidth <= 900;
+
+      if (isMobile) {
+        var shouldOpen = (forceState !== undefined) ? forceState : !sidebar.classList.contains('mobile-open');
+        if (shouldOpen) {
+          sidebar.classList.add('mobile-open');
+          sidebar.classList.remove('collapsed');
+          if (backdrop) backdrop.classList.add('show');
+          if (btn) btn.classList.add('active');
+        } else {
+          sidebar.classList.remove('mobile-open');
+          if (backdrop) backdrop.classList.remove('show');
+          if (btn) btn.classList.remove('active');
+        }
+        return;
+      }
+
+      // Desktop toggle
+      var shouldCollapse = (forceState !== undefined) ? !forceState : !sidebar.classList.contains('collapsed');
+      if (shouldCollapse) {
+        sidebar.classList.add('collapsed');
+        if (btn) btn.classList.remove('active');
+        if (!silent) showStudioToast('Chatbots sidebar collapsed. Click "Chatbots" in header to reopen.');
+      } else {
+        sidebar.classList.remove('collapsed');
+        if (btn) btn.classList.add('active');
+      }
+
+      try {
+        localStorage.setItem('botly_chatbots_sidebar_collapsed', shouldCollapse ? 'true' : 'false');
+      } catch(e) {}
+    }
+    window.toggleBotsSidebar = toggleBotsSidebar;
+
+    // Backwards-compatible aliases
+    window.openNewChatbot = function() { handleCreateNewCompanyBot(); };
+    window.openNewChatbotModal = function() { handleCreateNewCompanyBot(); };
+    window.initNewChatbotStudio = function() { handleCreateNewCompanyBot(); };
+
+    function applyQuickTemplate(tpl) {
+      if (tpl === 'general') {
+        wizardState.companyName = 'My Company';
+        wizardState.botName = 'Botly Pro';
+        wizardState.botTitle = 'AI Assistant';
+        wizardState.purposes = ['lead_generation', 'customer_support'];
+        applyThemePreset('dark-lime');
+      } else if (tpl === 'support') {
+        wizardState.companyName = 'Apex Care';
+        wizardState.botName = 'SupportBot';
+        wizardState.botTitle = '24/7 Support Specialist';
+        wizardState.purposes = ['customer_support'];
+        applyThemePreset('ocean');
+      } else if (tpl === 'sales') {
+        wizardState.companyName = 'Growth Wave';
+        wizardState.botName = 'SalesAI';
+        wizardState.botTitle = 'Lead & Sales Specialist';
+        wizardState.purposes = ['lead_generation', 'consultation_booking'];
+        applyThemePreset('indigo');
+      } else if (tpl === 'mpesa') {
+        wizardState.companyName = 'NextGen Ke';
+        wizardState.botName = 'PayBot';
+        wizardState.botTitle = 'Instant Checkout Assistant';
+        wizardState.purposes = ['payment_checkout', 'lead_generation'];
+        applyThemePreset('dark-lime');
+      }
+
+      var cEl = document.getElementById('wiz-company-name');
+      if (cEl) cEl.value = wizardState.companyName;
+      var nEl = document.getElementById('wiz-bot-name');
+      if (nEl) nEl.value = wizardState.botName;
+      var tEl = document.getElementById('wiz-bot-title');
+      if (tEl) tEl.value = wizardState.botTitle;
+
+      updatePurposeUI();
+      applyBotLiveConfig();
+      if (window.BotlyChatbot && typeof window.BotlyChatbot.reset === 'function') {
+        window.BotlyChatbot.reset();
+      }
+      BotlyChatbotManager.syncActiveBotFromUI();
+      var tplName = tpl === 'mpesa' ? 'M-Pesa Checkout' : (tpl.charAt(0).toUpperCase() + tpl.slice(1));
+      showStudioToast('✨ ' + tplName + ' template applied! Test live on the right.');
     }
 
     function showStudioToast(msg) {
@@ -4507,26 +4901,46 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       var drawer = document.getElementById('studio-mobile-drawer');
       var btn = document.getElementById('btn-studio-hamburger');
       if (!drawer) return;
-      var isOpen = drawer.classList.contains('open');
+      var isOpen = drawer.style.display === 'block';
       if (isOpen) {
-        drawer.classList.remove('open');
+        drawer.style.display = 'none';
         if (btn) btn.classList.remove('active');
         document.body.style.overflow = '';
       } else {
-        drawer.classList.add('open');
+        drawer.style.display = 'block';
         if (btn) btn.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
     };
 
     window.closeStudioMobileMenu = function(e) {
-      if (e && e.target && e.target.classList.contains('studio-mobile-drawer-content')) return;
+      if (e && e.target && e.target.classList && e.target.classList.contains('studio-mobile-drawer-content')) return;
       var drawer = document.getElementById('studio-mobile-drawer');
       var btn = document.getElementById('btn-studio-hamburger');
-      if (drawer) drawer.classList.remove('open');
+      if (drawer) drawer.style.display = 'none';
       if (btn) btn.classList.remove('active');
       document.body.style.overflow = '';
     };
+
+    // Responsive: show/hide mobile vs desktop nav controls based on viewport width
+    function applyResponsiveNav() {
+      var isMobile = window.innerWidth <= 768;
+      var mobileActions = document.getElementById('customizer-mobile-actions');
+      var desktopActions = document.querySelector('.customizer-nav-actions');
+      var subtext = document.querySelector('.customizer-subtext');
+      if (mobileActions) mobileActions.style.display = isMobile ? 'flex' : 'none';
+      if (desktopActions) desktopActions.style.display = isMobile ? 'none' : 'flex';
+      if (subtext) subtext.style.display = isMobile ? 'none' : '';
+      // Close drawer if resizing to desktop
+      if (!isMobile) {
+        var drawer = document.getElementById('studio-mobile-drawer');
+        if (drawer && drawer.style.display === 'block') {
+          drawer.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+      }
+    }
+    window.addEventListener('resize', applyResponsiveNav);
 
     function updateSandboxAuthGate(user) {
       var studio = document.querySelector('.studio-layout');
@@ -4577,6 +4991,8 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
     // INITIALIZATION
     // ==================================================
     document.addEventListener('DOMContentLoaded', function() {
+      applyResponsiveNav();
+      BotlyChatbotManager.init();
       renderFaqsList();
       updatePurposeUI();
       applyBotLiveConfig();
@@ -4599,9 +5015,14 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
         });
       }
 
-      // Check URL query parameters or hash for direct Webhooks access
+      // Check URL query parameters or hash for direct Webhooks access or New Chatbot initialization
       try {
         var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('new')) {
+          setTimeout(function() {
+            handleCreateNewCompanyBot();
+          }, 150);
+        }
         if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
           setTimeout(function() {
             openWebhooksModal();
