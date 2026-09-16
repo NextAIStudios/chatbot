@@ -1240,13 +1240,101 @@
           var pMatch = l.match(/[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i);
           if (pMatch) {
             var pName = pMatch[1].trim();
-            var pCur = pMatch[2] ? pMatch[2].trim() : (config.currency?.code || 'KES');
+            var pCur = pMatch[2] ? pMatch[2].trim() : ((config && config.currency && config.currency.code) || 'KES');
             var pAmt = parseFloat(pMatch[3].replace(/,/g, ''));
             var urlMatch = l.match(/\((https?:\/\/[^)]+)\)/i);
             var pUrl = (urlMatch ? urlMatch[1] : null) || (best.sourceUrl || (config.company && config.company.websiteUrl ? config.company.websiteUrl + '/products' : ''));
-            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl });
+            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl, rawLine: l.trim() });
           }
         });
+      }
+
+      // Check if user is asking for a specific product or item
+      var focusedProduct = null;
+      var highestProdScore = 0;
+      var stopWords = {
+        'i':1, 'me':1, 'my':1, 'we':1, 'our':1, 'you':1, 'your':1, 'want':1, 'need':1, 'buy':1,
+        'purchase':1, 'order':1, 'looking':1, 'for':1, 'a':1, 'an':1, 'the':1, 'give':1,
+        'how':1, 'much':1, 'is':1, 'are':1, 'what':1, 'about':1, 'show':1, 'tell':1,
+        'details':1, 'of':1, 'cost':1, 'price':1, 'can':1, 'get':1, 'please':1, 'to':1,
+        'do':1, 'have':1, 'there':1, 'like':1, 'interested':1, 'in':1, 'some':1
+      };
+      var queryTokensList = (lower || '').match(/[a-z0-9]+/g) || [];
+      var meaningfulTokens = queryTokensList.filter(function(t) { return !stopWords[t] && t.length >= 2; });
+
+      if (detectedProducts.length > 0 && meaningfulTokens.length > 0) {
+        var queryText = lower;
+        for (var pi = 0; pi < detectedProducts.length; pi++) {
+          var p = detectedProducts[pi];
+          var pNameLower = p.name.toLowerCase();
+          var pTokens = (pNameLower.match(/[a-z0-9]+/g) || []);
+          var pScore = 0;
+
+          // Full product name match
+          if (queryText.indexOf(pNameLower) !== -1) {
+            pScore += 25;
+          }
+
+          // First / brand word match (e.g. "Naviforce", "Curren", "Casio", "Apple", "Samsung", "HP", "Lenovo")
+          var brandWord = pTokens[0];
+          if (brandWord && brandWord.length >= 3 && queryText.indexOf(brandWord) !== -1) {
+            pScore += 10;
+          }
+
+          // Individual token matches
+          meaningfulTokens.forEach(function(token) {
+            if (pTokens.indexOf(token) !== -1) {
+              var isCategoryGeneric = /^(watch|watches|phone|phones|laptop|laptops|tv|tvs|smart|device|men|mens|women|womens)$/i.test(token);
+              pScore += isCategoryGeneric ? 1 : 5;
+            } else if (pNameLower.indexOf(token) !== -1 && token.length >= 4) {
+              pScore += 3;
+            }
+          });
+
+          if (pScore > highestProdScore) {
+            highestProdScore = pScore;
+            focusedProduct = { product: p, index: pi, score: pScore };
+          }
+        }
+      }
+
+      // If user specifically asked for an item, promote that item to top position
+      if (focusedProduct && focusedProduct.score >= 5) {
+        var chosenProd = detectedProducts.splice(focusedProduct.index, 1)[0];
+        detectedProducts.unshift(chosenProd);
+      }
+
+      // Build focused or catalog reply text
+      var finalAnswerText = best.answer;
+      if (focusedProduct && focusedProduct.score >= 5) {
+        var targetProd = detectedProducts[0];
+        var allLines = best.answer.split('\n');
+        var matchingLine = '';
+        var footerLines = [];
+        var pastBullets = false;
+
+        allLines.forEach(function(line) {
+          var trimmed = line.trim();
+          if (!trimmed) return;
+          if (/^[•\*\-]\s*\*\*/.test(trimmed)) {
+            if (trimmed.toLowerCase().indexOf(targetProd.name.toLowerCase()) !== -1 ||
+                (targetProd.rawLine && trimmed.indexOf(targetProd.rawLine) !== -1)) {
+              matchingLine = trimmed;
+            }
+            pastBullets = true;
+          } else if (pastBullets) {
+            footerLines.push(trimmed);
+          }
+        });
+
+        if (matchingLine) {
+          var footerText = footerLines.length > 0
+            ? footerLines.join('\n\n')
+            : 'All items are covered by official warranty, customer protection, and doorstep delivery.';
+          finalAnswerText = 'Here are the details for **' + targetProd.name + '**:\n\n' +
+            matchingLine + '\n\n' +
+            footerText + '\n\nYou can order directly below:';
+        }
       }
 
       if (isSaasMode) {
@@ -1272,7 +1360,12 @@
             payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '') + ':card'
           });
 
-          if (detectedProducts.length > 1) {
+          if (focusedProduct && focusedProduct.score >= 5) {
+            faqQuickReplies.push({
+              label: '🔍 View all options',
+              payload: best.question || 'What other options do you offer?'
+            });
+          } else if (detectedProducts.length > 1) {
             var secondProd = detectedProducts[1];
             var secondSym = (secondProd.currency === 'USD' || secondProd.currency === '$') ? '$' : 'KES ';
             var secondShort = secondProd.name.length > 18 ? secondProd.name.slice(0, 16) + '...' : secondProd.name;
@@ -1317,7 +1410,7 @@
 
       return {
         intent: 'faq',
-        reply: replyPrefix + best.answer + '\n\n' + followUpText,
+        reply: replyPrefix + finalAnswerText + '\n\n' + followUpText,
         suggestedQuickReplies: faqQuickReplies,
         lastFollowUp: typeof followUpObj === 'object' ? followUpObj : null,
         topic: best.question || ''

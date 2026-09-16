@@ -2861,7 +2861,7 @@ window.addEventListener('botly:payment', async (event) => {
   </div>
 
   <!-- Chatbot Bundle -->
-  <script src="../dist/insurance-chatbot.js?v=2.2.1"></script>
+  <script src="../dist/insurance-chatbot.js?v=2.2.2"></script>
 
   <!-- Studio Wizard Logic -->
   <script>
@@ -3662,7 +3662,7 @@ window.addEventListener('botly:payment', async (event) => {
             path: '/watches-sunglasses',
             category: 'services',
             wordCount: 680,
-            excerpt: 'Curren Chronograph (KES 2,499), Casio Vintage (KES 3,850), Smart Fitness Tracker (KES 1,950), Apple Watch Series 9 (KES 64,000).',
+            excerpt: 'Curren Chronograph (KES 2,499), Casio Vintage (KES 3,850), Naviforce Military Watch (KES 2,999), Apple Watch Series 9 (KES 64,000).',
             selected: true,
             qas: [
               {
@@ -4876,6 +4876,11 @@ window.addEventListener('botly:payment', async (event) => {
           var container = mount.querySelector('.ins-chatbot-container');
           if (container) container.style.backgroundColor = wizardState.backgroundColor || '#ffffff';
         }
+
+        // Auto-persist active bot configuration changes to localStorage
+        if (window.BotlyChatbotManager && typeof BotlyChatbotManager.syncActiveBotFromUI === 'function') {
+          BotlyChatbotManager.syncActiveBotFromUI();
+        }
       } catch(e) {
         console.error('Botly Live Preview init error:', e);
       }
@@ -5017,6 +5022,23 @@ window.addEventListener('botly:payment', async (event) => {
         if (emailEl && emailEl.value.trim()) wizardState.supportEmail = emailEl.value.trim();
         var phoneEl = document.getElementById('wiz-support-phone');
         if (phoneEl && phoneEl.value.trim()) wizardState.supportPhone = phoneEl.value.trim();
+        var wUrlEl = document.getElementById('wiz-website-url');
+        if (wUrlEl && wUrlEl.value.trim()) wizardState.websiteUrl = wUrlEl.value.trim();
+
+        var chkItemEl = document.getElementById('wiz-checkout-item');
+        var chkAmtEl = document.getElementById('wiz-checkout-amount');
+        var chkCurEl = document.getElementById('wiz-checkout-currency');
+        var chkUrlEl = document.getElementById('wiz-checkout-url');
+        var chkBizEl = document.getElementById('wiz-mpesa-business');
+        var chkNumEl = document.getElementById('wiz-mpesa-number');
+
+        if (!wizardState.checkoutConfig) wizardState.checkoutConfig = {};
+        if (chkItemEl && chkItemEl.value.trim()) wizardState.checkoutConfig.itemName = chkItemEl.value.trim();
+        if (chkAmtEl && chkAmtEl.value.trim()) wizardState.checkoutConfig.amount = parseFloat(chkAmtEl.value.trim()) || wizardState.checkoutConfig.amount;
+        if (chkCurEl && chkCurEl.value.trim()) wizardState.checkoutConfig.currency = chkCurEl.value.trim();
+        if (chkUrlEl && chkUrlEl.value.trim()) wizardState.checkoutConfig.externalUrl = chkUrlEl.value.trim();
+        if (chkBizEl && chkBizEl.value.trim()) wizardState.checkoutConfig.mpesaBusinessName = chkBizEl.value.trim();
+        if (chkNumEl && chkNumEl.value.trim()) wizardState.checkoutConfig.mpesaNumber = chkNumEl.value.trim();
 
         bot.companyName = wizardState.companyName;
         bot.botName = wizardState.botName;
@@ -5171,6 +5193,22 @@ window.addEventListener('botly:payment', async (event) => {
         var wUrlEl = document.getElementById('wiz-website-url');
         if (wUrlEl) wUrlEl.value = wizardState.websiteUrl;
 
+        // Restore checkout inputs
+        var chkItemEl = document.getElementById('wiz-checkout-item');
+        var chkAmtEl = document.getElementById('wiz-checkout-amount');
+        var chkCurEl = document.getElementById('wiz-checkout-currency');
+        var chkUrlEl = document.getElementById('wiz-checkout-url');
+        var chkBizEl = document.getElementById('wiz-mpesa-business');
+        var chkNumEl = document.getElementById('wiz-mpesa-number');
+        if (wizardState.checkoutConfig) {
+          if (chkItemEl && wizardState.checkoutConfig.itemName) chkItemEl.value = wizardState.checkoutConfig.itemName;
+          if (chkAmtEl && wizardState.checkoutConfig.amount) chkAmtEl.value = wizardState.checkoutConfig.amount;
+          if (chkCurEl && wizardState.checkoutConfig.currency) chkCurEl.value = wizardState.checkoutConfig.currency;
+          if (chkUrlEl && wizardState.checkoutConfig.externalUrl) chkUrlEl.value = wizardState.checkoutConfig.externalUrl;
+          if (chkBizEl && wizardState.checkoutConfig.mpesaBusinessName) chkBizEl.value = wizardState.checkoutConfig.mpesaBusinessName;
+          if (chkNumEl && wizardState.checkoutConfig.mpesaNumber) chkNumEl.value = wizardState.checkoutConfig.mpesaNumber;
+        }
+
         // Update Logo
         if (wizardState.logoUrl && typeof applyLogoUrl === 'function') {
           applyLogoUrl(wizardState.logoUrl);
@@ -5188,9 +5226,11 @@ window.addEventListener('botly:payment', async (event) => {
 
         // Update FAQs & chunks
         if (typeof renderFaqsList === 'function') renderFaqsList();
-        if (typeof renderDocChunks === 'function') renderDocChunks();
+        if (typeof renderDocumentChunksPreview === 'function') renderDocumentChunksPreview();
         if (typeof renderWebsiteChunksPreview === 'function') renderWebsiteChunksPreview();
+        if (typeof updateMemoryStats === 'function') updateMemoryStats();
 
+        // Restore website pages panel if crawled/indexed pages exist
         var pagesPanel = document.getElementById('website-pages-panel');
         if (pagesPanel) {
           if (wizardState.indexedWebsitePages && wizardState.indexedWebsitePages.length > 0) {
@@ -5198,6 +5238,26 @@ window.addEventListener('botly:payment', async (event) => {
             if (typeof renderDiscoveredWebPages === 'function') renderDiscoveredWebPages();
           } else {
             pagesPanel.style.display = 'none';
+          }
+        }
+
+        // Restore Website Bot Tuned banner
+        var tunedBanner = document.getElementById('website-bot-tuned-banner');
+        var tunedDetails = document.getElementById('website-bot-tuned-details');
+        if (tunedBanner) {
+          if (wizardState.websiteChunks && wizardState.websiteChunks.length > 0) {
+            tunedBanner.style.display = 'block';
+            if (tunedDetails) {
+              var selPagesCount = (wizardState.indexedWebsitePages && wizardState.indexedWebsitePages.length > 0)
+                ? wizardState.indexedWebsitePages.filter(function(p){ return p.selected; }).length
+                : 0;
+              var targetName = (wizardState.activeWebProfile && wizardState.activeWebProfile.companyName) || wizardState.companyName;
+              tunedDetails.innerHTML =
+                '<strong>' + (selPagesCount || 'Website') + ' pages indexed (' + wizardState.websiteChunks.length + ' Q&amp;As in memory)</strong>. ' +
+                'Persona and live preview active for <strong>' + escapeHtml(targetName) + '</strong>.';
+            }
+          } else {
+            tunedBanner.style.display = 'none';
           }
         }
 
@@ -5291,6 +5351,7 @@ window.addEventListener('botly:payment', async (event) => {
         getAllBots: getAllBots,
         getActiveBotId: getActiveBotId,
         syncActiveBotFromUI: syncActiveBotFromUI,
+        saveCurrentBot: syncActiveBotFromUI,
         createNewBot: createNewBot,
         switchBot: switchBot,
         deleteBot: deleteBot,
@@ -6186,10 +6247,22 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
         });
       }
 
+      // Auto-save active bot configuration and training memory when window unloads
+      window.addEventListener('beforeunload', function() {
+        if (window.BotlyChatbotManager && typeof BotlyChatbotManager.syncActiveBotFromUI === 'function') {
+          BotlyChatbotManager.syncActiveBotFromUI();
+        }
+      });
+
       // Check URL query parameters or hash for direct Webhooks access or New Chatbot initialization
       try {
         var urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('new')) {
+          // Immediately strip ?new so that refreshing does NOT create another new bot and erase user data!
+          try {
+            var cleanUrl = window.location.pathname + (window.location.hash || '');
+            window.history.replaceState({}, document.title, cleanUrl);
+          } catch(e) {}
           setTimeout(function() {
             handleCreateNewCompanyBot();
           }, 150);

@@ -285,8 +285,93 @@ export class IntentEngine {
             const pAmt = parseFloat(pMatch[3].replace(/,/g, ''));
             const urlMatch = l.match(/\((https?:\/\/[^)]+)\)/i);
             const pUrl = (urlMatch ? urlMatch[1] : null) || (bestFaq.item.sourceUrl || (this.config.company?.websiteUrl ? this.config.company.websiteUrl + '/products' : ''));
-            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl });
+            detectedProducts.push({ name: pName, price: pAmt, currency: pCur, url: pUrl, rawLine: l.trim() });
           }
+        }
+      }
+
+      // Check if user is asking for a specific product or item
+      let focusedProduct = null;
+      let highestProdScore = 0;
+      const stopWords = new Set([
+        'i', 'me', 'my', 'we', 'our', 'you', 'your', 'want', 'need', 'buy',
+        'purchase', 'order', 'looking', 'for', 'a', 'an', 'the', 'give',
+        'how', 'much', 'is', 'are', 'what', 'about', 'show', 'tell',
+        'details', 'of', 'cost', 'price', 'can', 'get', 'please', 'to',
+        'do', 'have', 'there', 'like', 'interested', 'in', 'some'
+      ]);
+      const meaningfulTokens = queryTokens.filter(t => !stopWords.has(t) && t.length >= 2);
+
+      if (detectedProducts.length > 0 && meaningfulTokens.length > 0) {
+        const queryText = lower;
+        for (let pi = 0; pi < detectedProducts.length; pi++) {
+          const p = detectedProducts[pi];
+          const pNameLower = p.name.toLowerCase();
+          const pTokens = pNameLower.split(/[^a-z0-9]+/i).filter(Boolean);
+          let pScore = 0;
+
+          // Full product name match
+          if (queryText.includes(pNameLower)) {
+            pScore += 25;
+          }
+
+          // First / brand word match (e.g. "Naviforce", "Curren", "Casio", "Apple", "Samsung", "HP", "Lenovo")
+          const brandWord = pTokens[0];
+          if (brandWord && brandWord.length >= 3 && queryText.includes(brandWord)) {
+            pScore += 10;
+          }
+
+          // Individual token matches
+          for (const token of meaningfulTokens) {
+            if (pTokens.includes(token)) {
+              const isCategoryGeneric = /^(watch|watches|phone|phones|laptop|laptops|tv|tvs|smart|device|men|mens|women|womens)$/i.test(token);
+              pScore += isCategoryGeneric ? 1 : 5;
+            } else if (pNameLower.includes(token) && token.length >= 4) {
+              pScore += 3;
+            }
+          }
+
+          if (pScore > highestProdScore) {
+            highestProdScore = pScore;
+            focusedProduct = { product: p, index: pi, score: pScore };
+          }
+        }
+      }
+
+      // If user specifically asked for an item, promote that item to top position
+      if (focusedProduct && focusedProduct.score >= 5) {
+        const [chosenProd] = detectedProducts.splice(focusedProduct.index, 1);
+        detectedProducts.unshift(chosenProd);
+      }
+
+      // Build focused or catalog reply text
+      let finalAnswerText = bestFaq.item.answer;
+      if (focusedProduct && focusedProduct.score >= 5) {
+        const targetProd = detectedProducts[0];
+        const allLines = bestFaq.item.answer.split('\n');
+        let matchingLine = '';
+        const footerLines = [];
+        let pastBullets = false;
+
+        for (const line of allLines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (/^[•\*\-]\s*\*\*/.test(trimmed)) {
+            if (trimmed.toLowerCase().includes(targetProd.name.toLowerCase()) ||
+                (targetProd.rawLine && trimmed.includes(targetProd.rawLine))) {
+              matchingLine = trimmed;
+            }
+            pastBullets = true;
+          } else if (pastBullets) {
+            footerLines.push(trimmed);
+          }
+        }
+
+        if (matchingLine) {
+          const footerText = footerLines.length > 0
+            ? footerLines.join('\n\n')
+            : 'All items are covered by official warranty, customer protection, and doorstep delivery.';
+          finalAnswerText = `Here are the details for **${targetProd.name}**:\n\n${matchingLine}\n\n${footerText}\n\nYou can order directly below:`;
         }
       }
 
@@ -310,7 +395,12 @@ export class IntentEngine {
             payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}:card`
           });
 
-          if (detectedProducts.length > 1) {
+          if (focusedProduct && focusedProduct.score >= 5) {
+            quickReplies.push({
+              label: '🔍 View all options',
+              payload: bestFaq.item.question || 'What other options do you offer?'
+            });
+          } else if (detectedProducts.length > 1) {
             const secProd = detectedProducts[1];
             const secSym = (secProd.currency === 'USD' || secProd.currency === '$') ? '$' : 'KES ';
             const secShort = secProd.name.length > 18 ? secProd.name.slice(0, 16) + '...' : secProd.name;
@@ -338,7 +428,7 @@ export class IntentEngine {
         intent: 'faq',
         confidence: bestFaq.score,
         matchedItem: bestFaq.item,
-        reply: `${replyPrefix}${bestFaq.item.answer}\n\n${followUp}`,
+        reply: `${replyPrefix}${finalAnswerText}\n\n${followUp}`,
         suggestedQuickReplies: quickReplies,
         quickReplies: quickReplies
       };

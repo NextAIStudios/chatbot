@@ -465,8 +465,8 @@ const catalogEngine = new IntentEngine({
   customKnowledge: [
     {
       question: 'Do you sell wristwatches, luxury watches, and smartwatches on Jumia?',
-      answer: "Yes! Jumia Kenya offers 10,000+ watches and smart accessories across all budgets:\n• **Curren Men's Luxury Chronograph Watch** — **KES 2,499** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Casio Vintage Digital Gold Watch** — **KES 3,850** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Smart Fitness Band 8 Water Resistant** — **KES 1,950** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Apple Watch Series 9 GPS 45mm** — **KES 64,000** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))",
-      keywords: ['watch', 'watches', 'smartwatch', 'curren', 'casio', 'apple watch', 'wrist watch', 'jewelry'],
+      answer: "Yes! Jumia Kenya offers 10,000+ watches and smart accessories across all budgets:\n• **Curren Men's Luxury Chronograph Watch** — **KES 2,499** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Casio Vintage Digital Gold Watch** — **KES 3,850** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Smart Fitness Band 8 Water Resistant** — **KES 1,950** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Apple Watch Series 9 GPS 45mm** — **KES 64,000** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))\n• **Naviforce Dual Display Military Leather Watch** — **KES 2,999** ([View Watch](https://www.jumia.co.ke/watches-sunglasses/))",
+      keywords: ['watch', 'watches', 'smartwatch', 'curren', 'casio', 'apple watch', 'naviforce', 'leather watch', 'wrist watch', 'jewelry'],
       source: 'website',
       sourceUrl: 'https://www.jumia.co.ke/watches-sunglasses/',
       category: 'website'
@@ -500,6 +500,21 @@ assert(buyWatchReply.payload.includes(encodeURIComponent('https://www.jumia.co.k
 // Test 15.4: SaaS pricing and features query accurately matches SaaS tier chunk
 const saasQuery = catalogEngine.classify('What are your SaaS pricing plans and features?');
 assert(saasQuery.intent === 'faq' && saasQuery.reply.includes('Growth Plan') && saasQuery.reply.includes('$49'), 'SaaS query accurately returns multi-tier pricing and features');
+
+// Test 15.5: Specific product inquiry ("i want Naviforce Dual Display Military Leather Watch") focuses exclusively on that item
+const naviforceQuery = catalogEngine.classify('i want Naviforce Dual Display Military Leather Watch');
+assert(naviforceQuery.intent === 'faq', 'Specific item inquiry accurately matches knowledge base FAQ');
+assert(naviforceQuery.reply.includes('Naviforce Dual Display Military Leather Watch'), 'Reply focuses on requested Naviforce watch');
+assert(!naviforceQuery.reply.includes('Curren'), 'Reply filters out unrelated items (Curren) when specific item is inquired');
+const naviReplies = naviforceQuery.quickReplies || [];
+const buyNavi = naviReplies.find(r => r.label.includes('Naviforce'));
+assert(buyNavi && buyNavi.payload.includes('2999') && buyNavi.payload.includes('KES'), 'Checkout quick reply button focuses specifically on Naviforce at KES 2,999');
+
+// Test 15.6: Specific inquiry for Casio Vintage Watch focuses exclusively on Casio
+const casioQuery = catalogEngine.classify('Casio Vintage Digital Gold Watch');
+assert(casioQuery.reply.includes('Casio Vintage') && !casioQuery.reply.includes('Curren'), 'Casio inquiry focuses on Casio and omits Curren');
+const buyCasio = (casioQuery.quickReplies || []).find(r => r.label.includes('Casio'));
+assert(buyCasio && buyCasio.payload.includes('3850') && buyCasio.payload.includes('KES'), 'Casio checkout quick reply focuses on KES 3,850');
 
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
