@@ -21,27 +21,28 @@
     ================================================== */
     * { box-sizing: border-box; }
 
-    /* ── Desktop: Hide mobile-only elements ── */
-    .customizer-brand-title .brand-short { display: none !important; }
-    .customizer-brand-title .brand-long  { display: inline !important; }
+    /* ── Desktop & Mobile Brand Title ── */
+    .customizer-brand-title              { display: block !important; }
+    .customizer-brand-title .brand-long  { display: inline-block !important; }
     .customizer-mobile-actions           { display: none !important; }
     .studio-hamburger-btn                { display: none !important; }
-    .studio-mobile-drawer                { display: none !important; }
+    .studio-mobile-drawer                { display: none; }
     .studio-mobile-drawer.open           { display: block !important; }
 
-    /* ── Mobile (≤768px): Switch to compact brand + hamburger ── */
+    /* ── Mobile (≤768px): Brand always visible + mobile actions ── */
     @media (max-width: 768px) {
-      .customizer-brand-title .brand-long  { display: none !important; }
-      .customizer-brand-title .brand-short { display: inline !important; }
+      .customizer-brand-title              { display: block !important; font-size: 15px !important; font-weight: 800 !important; color: #18221c !important; }
+      .customizer-brand-title .brand-long  { display: inline-block !important; font-size: 15px !important; font-weight: 800 !important; color: #18221c !important; }
       .customizer-nav-actions              { display: none !important; }
-      .customizer-mobile-actions           { display: flex !important; align-items: center; gap: 8px; }
-      .studio-hamburger-btn                { display: flex !important; }
+      .customizer-mobile-actions           { display: flex !important; align-items: center; gap: 6px; }
+      .studio-hamburger-btn                { display: inline-flex !important; }
       .customizer-subtext                  { display: none !important; }
     }
 
     /* ── Small phones (≤480px) ── */
     @media (max-width: 480px) {
-      .customizer-brand-title .brand-short { font-size: 14px !important; }
+      .customizer-brand-title              { font-size: 14px !important; }
+      .customizer-brand-title .brand-long  { font-size: 14px !important; }
     }
     body {
       margin: 0;
@@ -794,11 +795,6 @@
           <span>Chatbots (<span id="bots-count-badge">1</span>)</span>
         </button>
 
-        <button type="button" id="btn-nav-new-chatbot" onclick="handleCreateNewCompanyBot()" class="customizer-new-bot-btn" title="Create a New Chatbot for another company">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span>New Chatbot</span>
-        </button>
-
         <button type="button" onclick="openWebhooksModal()" class="customizer-webhooks-btn" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Webhook &amp; API Console in Sandbox">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Webhooks
@@ -832,13 +828,15 @@
         </button>
       </div>
 
-      <!-- Actions (Mobile View: Quick Leads Badge + Hamburger Menu) -->
+      <!-- Actions (Mobile View: Quick Bots + Leads Badges + Hamburger Menu) -->
       <div class="customizer-mobile-actions" id="customizer-mobile-actions" style="display: none;">
-        <button type="button" onclick="toggleBotsSidebar()" class="bots-sidebar-toggle-btn" style="padding: 4px 10px; font-size: 11px;" title="My Chatbots">
-          Bots (<span id="bots-count-badge-mobile">1</span>)
+        <button type="button" id="btn-toggle-bots-sidebar-mobile" onclick="toggleBotsSidebar()" class="mobile-nav-btn mobile-bots-btn" title="My Chatbots">
+          <span>Bots</span>
+          <span class="mobile-nav-badge mobile-bots-badge" id="bots-count-badge-mobile">1</span>
         </button>
-        <button type="button" onclick="openLeadsModal()" class="customizer-leads-btn mobile-quick-leads" title="Captured Leads">
-          Leads <span id="nav-leads-badge-mobile" style="background: #18221c; color: #9be553; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 800;">0</span>
+        <button type="button" onclick="openLeadsModal()" class="mobile-nav-btn mobile-leads-btn" title="Captured Leads">
+          <span>Leads</span>
+          <span class="mobile-nav-badge mobile-leads-badge" id="nav-leads-badge-mobile">0</span>
         </button>
         <button type="button" id="btn-studio-hamburger" class="studio-hamburger-btn" onclick="toggleStudioMobileMenu()" aria-label="Open Studio Menu" title="Open Menu">
           <span class="ham-line ham-line-1"></span>
@@ -850,7 +848,7 @@
   </header>
 
   <!-- Studio Mobile Hamburger Drawer -->
-  <div id="studio-mobile-drawer" class="studio-mobile-drawer" style="display: none;" onclick="closeStudioMobileMenu(event)">
+  <div id="studio-mobile-drawer" class="studio-mobile-drawer" onclick="closeStudioMobileMenu(event)">
     <div class="studio-mobile-drawer-content" onclick="event.stopPropagation()">
       <div class="drawer-header">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -4150,6 +4148,7 @@ window.addEventListener('botly:payment', async (event) => {
     function toggleBotsSidebar(forceState, silent) {
       var sidebar = document.getElementById('chatbots-sidebar');
       var btn = document.getElementById('btn-toggle-bots-sidebar');
+      var btnMobile = document.getElementById('btn-toggle-bots-sidebar-mobile');
       var backdrop = document.getElementById('chatbots-sidebar-backdrop');
       if (!sidebar) return;
 
@@ -4162,10 +4161,12 @@ window.addEventListener('botly:payment', async (event) => {
           sidebar.classList.remove('collapsed');
           if (backdrop) backdrop.classList.add('show');
           if (btn) btn.classList.add('active');
+          if (btnMobile) btnMobile.classList.add('active');
         } else {
           sidebar.classList.remove('mobile-open');
           if (backdrop) backdrop.classList.remove('show');
           if (btn) btn.classList.remove('active');
+          if (btnMobile) btnMobile.classList.remove('active');
         }
         return;
       }
@@ -4901,23 +4902,29 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       var drawer = document.getElementById('studio-mobile-drawer');
       var btn = document.getElementById('btn-studio-hamburger');
       if (!drawer) return;
-      var isOpen = drawer.style.display === 'block';
+      var isOpen = drawer.classList.contains('open');
       if (isOpen) {
+        drawer.classList.remove('open');
         drawer.style.display = 'none';
         if (btn) btn.classList.remove('active');
         document.body.style.overflow = '';
       } else {
         drawer.style.display = 'block';
+        drawer.offsetHeight; // trigger reflow
+        drawer.classList.add('open');
         if (btn) btn.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
     };
 
     window.closeStudioMobileMenu = function(e) {
-      if (e && e.target && e.target.classList && e.target.classList.contains('studio-mobile-drawer-content')) return;
+      if (e && e.target && e.target.closest && e.target.closest('.studio-mobile-drawer-content')) return;
       var drawer = document.getElementById('studio-mobile-drawer');
       var btn = document.getElementById('btn-studio-hamburger');
-      if (drawer) drawer.style.display = 'none';
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.style.display = 'none';
+      }
       if (btn) btn.classList.remove('active');
       document.body.style.overflow = '';
     };
@@ -4934,7 +4941,8 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       // Close drawer if resizing to desktop
       if (!isMobile) {
         var drawer = document.getElementById('studio-mobile-drawer');
-        if (drawer && drawer.style.display === 'block') {
+        if (drawer && (drawer.classList.contains('open') || drawer.style.display === 'block')) {
+          drawer.classList.remove('open');
           drawer.style.display = 'none';
           document.body.style.overflow = '';
         }
