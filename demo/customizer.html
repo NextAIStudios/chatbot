@@ -1829,17 +1829,6 @@
               </div>
             </div>
 
-            <!-- Quick sample links for testing -->
-            <div>
-              <span style="font-size: 11px; font-weight: 700; color: #64748b;">Popular Website Profiles:</span>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
-                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://kenyanextgen.co.ke')">kenyanextgen.co.ke</button>
-                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://jumia.co.ke')">jumia.co.ke</button>
-                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://acme-studio.io')">acme-studio.io</button>
-                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://botly.ai')">botly.ai</button>
-                <button type="button" class="idea-chip" onclick="setSampleWebsite('https://mycompany.com')">mycompany.com</button>
-              </div>
-            </div>
 
             <button type="button" id="btn-sync-website" onclick="scanAndIndexWebsite()" class="btn-w-next" style="background: #0284c7; padding: 10px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -2861,7 +2850,7 @@ window.addEventListener('botly:payment', async (event) => {
   </div>
 
   <!-- Chatbot Bundle -->
-  <script src="../dist/insurance-chatbot.js?v=2.2.2"></script>
+  <script src="../dist/insurance-chatbot.js?v=2.2.4"></script>
 
   <!-- Studio Wizard Logic -->
   <script>
@@ -3622,6 +3611,8 @@ window.addEventListener('botly:payment', async (event) => {
         companyName: 'Jumia Kenya',
         botName: 'Jumia Shopping Assistant',
         botTitle: 'Order Concierge & Deals Finder',
+        archetype: 'ecommerce',
+        goals: ['catalog_search', 'product_discovery'],
         greeting: 'Jambo! Welcome to Jumia Kenya. Looking for the latest flash sales, watches, phone deals, order tracking, or delivery information? Ask me anything!',
         quickReplies: [
           { label: '⌚ Watches & Accessories', payload: 'I am looking for a watch' },
@@ -3652,7 +3643,7 @@ window.addEventListener('botly:payment', async (event) => {
                 id: 'web_jumia_home',
                 question: 'What is Jumia Kenya and what products do you sell?',
                 answer: 'Jumia Kenya is East Africa’s leading online shopping destination, offering over 1 million authentic products across smartphones, electronics, watches, computing, fashion, beauty, home appliances, and groceries with secure nationwide delivery.',
-                keywords: ['jumia', 'shopping', 'products', 'store', 'marketplace', 'kenya', 'mall', 'buy', 'online shopping']
+                keywords: ['about jumia', 'what is jumia', 'company overview', 'jumia kenya marketplace', 'who is jumia']
               }
             ]
           },
@@ -3997,121 +3988,45 @@ window.addEventListener('botly:payment', async (event) => {
       }
     };
 
-    // Generic dynamic synthesizer for ANY custom domain (e-commerce, SaaS, or agency)
+    // Clean dynamic synthesizer for custom domains (absence of evidence produces NO fake plans or checkout)
     function generateSyntheticDomainPages(url) {
       var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
       var baseName = domain.split('.')[0];
       var cleanName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
-      var isEcommerce = /shop|store|mall|mart|market|buy|fashion|retail|deal/i.test(domain);
-      var isSaasDomain = /app|io|ai|cloud|tech|soft|dev|suite|hub/i.test(domain);
-
-      var primaryItem = isEcommerce ? (cleanName + ' Premium Edition') : (cleanName + ' Professional Plan');
-      var primaryPrice = isEcommerce ? 2499 : 49;
-      var primaryCur = isEcommerce ? 'KES' : 'USD';
 
       return {
         companyName: cleanName,
         botName: cleanName + ' Concierge',
-        botTitle: isEcommerce ? 'Order & Shopping Concierge' : 'AI Knowledge & Support Concierge',
-        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our ' + (isEcommerce ? 'products, orders, or delivery' : 'services, pricing, or support') + '?',
+        botTitle: 'AI Inquiries & Knowledge Concierge',
+        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our services or inquiries?',
         quickReplies: [
-          { label: isEcommerce ? '🛍️ Best Sellers' : '💼 Our Services', payload: isEcommerce ? 'What are your top products and pricing?' : 'What services or products does ' + cleanName + ' offer?' },
-          { label: '💰 Pricing & Plans', payload: 'What are your pricing packages and terms?' },
-          { label: '💳 Instant Checkout', payload: 'checkout_now' },
-          { label: '📞 Contact Support', payload: 'How can I get in touch with the team?' }
+          { label: '💼 Our Services', payload: 'What services or solutions does ' + cleanName + ' offer?' },
+          { label: '📞 Contact Team', payload: 'How can I get in touch with the team?' }
         ],
         checkoutConfig: {
-          itemName: primaryItem,
-          amount: primaryPrice,
-          currency: primaryCur,
-          externalUrl: url.replace(/\/$/, '') + '/checkout',
+          itemName: '',
+          amount: '',
+          currency: 'KES',
+          externalUrl: '',
           mpesaBusinessName: cleanName,
-          mpesaNumber: '123456',
+          mpesaNumber: '',
           mpesaType: 'buy_goods'
         },
         pages: [
           {
             id: 'gen_home',
-            title: cleanName + ' - Home & Company Overview',
+            title: cleanName + ' - Overview',
             path: '/',
             category: 'overview',
-            wordCount: 420,
-            excerpt: 'Welcome to ' + cleanName + '. We deliver high-quality solutions, verified deliverables, and 24/7 client satisfaction.',
+            wordCount: 180,
+            excerpt: 'Official website for ' + cleanName + '.',
             selected: true,
             qas: [
               {
                 id: 'web_gen_home',
                 question: 'What is ' + cleanName + ' and what do you do?',
-                answer: 'Welcome to ' + cleanName + '! We are a leading provider of tailored products, solutions, and automated workflows designed to help our customers succeed. Browse our catalog or complete an order right here in chat.',
-                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'mission', 'welcome', 'solutions', 'store']
-              }
-            ]
-          },
-          {
-            id: 'gen_services',
-            title: cleanName + ' - Products & Solutions Catalog',
-            path: '/products',
-            category: 'services',
-            wordCount: 560,
-            excerpt: 'Curated products & services: Starter Package (' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '), Professional Solution (' + primaryCur + ' ' + (isEcommerce ? '2,499' : '49') + '), Enterprise (' + primaryCur + ' ' + (isEcommerce ? '6,500' : '199') + ').',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_services',
-                question: 'What products or services do you offer?',
-                answer: 'At ' + cleanName + ', we provide top-rated offerings with verified quality and direct checkout:\n\n• **' + cleanName + ' Starter Package** — **' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n• **' + cleanName + ' Professional Edition** — **' + primaryCur + ' ' + (isEcommerce ? '2,499' : '49') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n• **' + cleanName + ' Enterprise Tier** — **' + primaryCur + ' ' + (isEcommerce ? '6,500' : '199') + '** [View Details ↗](' + url.replace(/\/$/, '') + '/products)\n\nAll items are available for instant 1-click in-chat checkout via M-Pesa or Card.',
-                keywords: ['services', 'offerings', 'products', 'solutions', 'features', 'items', 'catalog', 'capabilities', 'buy', 'order']
-              }
-            ]
-          },
-          {
-            id: 'gen_pricing',
-            title: cleanName + ' - Pricing Plans & Direct Checkout',
-            path: '/pricing',
-            category: 'pricing',
-            wordCount: 410,
-            excerpt: 'Transparent pricing starting at ' + primaryCur + ' ' + primaryPrice + ' with immediate M-Pesa & Card payment options.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_pricing',
-                question: 'What are your pricing packages and payment terms?',
-                answer: 'Our pricing is 100% transparent with zero hidden fees:\n\n• **Starter Tier**: ' + primaryCur + ' ' + (isEcommerce ? '1,500' : '29') + '\n• **Standard / Pro Tier**: ' + primaryCur + ' ' + primaryPrice + '\n• **Custom Enterprise**: Tailored upon request.\n\nYou can complete your payment instantly via M-Pesa or Card right here in chat or at [Secure Checkout ↗](' + url.replace(/\/$/, '') + '/checkout).',
-                keywords: ['pricing', 'cost', 'plans', 'rate', 'estimate', 'quote', 'package', 'price', 'payment', 'terms', 'checkout']
-              }
-            ]
-          },
-          {
-            id: 'gen_support',
-            title: cleanName + ' - Customer Support & Help Desk',
-            path: '/support',
-            category: 'support',
-            wordCount: 320,
-            excerpt: 'Fast support desk, inquiry ticketing, phone and email handover, and prompt issue escalation.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_support',
-                question: 'How do I contact your support team or request assistance?',
-                answer: 'You can reach the ' + cleanName + ' team at care@' + domain + ', or leave your name and phone number right here in this chat for an immediate callback.',
-                keywords: ['support', 'contact', 'help', 'email', 'phone', 'desk', 'hours', 'reach']
-              }
-            ]
-          },
-          {
-            id: 'gen_policies',
-            title: cleanName + ' - Customer Guarantees & Terms',
-            path: '/terms',
-            category: 'policies',
-            wordCount: 380,
-            excerpt: '100% satisfaction guarantee, secure SSL encrypted payments, and fast order fulfillment.',
-            selected: false,
-            qas: [
-              {
-                id: 'web_gen_terms',
-                question: 'What are your guarantees and policies?',
-                answer: cleanName + ' adheres to strict buyer protection, SSL encrypted payment processing, and high service quality standards. We guarantee client satisfaction on every order.',
-                keywords: ['terms', 'privacy', 'policy', 'guarantee', 'security', 'sla', 'compliance']
+                answer: 'Welcome to ' + cleanName + '! We are dedicated to providing high quality solutions and professional services. Please let us know what you need or how we can assist you.',
+                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'services', 'welcome']
               }
             ]
           }
@@ -4425,7 +4340,7 @@ window.addEventListener('botly:payment', async (event) => {
         }
 
         // Auto-tune Checkout Configuration & Payment Links
-        if (profile.checkoutConfig) {
+        if (profile.checkoutConfig && profile.checkoutConfig.amount && profile.checkoutConfig.itemName) {
           if (profile.checkoutConfig.itemName) wizardState.checkoutConfig.itemName = profile.checkoutConfig.itemName;
           if (profile.checkoutConfig.amount) wizardState.checkoutConfig.amount = profile.checkoutConfig.amount;
           if (profile.checkoutConfig.currency) wizardState.checkoutConfig.currency = profile.checkoutConfig.currency;
@@ -4446,10 +4361,22 @@ window.addEventListener('botly:payment', async (event) => {
           if (chkUrlEl) chkUrlEl.value = wizardState.checkoutConfig.externalUrl;
           if (chkBizEl) chkBizEl.value = wizardState.checkoutConfig.mpesaBusinessName;
           if (chkNumEl) chkNumEl.value = wizardState.checkoutConfig.mpesaNumber;
-        } else if (!wizardState.checkoutConfig.externalUrl && wizardState.websiteUrl) {
-          wizardState.checkoutConfig.externalUrl = wizardState.websiteUrl.replace(/\/$/, '') + '/checkout';
+        } else {
+          // No checkout evidence: clear checkout fields and do not invent
+          wizardState.checkoutConfig.itemName = '';
+          wizardState.checkoutConfig.amount = '';
+          wizardState.checkoutConfig.externalUrl = '';
+          var chkItemEl = document.getElementById('wiz-checkout-item');
+          var chkAmtEl = document.getElementById('wiz-checkout-amount');
           var chkUrlEl = document.getElementById('wiz-checkout-url');
-          if (chkUrlEl) chkUrlEl.value = wizardState.checkoutConfig.externalUrl;
+          if (chkItemEl) chkItemEl.value = '';
+          if (chkAmtEl) chkAmtEl.value = '';
+          if (chkUrlEl) chkUrlEl.value = '';
+
+          var pIdx = wizardState.purposes.indexOf('payment_checkout');
+          if (pIdx !== -1) {
+            wizardState.purposes.splice(pIdx, 1);
+          }
         }
       }
 
@@ -4784,9 +4711,13 @@ window.addEventListener('botly:payment', async (event) => {
 
       // Adaptive quick replies based on active website profile, goals and company memory
       var quickReplies = [];
+      var hasCheckoutCapability = wizardState.purposes.indexOf('payment_checkout') !== -1 && Boolean(wizardState.checkoutConfig && wizardState.checkoutConfig.amount);
 
       if (wizardState.activeWebProfile && wizardState.activeWebProfile.quickReplies && wizardState.activeWebProfile.quickReplies.length > 0) {
-        quickReplies = wizardState.activeWebProfile.quickReplies.slice(0, 3);
+        quickReplies = wizardState.activeWebProfile.quickReplies.filter(function(qr) {
+          if ((qr.payload === 'checkout_now' || qr.payload === 'intent_pay') && !hasCheckoutCapability) return false;
+          return true;
+        }).slice(0, 3);
       } else if (allKnowledge.length > 0) {
         var firstQ = allKnowledge[0].question;
         var qLabel = firstQ.length > 25 ? firstQ.substring(0, 22) + '...' : firstQ;
@@ -4799,19 +4730,26 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (quickReplies.length < 3) {
+      function hasQuickReply(term) {
+        var t = term.toLowerCase();
+        return quickReplies.some(function(q) {
+          return q.label.toLowerCase().indexOf(t) !== -1 || q.payload.toLowerCase().indexOf(t) !== -1;
+        });
+      }
+
+      if (quickReplies.length < 3 && !hasQuickReply('services')) {
         quickReplies.push({ label: 'Our Services', payload: 'What services or programs do you offer?' });
       }
-      if (wizardState.purposes.indexOf('lead_generation') !== -1 && quickReplies.length < 4) {
+      if (wizardState.purposes.indexOf('lead_generation') !== -1 && quickReplies.length < 4 && !hasQuickReply('started')) {
         quickReplies.push({ label: 'Get started', payload: 'How do I get started?' });
       }
-      if (wizardState.purposes.indexOf('payment_checkout') !== -1 && quickReplies.length < 4) {
+      if (hasCheckoutCapability && quickReplies.length < 4 && !hasQuickReply('checkout')) {
         quickReplies.push({ label: 'Pay & Checkout', payload: 'checkout_now' });
       }
-      if (wizardState.purposes.indexOf('consultation_booking') !== -1 && quickReplies.length < 4) {
+      if (wizardState.purposes.indexOf('consultation_booking') !== -1 && quickReplies.length < 4 && !hasQuickReply('consultation') && !hasQuickReply('call')) {
         quickReplies.push({ label: 'Book a Call', payload: 'I want to schedule a consultation session' });
       }
-      if (quickReplies.length < 4) {
+      if (quickReplies.length < 4 && !hasQuickReply('contact') && !hasQuickReply('team')) {
         quickReplies.push({ label: 'Talk to team', payload: 'I want to speak with someone from the team' });
       }
 
@@ -4843,7 +4781,7 @@ window.addEventListener('botly:payment', async (event) => {
           },
           currency: { code: wizardState.checkoutConfig.currency || 'KES', symbol: (wizardState.checkoutConfig.currency === 'USD' ? '$' : 'KES ') },
           checkout: {
-            enabled: wizardState.purposes.indexOf('payment_checkout') !== -1,
+            enabled: hasCheckoutCapability,
             externalUrl: wizardState.checkoutConfig.externalUrl,
             item: wizardState.checkoutConfig.itemName,
             mpesa: {

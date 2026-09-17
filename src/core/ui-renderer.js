@@ -370,6 +370,13 @@ export class UIRenderer {
         btn.className = 'ins-chip-btn';
         btn.textContent = qr.label;
         btn.addEventListener('click', () => {
+          const target = qr.url || qr.payload;
+          if (typeof target === 'string' && /^https?:\/\//i.test(target)) {
+            if (typeof window !== 'undefined' && window.open) {
+              window.open(target, '_blank', 'noopener,noreferrer');
+            }
+            return;
+          }
           if (this.onUserAction) {
             this.onUserAction('QUICK_REPLY', qr.payload || qr.label);
           }

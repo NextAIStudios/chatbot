@@ -472,6 +472,24 @@ const catalogEngine = new IntentEngine({
       category: 'website'
     },
     {
+      id: 'web_jumia_home',
+      question: 'What is Jumia Kenya and what products do you sell?',
+      answer: 'Jumia Kenya is East Africa’s leading online shopping destination, offering over 1 million authentic products across smartphones, electronics, watches, computing, fashion, beauty, home appliances, and groceries with secure nationwide delivery.',
+      keywords: ['about jumia', 'what is jumia', 'company overview', 'jumia kenya marketplace', 'who is jumia'],
+      source: 'website',
+      sourceUrl: 'https://www.jumia.co.ke/',
+      category: 'overview'
+    },
+    {
+      id: 'web_jumia_laptops',
+      question: 'What laptops, MacBooks and computers are available on Jumia?',
+      answer: 'We feature brand new computing laptops from verified Jumia Mall stores:\n\n• **HP 15 Intel Core i5** (8GB RAM, 512GB NVMe SSD, 15.6" FHD) — **KES 48,000** ([View on Jumia](https://www.jumia.co.ke/laptops/))\n• **Apple MacBook Air M2 13.6"** (8GB RAM, 256GB SSD) — **KES 145,000** ([View on Jumia](https://www.jumia.co.ke/laptops/))\n• **Lenovo IdeaPad 3 Core i3** (8GB RAM, 256GB SSD) — **KES 35,000** ([View on Jumia](https://www.jumia.co.ke/laptops/))\n• **Dell Latitude Core i5 Refurbished Grade A** — **KES 26,500** ([View on Jumia](https://www.jumia.co.ke/laptops/))\n\nPre-installed with genuine Windows/macOS and full warranty.',
+      keywords: ['laptop', 'laptops', 'computer', 'computers', 'hp', 'macbook', 'lenovo', 'computing', 'pc', 'core i5', 'core i7', 'dell'],
+      source: 'website',
+      sourceUrl: 'https://www.jumia.co.ke/laptops/',
+      category: 'services'
+    },
+    {
       question: 'What are Botly Pro SaaS pricing plans, features, and API integrations?',
       answer: "Botly Pro offers flexible SaaS subscription tiers:\n• **Starter Plan** — **$15/month** — 1 Chatbot, 1,000 chats/mo, basic customizer.\n• **Growth Plan** — **$49/month** — 5 Chatbots, unlimited chats, M-Pesa + Card checkout, crawler, Webhooks.\n• **Enterprise Plan** — **$199/month** — Dedicated server, custom AI fine-tuning, SLA, priority support.",
       keywords: ['saas', 'pricing', 'plans', 'features', 'growth plan', 'enterprise', 'api', 'webhooks'],
@@ -516,6 +534,167 @@ assert(casioQuery.reply.includes('Casio Vintage') && !casioQuery.reply.includes(
 const buyCasio = (casioQuery.quickReplies || []).find(r => r.label.includes('Casio'));
 assert(buyCasio && buyCasio.payload.includes('3850') && buyCasio.payload.includes('KES'), 'Casio checkout quick reply focuses on KES 3,850');
 
+console.log('\n--- 🛡️ 16. Testing Absence of Evidence & Capability Gating (Phase 1 Bugfix) ---');
+const lawFirmConfig = {
+  mode: 'saas',
+  goals: ['lead_generation', 'consultation_booking'],
+  goal: 'consultation_booking',
+  company: {
+    name: 'Wanzaki Vindu Advocates',
+    websiteUrl: 'https://wanzakivinduadvocates.com/',
+    supportEmail: 'info@wanzakivinduadvocates.com'
+  },
+  checkout: {
+    enabled: false,
+    item: '',
+    amount: null
+  },
+  customKnowledge: [
+    {
+      question: 'What is Wanzaki Vindu Advocates and what do you do?',
+      answer: 'Welcome to Wanzaki Vindu Advocates! We provide premier legal services, dispute resolution, and corporate advisory across Kenya.',
+      source: 'website',
+      keywords: ['wanzakivinduadvocates', 'about', 'services', 'legal', 'advocates']
+    }
+  ]
+};
+
+const lawFirmEngine = new IntentEngine(lawFirmConfig);
+
+// Test 16.1: Pricing inquiry does NOT return $49 or "Professional Plan"
+const lawPricingQuery = lawFirmEngine.classify('What are your pricing packages and plans? Can I get a $49 plan?');
+assert(!lawPricingQuery.reply.includes('$49'), 'Pricing query does NOT return $49 plan when evidence is absent');
+assert(!lawPricingQuery.reply.includes('Professional Plan'), 'Pricing query does NOT return Professional Plan');
+assert(lawPricingQuery.reply.includes('info@wanzakivinduadvocates.com') || lawPricingQuery.reply.includes('team'), 'Pricing query directs user to reach out to the firm');
+
+// Test 16.2: Quick replies do not include checkout_now or pay buttons
+const pricingReplies = lawPricingQuery.suggestedQuickReplies || [];
+assert(!pricingReplies.some(r => r.payload === 'checkout_now' || r.payload === 'intent_pay'), 'Quick replies do not include checkout_now or payment triggers');
+
+// Test 16.3: Direct checkout request does not trigger payment wizard when checkout.enabled is false
+const directPayQuery = lawFirmEngine.classify('checkout_now');
+assert(directPayQuery.action !== 'OPEN_PAYMENT_WIZARD', 'Direct checkout payload does NOT route to OPEN_PAYMENT_WIZARD when checkout is disabled');
+
+console.log('\n--- 🛒 17. Testing Live Dynamic Product Search Tool & Tiered Fallback ("i want socks") ---');
+// Test 17.1: "i want socks" on Jumia invokes product search, NOT lead capture name prompt
+const socksQuery = catalogEngine.classify('i want socks');
+assert(socksQuery.action !== 'LEAD_CAPTURE', 'Product query "i want socks" does NOT trigger LEAD_CAPTURE');
+assert(!socksQuery.reply.includes('full name'), 'Product query "i want socks" does NOT demand user\'s full name');
+assert(socksQuery.action === 'PRODUCT_SEARCH', 'Routes to PRODUCT_SEARCH dynamic tool action');
+assert(socksQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=socks'), 'Reply includes live Jumia catalog search URL for socks');
+
+// Test 17.2: Quick reply provides direct catalog search link
+const socksReplies = socksQuery.suggestedQuickReplies || [];
+assert(socksReplies.some(r => r.payload && r.payload.includes('q=socks')), 'Quick reply provides direct live catalog link');
+
+// Test 17.3: "do you have blenders" also triggers dynamic product search
+const blenderQuery = catalogEngine.classify('do you have blenders?');
+assert(blenderQuery.action === 'PRODUCT_SEARCH', 'Query "do you have blenders?" triggers PRODUCT_SEARCH');
+assert(blenderQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=blenders'), 'Reply includes live search URL for blenders');
+assert(!blenderQuery.reply.includes('full name'), 'Blender search does not ask for full name');
+
+// Test 17.4: Non-ecommerce law firm inquiry does NOT trigger product search
+const lawMatterQuery = lawFirmEngine.classify('do you handle land disputes in Machakos?');
+assert(lawMatterQuery.action !== 'PRODUCT_SEARCH', 'Law firm legal matter inquiry does NOT route to PRODUCT_SEARCH');
+
+// Test 17.5: "i want to buy a toy for my child what do you have?" queries live catalog for toys, NOT store definition
+const toyQuery = catalogEngine.classify('i want to buy a toy for my child what do you have?');
+assert(toyQuery.action === 'PRODUCT_SEARCH', 'Toy query triggers PRODUCT_SEARCH');
+assert(!toyQuery.reply.includes('East Africa’s leading'), 'Toy query does NOT return generic brochure definition of Jumia');
+assert(!toyQuery.reply.includes('for your business'), 'Toy query does NOT ask B2B advisor question for business');
+assert(!toyQuery.reply.includes('full name'), 'Toy query does NOT demand user full name');
+assert(toyQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=toy'), 'Toy query builds live Jumia catalog link for toy');
+assert(toyQuery.reply.includes('Baby Products, Toys & Games'), 'Toy query identifies Baby & Toys department');
+
+// Test 17.6: "i want to buy cooking oil do you have any" queries live catalog for cooking oil
+const oilQuery = catalogEngine.classify('i want to buy cooking oil do you have any');
+assert(oilQuery.action === 'PRODUCT_SEARCH', 'Cooking oil query triggers PRODUCT_SEARCH');
+assert(!oilQuery.reply.includes('East Africa’s leading'), 'Cooking oil query does NOT return generic brochure definition');
+assert(!oilQuery.reply.includes('for your business'), 'Cooking oil query does NOT ask B2B advisor question for business');
+assert(oilQuery.reply.includes('cooking') && oilQuery.reply.includes('oil'), 'Cooking oil query extracts keywords cooking and oil');
+assert(oilQuery.reply.includes('Groceries & Supermarket'), 'Cooking oil query identifies Groceries & Supermarket department');
+
+// Test 17.7: Explicit company overview query "What is Jumia Kenya?" DOES match overview FAQ
+const aboutQuery = catalogEngine.classify('What is Jumia Kenya and what products do you sell?');
+assert(aboutQuery.intent === 'faq', 'Overview query matches FAQ intent');
+assert(aboutQuery.reply.includes('East Africa’s leading'), 'Overview query correctly returns company definition overview');
+
+// --- 18. Testing Hard Relevance Threshold, Content-Type Gating & Null Catalog Fallback ---
+console.log('\n--- 🛡️ 18. Testing Relevance Floor, Content-Type Gating & Honest Search Fallback ---');
+
+// Test 18.1: Unindexed groceries query "eggs" does NOT match laptops
+const eggsQuery = catalogEngine.classify('i want eggs');
+assert(eggsQuery.action === 'PRODUCT_SEARCH', 'Eggs query triggers PRODUCT_SEARCH');
+assert(!eggsQuery.reply.includes('HP 15'), 'Eggs query does NOT return HP laptop listing');
+assert(!eggsQuery.reply.includes('MacBook'), 'Eggs query does NOT return MacBook listing');
+assert(!eggsQuery.reply.includes('Lenovo'), 'Eggs query does NOT return Lenovo listing');
+assert(!eggsQuery.reply.includes('From Website Knowledge'), 'Eggs query does NOT synthesize From Website Knowledge');
+assert(eggsQuery.reply.includes("I don't have **eggs** in my indexed knowledge"), 'Eggs query honestly states item is not in indexed knowledge');
+assert(eggsQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=eggs'), 'Eggs query provides live catalog link to eggs');
+assert(eggsQuery.reply.includes('Groceries & Supermarket'), 'Eggs query routes to Groceries department');
+
+// Test 18.2: Raw catalog URL input "https://www.jumia.co.ke/catalog/?q=eggs" extracts eggs entity and avoids laptops
+const urlInputQuery = catalogEngine.classify('https://www.jumia.co.ke/catalog/?q=eggs');
+assert(urlInputQuery.action === 'PRODUCT_SEARCH', 'URL input triggers PRODUCT_SEARCH');
+assert(!urlInputQuery.reply.includes('HP 15') && !urlInputQuery.reply.includes('MacBook'), 'URL input does NOT match laptops');
+assert(!urlInputQuery.reply.includes('From Website Knowledge'), 'URL input does NOT say From Website Knowledge');
+assert(urlInputQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=eggs'), 'URL input provides live search link for eggs');
+
+// Test 18.3: Legitimate laptops query matches laptops catalog chunk
+const laptopQuery = catalogEngine.classify('Tell me about laptops and MacBooks available');
+assert(laptopQuery.intent === 'faq', 'Laptops query matches FAQ intent');
+assert(laptopQuery.reply.includes('HP 15'), 'Laptops query includes HP 15 listing');
+assert(laptopQuery.reply.includes('MacBook Air'), 'Laptops query includes MacBook Air listing');
+assert(laptopQuery.reply.includes('From Website Knowledge'), 'Laptops query includes From Website Knowledge citation');
+
+// Test 18.4: Category gating prevents watches from matching laptops
+const watchGatingQuery = catalogEngine.classify('I am looking for a watch');
+assert(watchGatingQuery.intent === 'faq', 'Watch query matches FAQ intent');
+assert(watchGatingQuery.reply.includes('Curren'), 'Watch query includes Curren');
+assert(!watchGatingQuery.reply.includes('MacBook'), 'Watch query does NOT include laptops');
+
+// --- 🛍️ 19. Testing In-Chat Product Discovery, Store Boundaries & Exact Stemming ---
+console.log('\n--- 🛍️ 19. Testing In-Chat Product Discovery, Store Boundaries & Exact Stemming ---');
+
+// Test 19.1: Exact root equality prevents "cars" from false-matching "care", "carry", and "cards"
+assert(!catalogEngine.wordsMatch('cars', 'care'), 'Stemmer does NOT match "cars" with "care"');
+assert(!catalogEngine.wordsMatch('cars', 'carry'), 'Stemmer does NOT match "cars" with "carry"');
+assert(!catalogEngine.wordsMatch('cars', 'cards'), 'Stemmer does NOT match "cars" with "cards"');
+assert(catalogEngine.wordsMatch('cars', 'car'), 'Stemmer correctly matches "cars" with "car"');
+assert(catalogEngine.wordsMatch('lotion', 'lotions'), 'Stemmer correctly matches "lotion" with "lotions"');
+
+// Test 19.2: "do you have lotion" delivers real in-chat product cards & 1-click buy chips
+const lotionQuery = catalogEngine.classify('do you have lotion');
+assert(lotionQuery.action === 'PRODUCT_SEARCH', 'Lotion query triggers PRODUCT_SEARCH');
+assert(lotionQuery.reply.includes('Nivea Cocoa Butter'), 'Lotion query returns Nivea Cocoa Butter card');
+assert(lotionQuery.reply.includes('Vaseline Intensive Care'), 'Lotion query returns Vaseline Aloe card');
+assert(lotionQuery.reply.includes('KES 650'), 'Lotion query includes authentic KES 650 price');
+assert(!lotionQuery.reply.includes("I don't have **lotion** in my indexed knowledge"), 'Does NOT give passive "I don\'t have lotion in indexed knowledge" fallback');
+assert(lotionQuery.suggestedQuickReplies.some(q => q.payload.startsWith('checkout_item:') && q.payload.includes('Nivea')), 'Surfaces 1-click in-chat Buy button for Nivea');
+
+// Test 19.3: Livestock boundary refusal for "i am looking for a cow"
+const cowQuery = catalogEngine.classify('i am looking for a cow');
+assert(cowQuery.action === 'OUT_OF_SCOPE', 'Cow query triggers OUT_OF_SCOPE boundary action');
+assert(cowQuery.reply.includes('does not sell live animals or livestock'), 'Cow query returns honest livestock merchant refusal');
+assert(!cowQuery.reply.includes('catalog/?q=cow'), 'Cow query does NOT generate absurd catalog link for cow');
+assert(cowQuery.suggestedQuickReplies.some(q => q.label.includes('Meat & Poultry')), 'Cow query offers Meat & Poultry alternative');
+assert(cowQuery.suggestedQuickReplies.some(q => q.label.includes('Dairy & Eggs')), 'Cow query offers Dairy & Eggs alternative');
+
+// Test 19.4: Motor vehicles boundary refusal for "do you sell cars"
+const carQuery = catalogEngine.classify('do you sell cars');
+assert(carQuery.action === 'OUT_OF_SCOPE', 'Car query triggers OUT_OF_SCOPE boundary action');
+assert(carQuery.reply.includes('does not sell full motor vehicles or cars'), 'Car query returns honest motor vehicle refusal');
+assert(!carQuery.reply.includes('+1 (800) 555-0199'), 'Car query does NOT return Customer Care toll-free hotline');
+assert(!carQuery.reply.includes('East Africa’s leading'), 'Car query does NOT return generic company definition');
+assert(carQuery.suggestedQuickReplies.some(q => q.label.includes('Car Accessories')), 'Car query offers Car Accessories alternative');
+assert(carQuery.suggestedQuickReplies.some(q => q.label.includes('Car Batteries')), 'Car query offers Car Batteries alternative');
+
+// Test 19.5: Real estate boundary refusal for "can I buy a house"
+const houseQuery = catalogEngine.classify('can I buy a house');
+assert(houseQuery.action === 'OUT_OF_SCOPE', 'House query triggers OUT_OF_SCOPE boundary action');
+assert(houseQuery.reply.includes('does not sell real estate or land'), 'House query returns real estate boundary refusal');
+assert(houseQuery.suggestedQuickReplies.some(q => q.label.includes('Kitchen Appliances')), 'House query offers Kitchen Appliances alternative');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);
@@ -525,4 +704,5 @@ if (failed > 0) {
 } else {
   process.exit(0);
 }
+
 

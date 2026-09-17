@@ -4,6 +4,7 @@
  */
 
 import { INSURANCE_KNOWLEDGE_BASE } from './knowledge-base.js';
+import { buildProductSearchUrl, searchProducts, getDepartmentHint } from '../tools/tool-registry.js';
 
 export class IntentEngine {
   constructor(config = {}) {
@@ -54,32 +55,24 @@ export class IntentEngine {
    * Extract morphological word stem for fuzzy root matching
    */
   getStem(word) {
-    if (!word || word.length < 4) return word || '';
+    if (!word || word.length < 3) return (word || '').toLowerCase();
     return word
       .toLowerCase()
       .replace(/(ing|tions?|tionals?|ated|ates?|ating|ed|es|s|ments?|ables?|ity|al|ive|izes?|ises?)$/, '');
   }
 
   /**
-   * Determine if two words share a semantic root or significant prefix
-   * (e.g. "automation" and "automated" -> root "automat")
+   * Determine if two words share a semantic root
+   * (e.g. "automation" and "automated" -> root "automat", "cars" and "car" -> root "car")
    */
   wordsMatch(w1, w2) {
     if (!w1 || !w2) return false;
-    if (w1 === w2) return true;
-    if (w1.length >= 4 && w2.length >= 4) {
-      if (w1.includes(w2) || w2.includes(w1)) return true;
-      const s1 = this.getStem(w1);
-      const s2 = this.getStem(w2);
-      if (s1.length >= 3 && s2.length >= 3) {
-        if (s1 === s2 || s1.startsWith(s2) || s2.startsWith(s1)) return true;
-      }
-      const minLen = Math.min(w1.length, w2.length);
-      if (minLen >= 5) {
-        const prefixLen = Math.min(5, minLen);
-        if (w1.slice(0, prefixLen) === w2.slice(0, prefixLen)) return true;
-      }
-    }
+    const v1 = w1.toLowerCase();
+    const v2 = w2.toLowerCase();
+    if (v1 === v2) return true;
+    const s1 = this.getStem(v1);
+    const s2 = this.getStem(v2);
+    if (s1.length >= 2 && s2.length >= 2 && s1 === s2) return true;
     return false;
   }
 
@@ -106,6 +99,109 @@ export class IntentEngine {
     }
 
     return matches / Math.sqrt(queryTokens.length * targetTokens.size);
+  }
+
+  /**
+   * Extract key topical and entity keywords from conversational queries
+   */
+  extractQueryKeywords(rawText = '') {
+    if (!rawText) return { keywords: [], cleanQuery: '', searchTerms: '', isProductInquiry: false, isAboutCompany: false };
+    const raw = rawText.trim();
+    let cleaned = raw;
+    let isProductInquiry = false;
+
+    // Check if input contains or is a search/catalog URL (e.g. https://www.jumia.co.ke/catalog/?q=eggs)
+    const urlQueryMatch = raw.match(/[?&]q=([^&#]+)/i);
+    if (urlQueryMatch) {
+      try {
+        cleaned = decodeURIComponent(urlQueryMatch[1].replace(/\+/g, ' ')).trim();
+      } catch (e) {
+        cleaned = urlQueryMatch[1].replace(/\+/g, ' ').trim();
+      }
+      isProductInquiry = true;
+    } else if (/^https?:\/\//i.test(raw)) {
+      try {
+        const parsedUrl = new URL(raw);
+        const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
+        if (pathParts.length > 0) {
+          cleaned = pathParts[pathParts.length - 1].replace(/[-_]+/g, ' ').trim();
+          isProductInquiry = true;
+        }
+      } catch (e) {}
+    }
+
+    const isAboutCompany = /^(?:what\s*is|who\s*(?:is|are)|about\s*(?:us|the\s*company)|tell\s*me\s*about\s*(?:the\s*company|you)|what\s*do\s*you\s*(?:guys\s*)?do)\b/i.test(raw);
+
+    const productPrefixPatterns = [
+      /^(?:i\s*(?:am\s*looking|'m\s*looking|look)\s*for)\s+/i,
+      /^(?:looking\s*for)\s+/i,
+      /^(?:i\s*want\s*to\s*(?:buy|purchase|order|get|find|see|have))\s+/i,
+      /^(?:i\s*would\s*like\s*to\s*(?:buy|purchase|order|get|find|see))\s+/i,
+      /^(?:i\s*(?:want|need|wish\s*for))\s+/i,
+      /^(?:we\s*(?:want|need|are\s*looking\s*for))\s+/i,
+      /^(?:do\s*you\s*(?:have|sell|offer|stock|carry))\s+(?:any\s+)?/i,
+      /^(?:can\s*i\s*(?:buy|purchase|get|find|order))\s+/i,
+      /^(?:can\s*you\s*(?:show|give|find|recommend)\s*me)\s+/i,
+      /^(?:show\s*me|search\s*for|find\s*me)\s+/i,
+      /^(?:where\s*can\s*i\s*(?:find|buy|get|order))\s+/i,
+      /^(?:what\s*kind\s*of|what\s*types?\s*of)\s+/i,
+      /^(?:what\s*(?:do\s*you\s*have|are\s*there)\s*for)\s+/i,
+      /^(?:is\s*there\s*any|are\s*there\s*any)\s+/i
+    ];
+
+    for (const p of productPrefixPatterns) {
+      if (p.test(cleaned)) {
+        isProductInquiry = true;
+        cleaned = cleaned.replace(p, '');
+        break;
+      }
+    }
+
+    if (!isProductInquiry && !isAboutCompany && /\b(buy|purchase|order|shop|stock|items?|products?|catalog|deal|deals|selling)\b/i.test(raw)) {
+      isProductInquiry = true;
+    }
+
+    // Strip conversational trailing questions/phrases
+    cleaned = cleaned
+      .replace(/\s+(?:what\s*do\s*you\s*have|what\s*(?:is|are)\s*available|do\s*you\s*have\s*any|do\s*you\s*have\s*that|do\s*you\s*have\s*them|in\s*stock|available|on\s*(?:your\s*)?(?:site|store|jumia)|can\s*i\s*get(?:\s*one|\s*some)?|please|for\s*sale|right\s*now|today)[?!.,\s]*$/i, '')
+      .replace(/[?!.,]+$/g, '')
+      .trim();
+
+    // Strip leading articles or quantities
+    cleaned = cleaned.replace(/^(?:a|an|the|some|any|pair\s*of)\s+/i, '').trim();
+
+    // Secondary cleanup of filler words to isolate key topical entities
+    const fillerWords = new Set([
+      'i', 'me', 'my', 'mine', 'we', 'us', 'our', 'ours', 'you', 'your', 'yours',
+      'a', 'an', 'the', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from',
+      'about', 'as', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have',
+      'has', 'had', 'do', 'does', 'did', 'can', 'could', 'should', 'would', 'will',
+      'shall', 'may', 'might', 'what', 'which', 'who', 'whom', 'this', 'that',
+      'these', 'those', 'any', 'some', 'all', 'and', 'or', 'but', 'if', 'so',
+      'there', 'here', 'please', 'want', 'need', 'buy', 'purchase', 'order',
+      'looking', 'look', 'find', 'get', 'show', 'tell', 'give', 'sell', 'offer',
+      'have', 'available', 'stock', 'something', 'thing', 'things',
+      'insurance', 'policy', 'policies', 'cover', 'coverage', 'explain', 'tell',
+      'https', 'http', 'www', 'com', 'co', 'ke', 'org', 'net',
+      'catalog', 'search', 'query', 'url', 'website', 'web', 'page', 'site',
+      'jumia', 'botly'
+    ]);
+
+    const rawTokens = this.tokenize(cleaned);
+    const keywords = rawTokens.filter(t => !fillerWords.has(t) && t.length >= 2);
+
+    let searchTerms = keywords.join(' ');
+    if (!searchTerms) {
+      searchTerms = cleaned || raw;
+    }
+
+    return {
+      keywords,
+      cleanQuery: cleaned || raw,
+      searchTerms,
+      isProductInquiry: isProductInquiry && !isAboutCompany,
+      isAboutCompany
+    };
   }
 
   /**
@@ -258,17 +354,18 @@ export class IntentEngine {
 
     // 7. General Knowledge Base FAQ Search
     const bestFaq = this.matchKnowledgeBase(queryTokens, null, raw);
-    if (bestFaq && bestFaq.score >= 0.22) {
+    if (bestFaq && bestFaq.score >= 0.45) {
       const followUp = this.generateFollowUpQuestion(bestFaq.item);
       let replyPrefix = '';
+      const host = bestFaq.item.sourceUrl ? bestFaq.item.sourceUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'Website';
+      const compName = this.config.company?.name || 'our company';
+
       if (bestFaq.item.source === 'document' || bestFaq.item.category === 'document') {
         replyPrefix = '**From Company Records:**\n\n';
-      } else if (bestFaq.item.source === 'website' || bestFaq.item.category === 'website') {
-        const host = bestFaq.item.sourceUrl ? bestFaq.item.sourceUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'Website';
+      } else if (bestFaq.item.source === 'website' || bestFaq.item.category === 'website' || bestFaq.item.contentType) {
         replyPrefix = `**From Website Knowledge (${host}):**\n\n`;
       }
 
-      const compName = this.config.company?.name;
       const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';
 
       // Detect product catalog listings with prices and direct URLs
@@ -434,9 +531,24 @@ export class IntentEngine {
       };
     }
 
-    // 8. If SaaS mode and asked about pricing / cost / how much
-    if (isSaas && /\b(price|pricing|cost|how\s*much|fee|rate|\$10|ten\s*dollars|plan|plans|charge|pay|purchase|buy)\b/i.test(lower)) {
-      const compName = this.config.company?.name;
+    const extracted = this.extractQueryKeywords(raw);
+    let needTopic = extracted.cleanQuery;
+    if (!needTopic || needTopic.length < 2) needTopic = raw;
+
+    const compName = this.config.company?.name || 'our';
+    const webUrl = this.config.company?.websiteUrl || '';
+
+    // Detect ecommerce or shopping intent
+    const isEcommerce =
+      (this.config.archetype === 'ecommerce' || this.config.archetype === 'retail') ||
+      (webUrl && /jumia|amazon|shopify|store|shop|mall|market|catalog/i.test(webUrl)) ||
+      (compName && /jumia|store|shop|mall|market|retail/i.test(compName));
+
+    // 8. If SaaS mode and asked about pricing / cost / plans (and NOT an ecommerce product inquiry)
+    const isPricingInquiry = !isEcommerce && !extracted.isProductInquiry &&
+      (/\b(price|pricing|subscription|plans?|packages?|tier|tiers|fee|rates?|\$10|ten\s*dollars)\b/i.test(lower) || /\b(how\s*much|cost|charge)\b/i.test(lower));
+
+    if (isSaas && isPricingInquiry) {
       const isBotlySelf = !compName || compName.toLowerCase() === 'botly' || compName.toLowerCase() === 'botly pro' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
 
       if (isBotlySelf) {
@@ -463,33 +575,69 @@ export class IntentEngine {
       }
     }
 
-    // 9. Lead Capture Flow for Undefined Queries / Custom Inquiries
-    let needTopic = raw.replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*offer|can\s*you\s*do|can\s*you\s*provide|tell\s*me\s*about|how\s*about|what\s*about|i\s*want|i\s*need|we\s*need)\s+/i, '').replace(/[?!.,]+$/g, '').trim();
-    if (!needTopic || needTopic.length < 3) needTopic = raw;
+    // 9. Dynamic Tool Search & Tiered Fallback Engine
 
-    const compName = this.config.company?.name || 'our';
-    const webUrl = this.config.company?.websiteUrl || '';
-    const isShoppingInquiry = /\b(watch|watches|phone|phones|laptop|laptops|shoes|cloth|dress|buy|order|catalog|product|stock|item)\b/i.test(raw);
+    // Tier 3: Live Product Search Tool for Ecommerce / Retail
+    if (isEcommerce) {
+      let searchKey = extracted.searchTerms || extracted.cleanQuery;
+      if (extracted.keywords.includes('toy')) {
+        searchKey = 'toy';
+      } else if (extracted.keywords.includes('cooking') && extracted.keywords.includes('oil')) {
+        searchKey = 'cooking oil';
+      } else if (extracted.keywords.length > 0) {
+        searchKey = extracted.keywords.slice(0, 3).join(' ');
+      }
 
-    if (isSaas && isShoppingInquiry && webUrl) {
+      const searchResult = searchProducts({ query: searchKey }, this.config);
+      const searchUrl = searchResult.searchUrl || buildProductSearchUrl(webUrl, searchKey);
+      const suggestedQuickReplies = searchResult.suggestedQuickReplies || [];
+
       return {
-        intent: 'faq',
-        reply: `I couldn't locate specific catalog stock for **${needTopic}** in my instant memory, but you can explore our complete live catalog directly on our site:\n\n🔗 [**Browse ${compName} Online Store ↗**](${webUrl})\n\n💬 Would you like to check our popular categories or connect with a sales specialist?`,
-        suggestedQuickReplies: [
-          { label: '🛍️ Browse Catalog', payload: 'What products or services do you offer?' },
-          { label: 'Talk to sales team', payload: `I want to speak with someone from the ${compName} team` }
-        ]
+        intent: searchResult.isOutOfScope ? 'out_of_scope' : 'product_search',
+        confidence: 0.95,
+        action: searchResult.isOutOfScope ? 'OUT_OF_SCOPE' : 'PRODUCT_SEARCH',
+        productQuery: searchKey,
+        searchUrl: searchUrl,
+        reply: searchResult.message,
+        suggestedQuickReplies,
+        quickReplies: suggestedQuickReplies
       };
     }
 
+    // Tier 4: Unknown / Human Help Needed
+    const leadCaptureEnabled = this.config.leadCapture ? this.config.leadCapture.enabled !== false : true;
+    if (leadCaptureEnabled) {
+      return {
+        intent: 'lead_capture_needed',
+        confidence: 0.2,
+        action: 'LEAD_CAPTURE',
+        inquiredNeed: needTopic,
+        reply: isSaas
+          ? `Great inquiry regarding **${needTopic}**! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **${compName}** team so someone can assist you directly.\n\nCould you please share your **full name**?`
+          : `That's a fantastic inquiry regarding **${needTopic}**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?`
+      };
+    }
+
+    // Clean neutral fallback without demanding user's full name
+    const supportEmail = this.config.company?.supportEmail || '';
+    const supportPhone = this.config.company?.supportPhone || '';
+    let contactInfo = '';
+    if (supportEmail && supportPhone) {
+      contactInfo = `at **${supportEmail}** or call **${supportPhone}**`;
+    } else if (supportEmail) {
+      contactInfo = `at **${supportEmail}**`;
+    } else if (supportPhone) {
+      contactInfo = `at **${supportPhone}**`;
+    }
+
     return {
-      intent: 'lead_capture_needed',
-      confidence: 0.2,
-      action: 'LEAD_CAPTURE',
-      inquiredNeed: needTopic,
-      reply: isSaas
-        ? `Great inquiry regarding **${needTopic}**! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **${compName}** team so someone can assist you directly.\n\nCould you please share your **full name**?`
-        : `That's a fantastic inquiry regarding **${needTopic}**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?`
+      intent: 'fallback_neutral',
+      confidence: 0.3,
+      reply: `I don't have the specific details for **"${needTopic}"** in my instant memory. Please reach out to the **${compName}** team ${contactInfo || 'directly'} or ask about our services and policies.`,
+      suggestedQuickReplies: [
+        { label: 'Our Services', payload: 'What services or products do you offer?' },
+        { label: 'Talk to team', payload: `I want to speak with someone from the ${compName} team` }
+      ]
     };
   }
 
@@ -630,18 +778,28 @@ export class IntentEngine {
     }
 
     // 5. Default progressive sequence across active goals
-    if (goals.includes('payment_checkout')) {
-      candidateList.push({ key: 'chk_default_progress', type: 'payment_checkout', text: '💬 Would you like to complete an order or checkout, or do you have any other questions?' });
-    }
-    if (goals.includes('consultation_booking')) {
-      candidateList.push({ key: 'con_default_progress', type: 'consultation_booking', text: '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team?' });
-    }
-    if (goals.includes('lead_generation')) {
-      candidateList.push({ key: 'lead_default_progress', type: 'lead_generation', text: '💬 Would you like our team to follow up with you directly, or can I help with anything else?' });
-      candidateList.push({ key: 'lead_default_progress_2', type: 'lead_generation', text: '💬 Shall I have an advisor follow up with tailored recommendations for your business?' });
-    }
-    if (goals.includes('customer_support')) {
-      candidateList.push({ key: 'sup_default_progress', type: 'customer_support', text: '💬 Does this help address your inquiry, or would you like more details?' });
+    const isEcommerceFollowUp =
+      (cfg.archetype === 'ecommerce' || cfg.archetype === 'retail') ||
+      (cfg.company?.websiteUrl && /jumia|amazon|shopify|store|shop|mall|market|catalog/i.test(cfg.company.websiteUrl)) ||
+      (cfg.company?.name && /jumia|store|shop|mall|market|retail/i.test(cfg.company.name));
+
+    if (isEcommerceFollowUp) {
+      candidateList.push({ key: 'ecom_delivery_help', type: 'ecommerce', text: '💬 Would you like details on delivery timelines, or help finding another item?' });
+      candidateList.push({ key: 'ecom_browse_more', type: 'ecommerce', text: '💬 Can I help you search for anything else on the store today?' });
+    } else {
+      if (goals.includes('payment_checkout')) {
+        candidateList.push({ key: 'chk_default_progress', type: 'payment_checkout', text: '💬 Would you like to complete an order or checkout, or do you have any other questions?' });
+      }
+      if (goals.includes('consultation_booking')) {
+        candidateList.push({ key: 'con_default_progress', type: 'consultation_booking', text: '💬 Would you like to schedule a 1-on-1 consultation or demo session with our team?' });
+      }
+      if (goals.includes('lead_generation')) {
+        candidateList.push({ key: 'lead_default_progress', type: 'lead_generation', text: '💬 Would you like our team to follow up with you directly, or can I help with anything else?' });
+        candidateList.push({ key: 'lead_default_progress_2', type: 'lead_generation', text: '💬 Shall I have an advisor follow up with tailored recommendations for your inquiry?' });
+      }
+      if (goals.includes('customer_support')) {
+        candidateList.push({ key: 'sup_default_progress', type: 'customer_support', text: '💬 Does this help address your inquiry, or would you like more details?' });
+      }
     }
     candidateList.push({ key: 'gen_default_help', type: goals[0] || 'lead_generation', text: '💬 Does this help, or would you like more details?' });
     }
@@ -681,14 +839,110 @@ export class IntentEngine {
    * Search knowledge base for highest scoring match
    */
   matchKnowledgeBase(queryTokens, categoryFilter = null, rawQuery = '') {
-    const stopWords = new Set(['do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in', 'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have', 'insurance', 'policy', 'looking', 'look', 'want', 'need', 'find', 'show', 'give']);
+    const stopWords = new Set([
+      'do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in',
+      'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have',
+      'insurance', 'policy', 'looking', 'look', 'want', 'need', 'find', 'show',
+      'give', 'buy', 'purchase', 'order', 'sell', 'store', 'mall', 'products',
+      'product', 'item', 'items', 'shopping', 'online', 'available', 'stock',
+      'get', 'deal', 'deals', 'selling', 'carry',
+      // Domain & URL boilerplate tokens
+      'https', 'http', 'www', 'com', 'co', 'ke', 'org', 'net',
+      'catalog', 'search', 'query', 'url', 'website', 'web', 'page', 'site',
+      'jumia', 'botly'
+    ]);
     let best = null;
     let highestScore = 0;
 
-    const cleanSubject = (rawQuery || '').replace(/^(i\s*am\s*looking\s*for|i'?m\s*looking\s*for|looking\s*for|do\s*you\s*have|do\s*you\s*sell|can\s*i\s*(get|buy|find)|show\s*me|tell\s*me\s*about|i\s*want\s*to\s*(buy|find|order|see)|i\s*want|i\s*need|where\s*(is|are|can\s*i\s*find)|what\s*about)\s+/i, '').replace(/[?!.,]+$/g, '').trim().toLowerCase();
+    const extracted = this.extractQueryKeywords(rawQuery);
+    const topicalKeywords = extracted.keywords;
+    const isProductInquiry = extracted.isProductInquiry;
+    const isAboutCompany = extracted.isAboutCompany;
+    const cleanSubject = (extracted.cleanQuery || '').toLowerCase();
+    const isPolicyInquiry = /\b(return|refund|returns|refunds|warranty|shipping|delivery|dispatch|timeline|fee|courier|pay|payment|mpesa|m-pesa|card|checkout|terms|privacy|policy|policies)\b/i.test(rawQuery);
 
     for (const item of this.knowledgeBase) {
       if (categoryFilter && item.category !== categoryFilter) continue;
+
+      // 1. Tag Content Type
+      let contentType = item.contentType;
+      if (!contentType) {
+        if ((item.products && Array.isArray(item.products) && item.products.length > 0) ||
+            (item.answer && /[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i.test(item.answer))) {
+          contentType = 'product_listing';
+        } else if (item.category === 'overview' || item.id === 'web_jumia_home' || /^(what\s*is\s*([a-z0-9]+\s+)?(company|jumia|botly|this|you)|who\s*(we\s*are|are\s*you)|about\s*(us|the\s*company))/i.test(item.question || '')) {
+          contentType = 'overview';
+        } else if (item.category === 'policies' || item.category === 'policy' || /\b(return|refund|warranty|shipping|delivery|dispatch|courier|guarantee|terms|privacy|payment|pay|m-pesa|mpesa|escrow)\b/i.test(item.question || '')) {
+          contentType = 'policy';
+        } else {
+          contentType = 'faq';
+        }
+      }
+      item.contentType = contentType;
+
+      // 2. Strict Content-Type Gating
+      // Overview / Company definition FAQs cannot match specific product or item inquiries
+      if (contentType === 'overview' && (isProductInquiry || (!isAboutCompany && topicalKeywords.length > 0))) {
+        continue;
+      }
+
+      // Policy FAQs cannot match item/product inquiries unless the query specifically asks about policy terms
+      if (contentType === 'policy' && isProductInquiry && !isPolicyInquiry) {
+        continue;
+      }
+
+      // Product Listing Chunks: Strict Domain / Category Alignment
+      // A product listing chunk (e.g. laptops, watches, phones) can ONLY match if the query's topical keywords
+      // or clean subject specifically align with this chunk's product categories or items.
+      if (contentType === 'product_listing' && (isProductInquiry || topicalKeywords.length > 0)) {
+        const allowedProductTokens = new Set();
+        (item.keywords || []).forEach(k => {
+          this.tokenize(k).forEach(t => {
+            if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
+          });
+        });
+        this.tokenize(item.question || '').forEach(t => {
+          if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
+        });
+        if (item.products && Array.isArray(item.products)) {
+          item.products.forEach(p => {
+            this.tokenize(p.name || '').forEach(t => {
+              if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
+            });
+          });
+        }
+        if (item.answer) {
+          const bMatches = item.answer.match(/\*\*([^*]+)\*\*/g) || [];
+          bMatches.forEach(b => {
+            this.tokenize(b).forEach(t => {
+              if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
+            });
+          });
+        }
+
+        let chunkHasProductMatch = false;
+        for (const tk of topicalKeywords) {
+          for (const ap of allowedProductTokens) {
+            if (this.wordsMatch(tk, ap)) {
+              chunkHasProductMatch = true;
+              break;
+            }
+          }
+          if (chunkHasProductMatch) break;
+        }
+
+        // Exact cleanSubject substring check against question/keywords
+        if (!chunkHasProductMatch && cleanSubject && cleanSubject.length >= 3) {
+          if ((item.question || '').toLowerCase().includes(cleanSubject) ||
+              (item.keywords || []).some(k => k.toLowerCase().includes(cleanSubject))) {
+            chunkHasProductMatch = true;
+          }
+        }
+
+        if (!chunkHasProductMatch) {
+          continue;
+        }
+      }
 
       const qTokens = new Set([...this.tokenize(item.question), ...(item.keywords || []).flatMap(k => this.tokenize(k))]);
       const isDocOrWeb = item.source === 'document' || item.source === 'website' || item.category === 'document' || item.category === 'website';
@@ -703,6 +957,20 @@ export class IntentEngine {
           keyMatches += 3.5;
         } else if (item.answer && item.answer.toLowerCase().includes(cleanSubject)) {
           keyMatches += 2.5;
+        }
+      }
+
+      // Check topical keyword matches
+      let topicalMatched = false;
+      if (topicalKeywords.length > 0) {
+        for (const tk of topicalKeywords) {
+          for (const qt of qTokens) {
+            if (this.wordsMatch(tk, qt)) {
+              keyMatches += (tk === qt ? 3.0 : 2.0);
+              topicalMatched = true;
+              break;
+            }
+          }
         }
       }
 
@@ -727,12 +995,17 @@ export class IntentEngine {
         }
       }
 
+      // If the query has specific topical keywords, require that at least one topical keyword matched
+      if (topicalKeywords.length > 0 && !topicalMatched && !((item.question || '').toLowerCase().includes(cleanSubject))) {
+        continue;
+      }
+
       let score = this.computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords || []);
       if (keyMatches > 0) {
         score += keyMatches * 0.2;
       } else {
         // If NO domain keywords or question words matched at all, penalize
-        score *= 0.2;
+        score *= 0.1;
       }
 
       // Custom user-trained knowledge receives priority boost so company-specific answers win
@@ -745,7 +1018,7 @@ export class IntentEngine {
       }
     }
 
-    if (best) {
+    if (best && highestScore >= 0.45) {
       return { item: best, score: highestScore };
     }
     return null;

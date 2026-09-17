@@ -90,6 +90,13 @@ export class BotlyChatbotWidget {
   }
 
   processQuickReply(payload) {
+    if (typeof payload === 'string' && /^https?:\/\//i.test(payload)) {
+      if (typeof window !== 'undefined' && window.open) {
+        window.open(payload, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
     if (payload.startsWith('intent_quote_')) {
       const type = payload.replace('intent_quote_', '');
       this.startQuote(type);
@@ -107,6 +114,11 @@ export class BotlyChatbotWidget {
     }
 
     if (payload === 'intent_pay' || payload === 'checkout_now') {
+      if (this.config.checkout && this.config.checkout.enabled === false) {
+        const comp = this.config.company?.name || 'our team';
+        this.ui.appendBotMessage(`Online checkout is not active for **${comp}**. Please contact our team or leave your details so we can assist you directly.`);
+        return;
+      }
       this.startPayment();
       return;
     }
@@ -259,6 +271,11 @@ export class BotlyChatbotWidget {
   }
 
   startPayment() {
+    if (this.config.checkout && this.config.checkout.enabled === false) {
+      const comp = this.config.company?.name || 'our team';
+      this.ui.appendBotMessage(`Online checkout is not active for **${comp}**. Please contact our team or leave your details so we can assist you directly.`);
+      return;
+    }
     const quote = this.quoteFlow.state.calculatedQuote;
     const checkoutRes = this.checkoutFlow.start(quote);
     this.ui.appendBotMessage(checkoutRes.message, {
