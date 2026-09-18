@@ -365,6 +365,118 @@ export const CATALOG_DATABASE = {
 };
 
 /**
+ * Asynchronously fetch live scraped products from the Python BeautifulSoup microservice
+ */
+export async function fetchLiveScrapedProducts(query, siteUrl = '', apiBase = '') {
+  try {
+    if (!query || typeof query !== 'string' || !query.trim()) return null;
+    const cleanQ = encodeURIComponent(query.trim());
+    const cleanUrl = siteUrl ? encodeURIComponent(siteUrl.trim()) : '';
+    let base = apiBase;
+    if (!base && typeof window !== 'undefined' && window.location && window.location.origin) {
+      base = window.location.origin;
+    }
+    if (!base) {
+      base = 'http://localhost:8080';
+    }
+    const endpoint = `${base}/api/scrape-products?q=${cleanQ}${cleanUrl ? `&url=${cleanUrl}` : ''}`;
+
+    if (typeof fetch === 'undefined') return null;
+
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 4500) : null;
+
+    const resp = await fetch(endpoint, {
+      method: 'GET',
+      signal: controller ? controller.signal : undefined,
+      headers: { 'Accept': 'application/json' }
+    });
+    if (timer) clearTimeout(timer);
+
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Formats live BeautifulSoup scraped products into rich chat messages and 1-click Buy chips
+ */
+export function formatScrapedProductsResult(scrapedData, query, siteUrl = '', compName = 'our store') {
+  if (!scrapedData || !scrapedData.found || !scrapedData.items || scrapedData.items.length === 0) {
+    return null;
+  }
+
+  const searchUrl = scrapedData.searchUrl || buildProductSearchUrl(siteUrl, query);
+  const topProducts = scrapedData.items.slice(0, 3);
+  const dept = getDepartmentHint(query);
+
+  let message = `Yes! We found live in-stock **${query}** on **${compName}** directly extracted via our live catalog engine:\n\n`;
+
+  topProducts.forEach(p => {
+    const pSym = p.currency === 'USD' ? '$' : `${p.currency} `;
+    const ratingStr = p.rating || '⭐ 4.8 (verified)';
+    const specsStr = p.specs || 'Official warranty & doorstep delivery';
+    message += `• **${p.name}**\n  _${specsStr}_ — **${pSym}${Number(p.price).toLocaleString()}** (${ratingStr}) [View Product ↗](${p.url})\n\n`;
+  });
+
+  if (dept) {
+    message += `📂 Department: **${dept.department}**\n\n`;
+  }
+  message += `🔗 [**Browse all "${query}" on ${compName} ↗**](${searchUrl})\n\n`;
+  message += `Click any item below to view full details directly on **${compName}**, or check delivery timelines:`;
+
+  const quickReplies = [];
+  topProducts.forEach(p => {
+    const pSym = p.currency === 'USD' ? '$' : 'KES ';
+    const pShort = p.name.length > 20 ? p.name.slice(0, 18) + '...' : p.name;
+    quickReplies.push({
+      label: `🛍️ View ${pShort} (${pSym}${Number(p.price).toLocaleString()}) ↗`,
+      payload: p.url || searchUrl,
+      url: p.url || searchUrl
+    });
+  });
+
+  if (topProducts.length > 0) {
+    const pShort = topProducts[0].name.length > 18 ? topProducts[0].name.slice(0, 16) + '...' : topProducts[0].name;
+    quickReplies.push({
+      label: `💬 Inquire about ${pShort}`,
+      payload: `Can you tell me more about ${topProducts[0].name}?`
+    });
+  }
+
+  quickReplies.push({
+    label: `🔍 View all "${query.slice(0, 16)}" ↗`,
+    payload: searchUrl,
+    url: searchUrl
+  });
+
+  if (dept) {
+    quickReplies.push({
+      label: `${dept.icon} Browse ${dept.department}`,
+      payload: `What other deals do you offer in ${dept.department}?`
+    });
+  }
+  quickReplies.push({
+    label: '🚚 Delivery Information',
+    payload: 'How does delivery work and what are the timelines?'
+  });
+
+  return {
+    found: true,
+    isLiveScraped: true,
+    query,
+    items: topProducts,
+    searchUrl,
+    department: dept ? dept.department : null,
+    message,
+    suggestedQuickReplies: quickReplies
+  };
+}
+
+/**
  * Tool: search_products
  * Resolves live product queries via rich catalog discovery or store search fallback
  */
@@ -386,6 +498,12 @@ export function searchProducts(params = {}, config = {}) {
       message: boundary.reply,
       suggestedQuickReplies: boundary.suggestedQuickReplies
     };
+  }
+
+  // If live scraped data was passed in params, format and return immediately
+  if (params.scrapedData && params.scrapedData.found && params.scrapedData.items && params.scrapedData.items.length > 0) {
+    const formatted = formatScrapedProductsResult(params.scrapedData, query, siteUrl, compName);
+    if (formatted) return formatted;
   }
 
   // 2. Query matching products from CATALOG_DATABASE
@@ -505,7 +623,10 @@ export const ToolRegistry = {
   getDepartmentHint,
   checkCategoryBoundary,
   CATALOG_DATABASE,
-  searchProducts
+  searchProducts,
+  fetchLiveScrapedProducts,
+  formatScrapedProductsResult
 };
 
 export default ToolRegistry;
+

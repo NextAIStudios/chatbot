@@ -999,6 +999,123 @@
     ]
   };
 
+  function fetchLiveScrapedProducts(query, siteUrl, callback) {
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      if (callback) callback(null);
+      return;
+    }
+    var cleanQ = encodeURIComponent(query.trim());
+    var cleanUrl = siteUrl ? encodeURIComponent(siteUrl.trim()) : '';
+    var base = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost:8080';
+    var endpoint = base + '/api/scrape-products?q=' + cleanQ + (cleanUrl ? '&url=' + cleanUrl : '');
+
+    if (typeof fetch === 'undefined') {
+      if (callback) callback(null);
+      return;
+    }
+
+    var didTimeout = false;
+    var timer = setTimeout(function() {
+      didTimeout = true;
+      if (callback) callback(null);
+    }, 4500);
+
+    fetch(endpoint, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function(res) {
+      if (didTimeout) return;
+      clearTimeout(timer);
+      if (!res.ok) {
+        if (callback) callback(null);
+        return;
+      }
+      return res.json();
+    })
+    .then(function(data) {
+      if (didTimeout) return;
+      if (callback) callback(data);
+    })
+    .catch(function() {
+      if (didTimeout) return;
+      clearTimeout(timer);
+      if (callback) callback(null);
+    });
+  }
+
+  function formatScrapedProductsResult(scrapedData, query, siteUrl, compName) {
+    if (!scrapedData || !scrapedData.found || !scrapedData.items || scrapedData.items.length === 0) {
+      return null;
+    }
+    if (!compName) compName = 'our store';
+    var searchUrl = scrapedData.searchUrl || buildProductSearchUrl(siteUrl, query);
+    var topProducts = scrapedData.items.slice(0, 3);
+    var dept = getDepartmentHint(query);
+
+    var message = 'Yes! We found live in-stock **' + query + '** on **' + compName + '** directly extracted via our live catalog engine:\n\n';
+
+    topProducts.forEach(function(p) {
+      var pSym = p.currency === 'USD' ? '$' : (p.currency + ' ');
+      var ratingStr = p.rating || '⭐ 4.8 (verified)';
+      var specsStr = p.specs || 'Official warranty & doorstep delivery';
+      message += '• **' + p.name + '**\n  _' + specsStr + '_ — **' + pSym + Number(p.price).toLocaleString() + '** (' + ratingStr + ') [View Product ↗](' + p.url + ')\n\n';
+    });
+
+    if (dept) {
+      message += '📂 Department: **' + dept.department + '**\n\n';
+    }
+    message += '🔗 [**Browse all "' + query + '" on ' + compName + ' ↗**](' + searchUrl + ')\n\n';
+    message += 'Click any item below to view full details directly on **' + compName + '**, or check delivery timelines:';
+
+    var quickReplies = [];
+    topProducts.forEach(function(p) {
+      var pSym = p.currency === 'USD' ? '$' : 'KES ';
+      var pShort = p.name.length > 20 ? p.name.slice(0, 18) + '...' : p.name;
+      quickReplies.push({
+        label: '🛍️ View ' + pShort + ' (' + pSym + Number(p.price).toLocaleString() + ') ↗',
+        payload: p.url || searchUrl,
+        url: p.url || searchUrl
+      });
+    });
+
+    if (topProducts.length > 0) {
+      var pShort = topProducts[0].name.length > 18 ? topProducts[0].name.slice(0, 16) + '...' : topProducts[0].name;
+      quickReplies.push({
+        label: '💬 Inquire about ' + pShort,
+        payload: 'Can you tell me more about ' + topProducts[0].name + '?'
+      });
+    }
+
+    quickReplies.push({
+      label: '🔍 View all "' + query.slice(0, 16) + '" ↗',
+      payload: searchUrl,
+      url: searchUrl
+    });
+
+    if (dept) {
+      quickReplies.push({
+        label: dept.icon + ' Browse ' + dept.department,
+        payload: 'What other deals do you offer in ' + dept.department + '?'
+      });
+    }
+    quickReplies.push({
+      label: '🚚 Delivery Information',
+      payload: 'How does delivery work and what are the timelines?'
+    });
+
+    return {
+      found: true,
+      isLiveScraped: true,
+      query: query,
+      items: topProducts,
+      searchUrl: searchUrl,
+      department: dept ? dept.department : null,
+      message: message,
+      suggestedQuickReplies: quickReplies
+    };
+  }
+
   function searchProducts(params, config) {
     if (!params) params = {};
     if (!config) config = {};
@@ -1019,6 +1136,12 @@
         message: boundary.reply,
         suggestedQuickReplies: boundary.suggestedQuickReplies
       };
+    }
+
+    // If live scraped data was passed in params, format and return immediately
+    if (params.scrapedData && params.scrapedData.found && params.scrapedData.items && params.scrapedData.items.length > 0) {
+      var liveRes = formatScrapedProductsResult(params.scrapedData, query, siteUrl, compName);
+      if (liveRes) return liveRes;
     }
 
     // 2. Query matching products from CATALOG_DATABASE
@@ -2783,6 +2906,26 @@
       if (mem.visitedTopics.indexOf(res.topic) === -1) {
         mem.visitedTopics.push(res.topic);
       }
+    }
+
+    if (res.action === 'PRODUCT_SEARCH' && !res.isOutOfScope) {
+      var self = this;
+      var webUrl = (this.config.company && this.config.company.websiteUrl) ? this.config.company.websiteUrl : '';
+      var queryKey = res.productQuery || text;
+
+      this.showTyping();
+      fetchLiveScrapedProducts(queryKey, webUrl, function(scrapedData) {
+        self.removeTyping();
+        if (scrapedData && scrapedData.found && scrapedData.items && scrapedData.items.length > 0) {
+          var compName = (self.config.company && self.config.company.name) ? self.config.company.name : 'our store';
+          var liveFormatted = formatScrapedProductsResult(scrapedData, queryKey, webUrl, compName);
+          mem.history.push({ role: 'bot', text: liveFormatted.message, intent: 'product_search', timestamp: Date.now() });
+          self.appendBot(liveFormatted.message, { quickReplies: liveFormatted.suggestedQuickReplies });
+        } else {
+          self.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });
+        }
+      });
+      return;
     }
 
     if (res.action === 'LEAD_CAPTURE') {

@@ -223,8 +223,11 @@ export class BotlyChatbotWidget {
 
     // 5. Intent Classification & Knowledge Base (Local & Custom Trained)
     const delay = this.config.bot?.typingDelayMs || 300;
-    setTimeout(() => {
-      const res = this.intentEngine.classify(text);
+    setTimeout(async () => {
+      const res = this.intentEngine.classifyAsync
+        ? await this.intentEngine.classifyAsync(text)
+        : this.intentEngine.classify(text);
+
 
       if (res.action === 'LEAD_CAPTURE') {
         const leadRes = this.leadCaptureFlow.start(res.inquiredNeed || text);

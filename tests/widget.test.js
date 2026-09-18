@@ -8,6 +8,7 @@ import { IntentEngine } from '../src/nlp/intent-engine.js';
 import { QuoteFlow } from '../src/flows/quote-flow.js';
 import { ClaimsFlow } from '../src/flows/claims-flow.js';
 import { ReceiptGenerator } from '../src/payments/receipt-generator.js';
+import { formatScrapedProductsResult, fetchLiveScrapedProducts, searchProducts } from '../src/tools/tool-registry.js';
 
 let passed = 0;
 let failed = 0;
@@ -695,6 +696,66 @@ assert(houseQuery.action === 'OUT_OF_SCOPE', 'House query triggers OUT_OF_SCOPE 
 assert(houseQuery.reply.includes('does not sell real estate or land'), 'House query returns real estate boundary refusal');
 assert(houseQuery.suggestedQuickReplies.some(q => q.label.includes('Kitchen Appliances')), 'House query offers Kitchen Appliances alternative');
 
+console.log('\n--- 🌐 20. Testing Live Web Scraping Engine & Dynamic In-Chat Checkout ---');
+assert(typeof fetchLiveScrapedProducts === 'function', 'fetchLiveScrapedProducts is exported as an async helper');
+assert(typeof formatScrapedProductsResult === 'function', 'formatScrapedProductsResult is exported as a formatter');
+
+// Test 20.1: Live scraped products payload formatting
+const mockScrapedData = {
+  found: true,
+  query: 'milk',
+  source: 'beautifulsoup_live',
+  searchUrl: 'https://www.jumia.co.ke/catalog/?q=milk',
+  items: [
+    {
+      name: 'Brookside Fresh Whole Milk (500ml)',
+      price: 65,
+      currency: 'KES',
+      rawPrice: 'KSh 65',
+      url: 'https://www.jumia.co.ke/brookside-whole-milk.html',
+      rating: '⭐ 4.8 (210 reviews)',
+      specs: 'Save 13% • Official warranty & doorstep delivery'
+    },
+    {
+      name: 'KCC Gold Crown Long Life Milk 500ml',
+      price: 75,
+      currency: 'KES',
+      rawPrice: 'KSh 75',
+      url: 'https://www.jumia.co.ke/kcc-long-life-milk.html',
+      rating: '⭐ 4.7 (145 reviews)',
+      specs: 'Ultra pasteurized long life milk'
+    }
+  ]
+};
+
+const formattedLive = formatScrapedProductsResult(mockScrapedData, 'milk', 'https://www.jumia.co.ke', 'Jumia Kenya');
+assert(formattedLive !== null, 'Formatter returns structured live result');
+assert(formattedLive.isLiveScraped === true, 'Sets isLiveScraped flag to true');
+assert(formattedLive.message.includes('live catalog engine'), 'Message specifies authentic live catalog extraction');
+assert(formattedLive.message.includes('Brookside Fresh Whole Milk (500ml)'), 'Message includes scraped Brookside milk');
+assert(formattedLive.message.includes('KES 65'), 'Message displays authentic scraped KES 65 price');
+assert(formattedLive.message.includes('Groceries & Supermarket'), 'Department hint correctly infers supermarket for milk');
+
+// Test 20.2: Quick reply direct store product links
+const viewChips = formattedLive.suggestedQuickReplies.filter(q => q.label && q.label.includes('🛍️ View') && q.url);
+assert(viewChips.length === 2, 'Generates direct verified store product links for each scraped product');
+assert(viewChips[0].label.includes('65'), 'Product chip displays product name and authentic price');
+assert(viewChips[0].url.includes('brookside-whole-milk'), 'Product chip links directly to official merchant page');
+assert(formattedLive.suggestedQuickReplies.some(q => q.label.includes('Inquire')), 'Offers specialist concierge inquiry option');
+
+
+
+// Test 20.3: searchProducts with live scraped data injection
+const searchLive = searchProducts({ query: 'milk', scrapedData: mockScrapedData }, { company: { name: 'Jumia Kenya', websiteUrl: 'https://www.jumia.co.ke' } });
+assert(searchLive.found === true, 'searchProducts returns found with live scraped data');
+assert(searchLive.isLiveScraped === true, 'searchProducts sets isLiveScraped with scrapedData');
+assert(searchLive.items.length === 2, 'searchProducts preserves scraped items');
+
+// Test 20.4: IntentEngine async resolution
+assert(typeof catalogEngine.classifyAsync === 'function', 'IntentEngine provides classifyAsync method');
+const syncFallback = catalogEngine.classify('milk');
+assert(syncFallback.action === 'PRODUCT_SEARCH', 'Synchronous classify resolves milk to PRODUCT_SEARCH');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);
@@ -704,5 +765,6 @@ if (failed > 0) {
 } else {
   process.exit(0);
 }
+
 
 

@@ -1317,7 +1317,7 @@
               <button type="button" class="idea-chip" onclick="applyQuickTemplate('general')">🏢 General Business</button>
               <button type="button" class="idea-chip" onclick="applyQuickTemplate('support')">🎧 24/7 Support</button>
               <button type="button" class="idea-chip" onclick="applyQuickTemplate('sales')">💰 Sales &amp; Leads</button>
-              <button type="button" class="idea-chip" onclick="applyQuickTemplate('mpesa')">📱 M-Pesa Checkout</button>
+              <button type="button" class="idea-chip" onclick="applyQuickTemplate('catalog')">🛍️ Live Catalog Search</button>
             </div>
           </div>
 
@@ -1350,14 +1350,14 @@
               <span class="p-desc">Answers FAQs instantly &amp; offers friendly human team handover.</span>
             </div>
 
-            <!-- Card 3: Sell & Checkout -->
+            <!-- Card 3: Live Product & Catalog Discovery -->
             <div class="purpose-card" id="purpose-payment_checkout" onclick="togglePurpose('payment_checkout')">
               <div class="purpose-card-top">
-                <span class="p-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+                <span class="p-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
                 <span class="purpose-check-badge">✓</span>
               </div>
-              <span class="p-title">Sell &amp; Checkout</span>
-              <span class="p-desc">Guides customers through packages and accepts payments in chat.</span>
+              <span class="p-title">Product &amp; Catalog Discovery</span>
+              <span class="p-desc">Live BeautifulSoup scraping extracts in-stock products, prices &amp; direct store links.</span>
             </div>
 
             <!-- Card 4: Book Calls -->
@@ -1374,143 +1374,66 @@
           <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 14px; border: 1px solid #e2e8f0;">
             <div style="font-size: 11.5px; font-weight: 800; color: #18221c; margin-bottom: 3px;">Combined Strategy:</div>
             <div id="purpose-preview-text" style="font-size: 12px; color: #475569; line-height: 1.45;">
-              Your bot will answer visitor questions 24/7, capture prospect contact details, and route qualified inquiries directly to your team.
+              Your bot will answer visitor questions 24/7, search your live product catalog dynamically, capture prospect contact details, and route qualified inquiries directly to your team.
             </div>
           </div>
 
-          <!-- Checkout & M-Pesa Payment Settings (Active when Sell & Checkout is selected) -->
+          <!-- Live Product Catalog & Web Scraping Setup (Active when Product & Catalog Discovery is selected) -->
           <div id="checkout-settings-section" style="margin-top: 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; display: flex; align-items: center; justify-content: center; color: #059669;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; display: flex; align-items: center; justify-content: center; color: #16a34a;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 </div>
                 <div>
-                  <h4 style="margin: 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">Sale &amp; Checkout Setup</h4>
+                  <h4 style="margin: 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">Live Product Catalog &amp; Web Scraping Setup</h4>
                   <p style="margin: 2px 0 0 0; font-size: 11.5px; color: #64748b;">
-                    Link to your checkout page and accept direct M-Pesa payments in chat.
+                    Extracts real-time in-stock products, prices, discounts, ratings &amp; direct store links.
                   </p>
                 </div>
               </div>
-              <span style="font-size: 10px; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #10b981; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">In-Chat Checkout</span>
+              <span style="font-size: 10px; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #10b981; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">🟢 Python Scraper Active</span>
             </div>
 
-            <!-- Method Tabs: Separate M-Pesa & Card -->
-            <div style="display: flex; gap: 6px; margin-bottom: 14px; background: #f1f5f9; padding: 4px; border-radius: 10px;">
-              <button type="button" id="tab-checkout-mpesa" class="checkout-tab-btn active" onclick="switchCheckoutTab('mpesa')">
-                <span style="font-size: 14px;">📱</span>
-                <span>M-Pesa Setup (Direct In-Chat)</span>
-              </button>
-              <button type="button" id="tab-checkout-card" class="checkout-tab-btn" onclick="switchCheckoutTab('card')">
-                <span style="font-size: 14px;">💳</span>
-                <span>Card &amp; External Payment Link</span>
-              </button>
-            </div>
-
-            <!-- Panel 1: M-Pesa Setup -->
-            <div id="checkout-panel-mpesa" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label style="font-size: 12px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span>
-                  M-Pesa Direct In-Chat Setup
-                </label>
-                <span style="font-size: 11px; color: #059669; font-weight: 700;">Customer enters confirmation code</span>
-              </div>
-
-              <!-- M-Pesa Mode Selector -->
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label class="form-label" style="margin-bottom: 4px;"><span>M-Pesa Destination Type</span></label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button type="button" class="t-chip active" id="btn-mpesa-buygoods" onclick="setMpesaType('buy_goods')">Buy Goods (Till Number)</button>
-                  <button type="button" class="t-chip" id="btn-mpesa-paybill" onclick="setMpesaType('paybill')">Paybill Number</button>
-                  <button type="button" class="t-chip" id="btn-mpesa-sendmoney" onclick="setMpesaType('send_money')">Phone Number (Send Money)</button>
-                </div>
-              </div>
-
-              <!-- Dynamic M-Pesa Number Input & Account -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div class="form-group" style="margin: 0;">
-                  <label class="form-label" style="margin-bottom: 4px;"><span id="lbl-mpesa-num">Till Number</span></label>
-                  <input type="text" id="wiz-mpesa-number" class="wiz-input" placeholder="e.g. 123456" value="123456" oninput="handleCheckoutConfigChange()">
-                </div>
-                <div class="form-group" style="margin: 0; display: none;" id="box-mpesa-account">
-                  <label class="form-label" style="margin-bottom: 4px;"><span>Account Number / Reference</span></label>
-                  <input type="text" id="wiz-mpesa-account" class="wiz-input" placeholder="e.g. NEXTGEN or Order ID" oninput="handleCheckoutConfigChange()">
-                </div>
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div class="form-group" style="margin: 0;">
-                  <label class="form-label" style="margin-bottom: 4px;"><span>Business / Recipient Name</span></label>
-                  <input type="text" id="wiz-mpesa-business" class="wiz-input" placeholder="e.g. NextGen Ke or My Company" value="NextGen Ke" oninput="handleCheckoutConfigChange()">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                  <label class="form-label" style="margin-bottom: 4px;"><span>Amount &amp; Currency</span></label>
-                  <div style="display: flex; gap: 6px;">
-                    <select id="wiz-checkout-currency" class="wiz-input" style="width: 80px; padding: 7px 8px; font-weight: 700;" onchange="handleCheckoutConfigChange()">
-                      <option value="KES" selected>KES</option>
-                      <option value="USD">USD</option>
-                    </select>
-                    <input type="number" id="wiz-checkout-amount" class="wiz-input" style="flex: 1;" placeholder="1000" value="1000" oninput="handleCheckoutConfigChange()">
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label class="form-label" style="margin-bottom: 4px;"><span>Package / Product Description</span></label>
-                <input type="text" id="wiz-checkout-item" class="wiz-input" placeholder="e.g. Standard Package / Full Access" value="Standard Package" oninput="handleCheckoutConfigChange()">
-              </div>
-
-              <div style="font-size: 11.5px; color: #166534; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
-                <strong>📱 In-Chat Verification:</strong> Customers pay on their phone via M-Pesa and enter their confirmation code (e.g. <strong>UIC8E69GLQ</strong>) right into the chatbot. The bot verifies the code and logs the paid order automatically.
-              </div>
-            </div>
-
-            <!-- Panel 2: Card & External Link Setup -->
-            <div id="checkout-panel-card" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label style="font-size: 12px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #0284c7;"></span>
-                  Card &amp; External Payment Link Setup
-                </label>
-                <span style="font-size: 11px; color: #0284c7; font-weight: 700;">Stripe • PayPal • Shopify • Web URL</span>
-              </div>
-
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label class="form-label" style="margin-bottom: 4px;">
-                  <span>Card Checkout Page / Payment Link URL</span>
-                </label>
-                <input type="url" id="wiz-checkout-url" class="wiz-input" placeholder="https://buy.stripe.com/... or https://mycompany.com/checkout" oninput="handleCheckoutConfigChange()">
+            <!-- Target Merchant Store URL & Scraping Mode -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="margin-bottom: 4px;"><span>Target Store Search URL / Merchant Domain</span></label>
+                <input type="url" id="wiz-catalog-store-url" class="wiz-input" placeholder="https://www.jumia.co.ke or https://mystore.com" value="https://www.jumia.co.ke" oninput="handleCatalogConfigChange()">
                 <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
-                  Paste your Stripe Payment Link, PayPal, Shopify cart, Flutterwave link, or store checkout page URL.
+                  Supports Jumia Kenya, Shopify, WooCommerce, or custom ecommerce catalog search URLs.
                 </small>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div class="form-group" style="margin: 0;">
-                  <label class="form-label" style="margin-bottom: 4px;"><span>Checkout Button Label</span></label>
-                  <input type="text" id="wiz-card-button-label" class="wiz-input" placeholder="Proceed to Card Checkout ↗" value="Proceed to Card Checkout ↗" oninput="handleCheckoutConfigChange()">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">⚡ Engine Microservice</div>
+                  <div style="font-size: 11.5px; color: #059669; font-weight: 700;">Python 3 + BeautifulSoup4</div>
+                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Running on /api/scrape-products</div>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                  <label class="form-label" style="margin-bottom: 4px;"><span>Amount &amp; Currency</span></label>
-                  <div style="display: flex; gap: 6px;">
-                    <select id="wiz-card-currency" class="wiz-input" style="width: 80px; padding: 7px 8px; font-weight: 700;" onchange="handleCheckoutConfigChange()">
-                      <option value="USD" selected>USD</option>
-                      <option value="KES">KES</option>
-                    </select>
-                    <input type="number" id="wiz-card-amount" class="wiz-input" style="flex: 1;" placeholder="10" value="10" oninput="handleCheckoutConfigChange()">
-                  </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">🔗 Link Experience</div>
+                  <div style="font-size: 11.5px; color: #0284c7; font-weight: 700;">Direct Store Links [↗]</div>
+                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Opens official product page</div>
                 </div>
               </div>
 
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label class="form-label" style="margin-bottom: 4px;"><span>Card Product / Service Description</span></label>
-                <input type="text" id="wiz-card-item-name" class="wiz-input" placeholder="e.g. Standard Package / Starter Tier" value="Standard Package" oninput="handleCheckoutConfigChange()">
+              <!-- Interactive Test Scraper Widget -->
+              <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px;">
+                <label class="form-label" style="margin-bottom: 6px;"><span>⚡ Test Live Scraper in Real-Time</span></label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="wiz-test-scrape-q" class="wiz-input" placeholder="Type a product (e.g. milk, blender, watch, shoes)" value="milk" style="flex: 1;" onkeydown="if(event.key==='Enter') testLiveCatalogScraper()">
+                  <button type="button" id="btn-test-scrape-go" onclick="testLiveCatalogScraper()" class="btn-w-next" style="padding: 0 14px; font-size: 12px; background: #0284c7; border-radius: 8px; white-space: nowrap;">
+                    Scrape Now ⚡
+                  </button>
+                </div>
+                <div id="test-scrape-results-box" style="margin-top: 10px; display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 11.5px; color: #334155; max-height: 140px; overflow-y: auto;">
+                </div>
               </div>
+            </div>
 
-              <div style="font-size: 11.5px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
-                <strong>💳 Card Checkout Experience:</strong> When customers select Card in chat, the bot shows a dedicated Card summary card with order amount and a secure button opening your checkout link in one click.
-              </div>
+            <div style="font-size: 11.5px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
+              <strong>🛍️ Authentic Store Discovery:</strong> When customers ask for products (e.g. <em>"i want to buy milk"</em> or <em>"do you have blenders"</em>), the chatbot queries your live merchant catalog with BeautifulSoup, extracts authentic in-stock prices and customer ratings, and provides 1-click links directly to the official product page.
             </div>
           </div>
         </div>
@@ -2914,7 +2837,7 @@ window.addEventListener('botly:payment', async (event) => {
     var goalLabels = {
       lead_generation: 'Leads & Sales',
       customer_support: '24/7 Support',
-      payment_checkout: 'Sell & Checkout',
+      payment_checkout: 'Product Discovery',
       consultation_booking: 'Book Calls & Demos'
     };
 
@@ -3073,7 +2996,7 @@ window.addEventListener('botly:payment', async (event) => {
         descEl.innerHTML = '<strong>' + wizardState.purposes.length + ' Active Functions (' + activeNames + '):</strong><br>' +
           'Your bot handles inquiries across all selected roles — answering questions 24/7' +
           (wizardState.purposes.indexOf('lead_generation') !== -1 ? ', capturing customer leads' : '') +
-          (wizardState.purposes.indexOf('payment_checkout') !== -1 ? ', guiding in-chat checkout' : '') +
+          (wizardState.purposes.indexOf('payment_checkout') !== -1 ? ', searching live store products & catalog deals' : '') +
           (wizardState.purposes.indexOf('consultation_booking') !== -1 ? ', and booking consultation meetings' : '') + '.';
       }
 
@@ -3081,6 +3004,68 @@ window.addEventListener('botly:payment', async (event) => {
       if (chkSec) {
         chkSec.style.display = (wizardState.purposes.indexOf('payment_checkout') !== -1) ? 'block' : 'none';
       }
+    }
+
+    function handleCatalogConfigChange() {
+      var storeUrlEl = document.getElementById('wiz-catalog-store-url');
+      if (storeUrlEl && storeUrlEl.value) {
+        wizardState.catalogStoreUrl = storeUrlEl.value.trim();
+        wizardState.websiteUrl = storeUrlEl.value.trim();
+      }
+      applyBotLiveConfig();
+    }
+
+    function testLiveCatalogScraper() {
+      var qInput = document.getElementById('wiz-test-scrape-q');
+      var q = (qInput ? qInput.value : 'milk').trim() || 'milk';
+      var storeUrlEl = document.getElementById('wiz-catalog-store-url');
+      var storeUrl = (storeUrlEl ? storeUrlEl.value : '').trim() || 'https://www.jumia.co.ke';
+
+      var resBox = document.getElementById('test-scrape-results-box');
+      var btn = document.getElementById('btn-test-scrape-go');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Scraping...';
+      }
+      if (resBox) {
+        resBox.style.display = 'block';
+        resBox.innerHTML = '<div style="color: #0284c7; font-weight: 700;">Connecting to Python BeautifulSoup server at /api/scrape-products...</div>';
+      }
+
+      fetch('/api/scrape-products?q=' + encodeURIComponent(q) + '&url=' + encodeURIComponent(storeUrl))
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Scrape Now ⚡';
+          }
+          if (resBox) {
+            if (data && data.found && data.items && data.items.length > 0) {
+              var html = '<div style="color: #059669; font-weight: 800; margin-bottom: 6px;">✅ Extracted ' + data.items.length + ' live items for "' + escapeHtml(q) + '":</div>';
+              data.items.slice(0, 3).forEach(function(item) {
+                var sym = item.currency === 'USD' ? '$' : 'KES ';
+                html += '<div style="padding: 4px 0; border-bottom: 1px solid #e2e8f0;">' +
+                  '• <strong>' + escapeHtml(item.name.slice(0, 45)) + '...</strong> — <span style="color: #059669; font-weight: 800;">' + sym + Number(item.price).toLocaleString() + '</span> ' +
+                  '<a href="' + escapeHtml(item.url) + '" target="_blank" style="color: #0284c7; margin-left: 6px; font-weight: 700;">View ↗</a>' +
+                  '</div>';
+              });
+              resBox.innerHTML = html;
+            } else if (data && data.isOutOfScope) {
+              resBox.innerHTML = '<div style="color: #d97706; font-weight: 700;">⚠️ Category Boundary: ' + escapeHtml(data.message.slice(0, 100)) + '...</div>';
+            } else {
+              resBox.innerHTML = '<div style="color: #64748b;">No items matched live DOM elements. Falling back to catalog search link.</div>';
+            }
+          }
+        })
+        .catch(function(err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Scrape Now ⚡';
+          }
+          if (resBox) {
+            resBox.innerHTML = '<div style="color: #dc2626;">Error connecting to scraping server: ' + escapeHtml(String(err)) + '</div>';
+          }
+        });
     }
 
     function switchCheckoutTab(tab) {
@@ -4077,16 +4062,12 @@ window.addEventListener('botly:payment', async (event) => {
         profileKey = domain;
       }
 
-      var profile = profileKey ? CURATED_WEBSITE_PROFILES[profileKey] : generateSyntheticDomainPages(url);
+      var fallbackProfile = profileKey ? CURATED_WEBSITE_PROFILES[profileKey] : generateSyntheticDomainPages(url);
 
-      if (statusMsg) statusMsg.innerHTML = 'Connecting to <strong>' + escapeHtml(domain) + '</strong>...';
-      if (statusSub) statusSub.textContent = 'Resolving DNS & scanning sitemap.xml for routes...';
+      if (statusMsg) statusMsg.innerHTML = 'Connecting to <strong>' + escapeHtml(domain) + '</strong> with BeautifulSoup...';
+      if (statusSub) statusSub.textContent = 'Crawling live pages, extracting headings, meta tags, and pricing...';
 
-      setTimeout(function() {
-        if (statusSub) statusSub.textContent = 'Discovered ' + profile.pages.length + ' pages. Extracting content, pricing, and FAQs...';
-      }, 350);
-
-      setTimeout(function() {
+      function applyCrawledProfile(profile) {
         if (statusBox) statusBox.style.display = 'none';
         if (btn) {
           btn.disabled = false;
@@ -4102,7 +4083,36 @@ window.addEventListener('botly:payment', async (event) => {
 
         // Automatically train initial selected pages
         trainBotWithSelectedPages(true);
-      }, 700);
+      }
+
+      // Live crawl via Python BeautifulSoup server endpoint
+      var crawlTimeout = setTimeout(function() {
+        console.warn('Live crawler timed out, applying curated/synthetic profile.');
+        applyCrawledProfile(fallbackProfile);
+      }, 7000);
+
+      fetch('/api/crawl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, max_pages: 6 })
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Live crawl returned ' + res.status);
+        return res.json();
+      })
+      .then(function(liveProfile) {
+        clearTimeout(crawlTimeout);
+        if (liveProfile && liveProfile.success && liveProfile.pages && liveProfile.pages.length > 0) {
+          applyCrawledProfile(liveProfile);
+        } else {
+          applyCrawledProfile(fallbackProfile);
+        }
+      })
+      .catch(function(err) {
+        clearTimeout(crawlTimeout);
+        console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
+        applyCrawledProfile(fallbackProfile);
+      });
     }
 
     // Backward compatibility wrapper
@@ -5374,12 +5384,18 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.botTitle = 'Lead & Sales Specialist';
         wizardState.purposes = ['lead_generation', 'consultation_booking'];
         applyThemePreset('indigo');
-      } else if (tpl === 'mpesa') {
-        wizardState.companyName = 'NextGen Ke';
-        wizardState.botName = 'PayBot';
-        wizardState.botTitle = 'Instant Checkout Assistant';
-        wizardState.purposes = ['payment_checkout', 'lead_generation'];
-        applyThemePreset('dark-lime');
+      } else if (tpl === 'mpesa' || tpl === 'catalog') {
+        wizardState.companyName = 'Jumia Kenya';
+        wizardState.botName = 'CatalogBot';
+        wizardState.botTitle = 'Live Product & Catalog Concierge';
+        wizardState.websiteUrl = 'https://www.jumia.co.ke';
+        wizardState.catalogStoreUrl = 'https://www.jumia.co.ke';
+        wizardState.purposes = ['customer_support', 'payment_checkout'];
+        applyThemePreset('sunset');
+        var sUrlEl = document.getElementById('wiz-catalog-store-url');
+        if (sUrlEl) sUrlEl.value = 'https://www.jumia.co.ke';
+        var wUrlEl = document.getElementById('wiz-website-url');
+        if (wUrlEl) wUrlEl.value = 'https://www.jumia.co.ke';
       }
 
       var cEl = document.getElementById('wiz-company-name');
@@ -5395,7 +5411,7 @@ window.addEventListener('botly:payment', async (event) => {
         window.BotlyChatbot.reset();
       }
       BotlyChatbotManager.syncActiveBotFromUI();
-      var tplName = tpl === 'mpesa' ? 'M-Pesa Checkout' : (tpl.charAt(0).toUpperCase() + tpl.slice(1));
+      var tplName = (tpl === 'mpesa' || tpl === 'catalog') ? 'Live Catalog Search' : (tpl.charAt(0).toUpperCase() + tpl.slice(1));
       showStudioToast('✨ ' + tplName + ' template applied! Test live on the right.');
     }
 

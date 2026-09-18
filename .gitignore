@@ -6,3 +6,5 @@ node_modules/
 demo/firebase-config.local.js
 *firebase-config.local.js
 dist/*.map
+__pycache__/
+*.pyc

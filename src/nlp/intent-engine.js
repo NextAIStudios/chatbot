@@ -4,7 +4,7 @@
  */
 
 import { INSURANCE_KNOWLEDGE_BASE } from './knowledge-base.js';
-import { buildProductSearchUrl, searchProducts, getDepartmentHint } from '../tools/tool-registry.js';
+import { buildProductSearchUrl, searchProducts, getDepartmentHint, fetchLiveScrapedProducts, formatScrapedProductsResult } from '../tools/tool-registry.js';
 
 export class IntentEngine {
   constructor(config = {}) {
@@ -202,6 +202,37 @@ export class IntentEngine {
       isProductInquiry: isProductInquiry && !isAboutCompany,
       isAboutCompany
     };
+  }
+
+  /**
+   * Asynchronous intent classification with live web scraping resolution for dynamic tools
+   */
+  async classifyAsync(text) {
+    const res = this.classify(text);
+    if (res.action === 'PRODUCT_SEARCH' && !res.isOutOfScope) {
+      try {
+        const webUrl = this.config.company?.websiteUrl || '';
+        const compName = this.config.company?.name || 'our store';
+        const liveData = await fetchLiveScrapedProducts(res.productQuery || text, webUrl);
+        if (liveData && liveData.found && liveData.items && liveData.items.length > 0) {
+          const formatted = formatScrapedProductsResult(liveData, res.productQuery || text, webUrl, compName);
+          if (formatted) {
+            return {
+              ...res,
+              isLiveScraped: true,
+              scrapedItems: liveData.items,
+              searchUrl: formatted.searchUrl || res.searchUrl,
+              reply: formatted.message,
+              suggestedQuickReplies: formatted.suggestedQuickReplies,
+              quickReplies: formatted.suggestedQuickReplies
+            };
+          }
+        }
+      } catch (err) {
+        // Fallback to synchronous classify result
+      }
+    }
+    return res;
   }
 
   /**
