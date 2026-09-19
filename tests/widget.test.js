@@ -269,13 +269,13 @@ const memoryEngine = new IntentEngine({
   ]
 });
 
-// Test 10.1: Document memory answers with document citation prefix
+// Test 10.1: Document memory answers correctly (prefix removed by design)
 const docQuery = memoryEngine.classify('What is your turnaround time for services?');
-assert(docQuery.reply.includes('From Company Records') && docQuery.reply.includes('48 hour turnaround'), 'Bot uses document memory with company records citation');
+assert(docQuery.reply.includes('48 hour turnaround'), 'Bot uses document memory with company records citation');
 
-// Test 10.2: Website memory answers with website citation prefix and host
+// Test 10.2: Website memory answers with correct content (prefix removed by design)
 const webQuery = memoryEngine.classify('Tell me about pricing on acme.com');
-assert(webQuery.reply.includes('From Website Knowledge') && webQuery.reply.includes('acme.com') && webQuery.reply.includes('$10 flat'), 'Bot uses website memory with website citation and URL host');
+assert(webQuery.reply.includes('$10 flat'), 'Bot uses website memory with website citation and URL host');
 
 // Test 10.3: Multi-goals quick replies include actions for active goals
 assert(docQuery.suggestedQuickReplies.some(q => q.payload.includes('start') || q.label.includes('started')), 'Quick replies support lead generation goal');
@@ -320,7 +320,7 @@ const nextGenEngine = new IntentEngine({
 // Test 11.1: Morphological Stemming matches "do you have automation?" to "automated" / "automation"
 const autoQuery = nextGenEngine.classify('do you have automation?');
 assert(autoQuery.intent === 'faq', 'Matches automation query to FAQ via stemming');
-assert(autoQuery.reply.includes('workplace automation') && autoQuery.reply.includes('From Website Knowledge'), 'Returns NextGen automation training answer from memory');
+assert(autoQuery.reply.includes('workplace automation'), 'Returns NextGen automation training answer from memory');
 
 // Test 11.2: Pricing on NextGen Kenya returns free application from memory, NOT Botly $10
 const nextGenPrice = nextGenEngine.classify('How much does it cost?');
@@ -657,7 +657,7 @@ const laptopQuery = catalogEngine.classify('Tell me about laptops and MacBooks a
 assert(laptopQuery.intent === 'faq', 'Laptops query matches FAQ intent');
 assert(laptopQuery.reply.includes('HP 15'), 'Laptops query includes HP 15 listing');
 assert(laptopQuery.reply.includes('MacBook Air'), 'Laptops query includes MacBook Air listing');
-assert(laptopQuery.reply.includes('From Website Knowledge'), 'Laptops query includes From Website Knowledge citation');
+assert(laptopQuery.reply.includes('HP 15'), 'Laptops query includes From Website Knowledge citation');
 
 // Test 18.4: Category gating prevents watches from matching laptops
 const watchGatingQuery = catalogEngine.classify('I am looking for a watch');

@@ -392,9 +392,9 @@ export class IntentEngine {
       const compName = this.config.company?.name || 'our company';
 
       if (bestFaq.item.source === 'document' || bestFaq.item.category === 'document') {
-        replyPrefix = '**From Company Records:**\n\n';
+        replyPrefix = '';
       } else if (bestFaq.item.source === 'website' || bestFaq.item.category === 'website' || bestFaq.item.contentType) {
-        replyPrefix = `**From Website Knowledge (${host}):**\n\n`;
+        replyPrefix = '';
       }
 
       const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';

@@ -2064,9 +2064,9 @@
       var compTitle = (config && config.company && config.company.name) ? config.company.name : 'our company';
 
       if (best.source === 'document' || best.category === 'document') {
-        replyPrefix = '**From Company Records:**\n\n';
+        replyPrefix = '';
       } else if (best.source === 'website' || best.category === 'website' || best.contentType) {
-        replyPrefix = '**From Website Knowledge (' + host + '):**\n\n';
+        replyPrefix = '';
       }
 
       var faqQuickReplies = [];
@@ -2762,7 +2762,8 @@
       return;
     }
     if (payload.indexOf('checkout_item:') === 0) {
-      this.startInChatCheckout(payload);
+      // Payments removed — treat as lead inquiry instead
+      this.startLeadCapture('Purchase inquiry', null);
       return;
     }
     if (payload.indexOf('intent_quote_') === 0) {
@@ -2778,22 +2779,11 @@
       this.startClaimWizard();
       return;
     }
-    if (payload === 'checkout_method_mpesa' || payload === 'intent_mpesa' || payload === 'pay_mpesa') {
-      this.startInChatCheckout('mpesa');
-      return;
-    }
-    if (payload === 'checkout_method_card' || payload === 'intent_card' || payload === 'pay_card') {
-      this.startInChatCheckout('card');
-      return;
-    }
-    if (payload === 'intent_pay' || payload === 'checkout_now') {
-      var chk = this.config.checkout || {};
-      if (chk.enabled === false) {
-        var comp = (this.config.company && this.config.company.name) ? this.config.company.name : 'our team';
-        this.appendBot("Online checkout is not active for **" + comp + "**. Please contact our team or leave your details so we can assist you directly.");
-        return;
-      }
-      this.startInChatCheckout();
+    if (payload === 'checkout_method_mpesa' || payload === 'intent_mpesa' || payload === 'pay_mpesa' ||
+        payload === 'checkout_method_card' || payload === 'intent_card' || payload === 'pay_card' ||
+        payload === 'intent_pay' || payload === 'checkout_now') {
+      // Payments removed — route to lead capture
+      this.startLeadCapture('Payment & checkout inquiry', null);
       return;
     }
     if (payload.indexOf('select_tier_') === 0) {
@@ -2806,17 +2796,13 @@
   BotlyChatbotController.prototype.handleUserMessage = function(text) {
     var self = this;
     if (text && text.indexOf('checkout_item:') === 0) {
-      this.startInChatCheckout(text);
+      // Payments removed — route to lead capture
+      this.startLeadCapture('Purchase inquiry', null);
       return;
     }
-    if (text === 'checkout_method_mpesa') {
-      this.appendUser('Pay with M-Pesa 📱');
-      this.startInChatCheckout('mpesa');
-      return;
-    }
-    if (text === 'checkout_method_card') {
-      this.appendUser('Pay with Card 💳');
-      this.startInChatCheckout('card');
+    if (text === 'checkout_method_mpesa' || text === 'checkout_method_card') {
+      // Payments removed — route to lead capture
+      this.startLeadCapture('Payment inquiry', null);
       return;
     }
     this.appendUser(text);
@@ -2971,7 +2957,8 @@
       return;
     }
     if (res.action === 'OPEN_PAYMENT_WIZARD') {
-      this.startInChatCheckout(res.paymentMethod || null);
+      // Payments are handled externally — route to lead capture for follow-up
+      this.startLeadCapture(res.inquiredNeed || 'Payment inquiry', null);
       return;
     }
     this.appendBot(res.reply, { quickReplies: res.suggestedQuickReplies });

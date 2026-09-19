@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Botly Pro | Conversational AI Platform for Every Company — $10/Chatbot</title>
-  <meta name="description" content="Deploy autonomous conversational AI chatbots for any company at $10 per chatbot. Answer customer questions, capture qualified leads, calculate real-time quotes, and complete in-chat checkout.">
-  <meta name="keywords" content="AI chatbot, conversational AI, customer service chatbot, lead capture bot, in-chat payments, chatbot for business">
+  <meta name="description" content="Deploy autonomous conversational AI chatbots for any company at $10 per chatbot. Answer customer questions 24/7, capture qualified leads, search live product catalogs, and book consultations directly in chat.">
+  <meta name="keywords" content="AI chatbot, conversational AI, customer service chatbot, lead capture bot, live product search, chatbot for business">
   <meta property="og:title" content="Botly Pro — AI Chatbot for Every Company at $10">
   <meta property="og:description" content="Deploy your company's AI chatbot in minutes. $10 per chatbot, per company. No hidden fees.">
   <!-- Favicon -->
@@ -136,16 +136,16 @@
       <div class="sandbox-frame">
         <div class="sandbox-frame-left">
           <div class="sandbox-tag">Interactive Sandbox Preview</div>
-          <h3>Deploy conversational agents that qualify, quote, and close.</h3>
+          <h3>Deploy conversational agents that qualify, discover, and convert.</h3>
           <p>
-            Botly Pro empowers every company to deploy autonomous AI agents capable of answering complex inquiries, generating instant quotes, capturing verified leads, and processing checkout inside the conversation thread.
+            Botly Pro empowers every company to deploy autonomous AI agents capable of answering complex inquiries, searching live product catalogs, capturing verified leads, and booking consultations inside the conversation thread.
           </p>
 
-          <!-- Interactive Testing Chips (Zero Emojis) -->
+          <!-- Interactive Testing Chips -->
           <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">
             <button class="prompt-chip" onclick="openChatWithPrompt('How much does Botly Pro cost? What are the pricing plans?')">View Pricing</button>
             <button class="prompt-chip" onclick="openChatWithPrompt('I want to get a chatbot for my company — how do I get started?')">Get Started</button>
-            <button class="prompt-chip" onclick="openChatWithPrompt('I want to complete payment checkout')">Buy Now — $10</button>
+            <button class="prompt-chip" onclick="openChatWithPrompt('Can you show me how Botly Pro works?')">Live Demo</button>
             <button class="prompt-chip" onclick="openChatWithPrompt('How does your onboarding and integration work?')">Integration FAQ</button>
             <button class="prompt-chip" onclick="openChatWithPrompt('Connect me with a product specialist')">Talk to Specialist</button>
           </div>
@@ -175,21 +175,34 @@
               <span style="font-size: 10.5px; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 600; color: #64748b;">Ready</span>
             </div>
 
-            <!-- Simulated Chat Bubble -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.5; color: #334155; margin-bottom: 12px;">
-              Hello. I am Botly Pro, your company assistant. I can answer inquiries, generate custom quotes, qualify requirements, or process payments directly in chat.
-            </div>
+          <!-- Bot greeting bubble -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.5; color: #334155; margin-bottom: 12px;">
+            Hello! I'm Botly Pro, your AI assistant. I can answer your questions, find products from live catalogs, qualify leads, and connect you with the right team.
+          </div>
 
-            <!-- Simulated Card -->
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; font-size: 12px; margin-bottom: 14px;">
-              <div style="font-weight: 800; color: #166534; margin-bottom: 4px;">Verified Tier Calculation</div>
-              <div style="color: #15803d;">Rate: <strong>$49.00 / month</strong></div>
-              <div style="font-size: 10.5px; color: #16a34a; margin-top: 2px;">Zero redirect payment link verified</div>
+          <!-- Live Product Discovery Card -->
+          <div style="background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 12px; padding: 12px; font-size: 12px; margin-bottom: 14px;">
+            <div style="font-weight: 800; color: #3730a3; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              Live Product Discovery
             </div>
+            <div style="color: #4338ca; margin-bottom: 4px;">Searching <strong>live store catalog</strong> in real time&hellip;</div>
+            <div style="display: flex; gap: 6px; margin-top: 8px;">
+              <div style="flex: 1; background: #fff; border: 1px solid #e0e7ff; border-radius: 8px; padding: 7px 8px;">
+                <div style="font-size: 10.5px; font-weight: 700; color: #1e1b4b; margin-bottom: 2px;">Brookside Milk 500ml</div>
+                <div style="font-size: 11px; color: #4f46e5; font-weight: 800;">KES 65</div>
+              </div>
+              <div style="flex: 1; background: #fff; border: 1px solid #e0e7ff; border-radius: 8px; padding: 7px 8px;">
+                <div style="font-size: 10.5px; font-weight: 700; color: #1e1b4b; margin-bottom: 2px;">KCC Long Life 500ml</div>
+                <div style="font-size: 11px; color: #4f46e5; font-weight: 800;">KES 75</div>
+              </div>
+            </div>
+          </div>
 
-            <button class="pill-btn-lime" style="width: 100%; border-radius: 10px; font-size: 13px; padding: 10px;" onclick="openChatWithPrompt('I want to complete payment checkout')">
-              Complete Checkout in Chat
-            </button>
+          <button class="pill-btn-dark" style="width: 100%; border-radius: 10px; font-size: 13px; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openChatWithPrompt('I want to buy milk, what do you have in stock?')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            Try Live Product Search
+          </button>
           </div>
         </div>
       </div>
@@ -674,7 +687,7 @@
         },
         {
           keywords: ['what is botly', 'about botly', 'what do you do', 'how does botly work', 'explain', 'tell me about', 'how it works'],
-          answer: "Botly Pro is an AI chatbot platform that any company can deploy in minutes. \n\nEach chatbot can: answer customer questions 24/7, capture and qualify leads, take payments in-chat, and send digital receipts. \n\nIt costs $10 per bot to deploy. Zero external dependencies. Works on any website."
+          answer: "Botly Pro is an AI chatbot platform that any company can deploy in minutes. \n\nEach chatbot can: answer customer questions 24/7, capture and qualify leads, search live product catalogs, and schedule consultations. \n\nIt costs $10 per bot to deploy. Zero external dependencies. Works on any website."
         },
         {
           keywords: ['enterprise', 'custom plan', 'bulk', 'volume', 'reseller', 'white label', 'agency', 'large scale', 'multiple companies', 'many bots'],
