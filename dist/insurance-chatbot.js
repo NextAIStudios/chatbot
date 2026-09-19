@@ -1491,19 +1491,35 @@
       }
     }
 
-    // Services Overview & Chatbot Creation
-    if (/\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
-      var compName = (config && config.company && config.company.name) ? config.company.name : 'Botly Pro';
-      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
-      return {
-        intent: 'services_overview',
-        reply: "We specialize in **Autonomous AI Chatbot Creation & Deployment** for companies of all sizes! 🚀\n\nHere is what our services include:\n• **Custom AI Chatbot Creation**: Tailored bots trained on your company's website, documents, and FAQs.\n• **24/7 Customer Support Automation**: Instant, human-like answers to customer inquiries around the clock.\n• **Autonomous Lead Capture**: Automatically collects and qualifies verified customer names and phone numbers.\n• **Live Product & Catalog Discovery**: Dynamic store & website scraping with real-time pricing and direct store links.\n• **5-Minute No-Code Deployment**: Works seamlessly on WordPress, Shopify, Webflow, React, Next.js, and HTML websites for just $10 flat per bot!\n\nWould you like to deploy a custom chatbot for your business?",
-        suggestedQuickReplies: [
-          { label: 'Get started', payload: 'How do I get started?' },
-          { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
-          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
-        ]
-      };
+    var compName = (config && config.company && config.company.name) ? config.company.name.trim() : '';
+    var isBotlySelf = !compName || /^(botly|botly\s*(pro|ai|insurance)?)$/i.test(compName) || (/\bbotly\b/i.test(lower) && !/\b(other|different|not)\s*botly\b/i.test(lower));
+
+    // Services Overview & Chatbot Creation (Botly Pro self-bot ONLY)
+    // Non-Botly client bots fall straight through to client knowledge base search or lead capture
+    if (isBotlySelf && /\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
+      var allFaqsCheck = (customKnowledge || []).concat(customFaqs || []);
+      var hasCustomServiceFaq = false;
+      for (var sfi = 0; sfi < allFaqsCheck.length; sfi++) {
+        var sfItem = allFaqsCheck[sfi];
+        if (sfItem && (sfItem.question || sfItem.answer)) {
+          var sfText = ((sfItem.question || '') + ' ' + (sfItem.keywords || []).join(' ')).toLowerCase();
+          if (/\b(services?|what\s*we\s*do|solutions?|offer)\b/i.test(sfText)) {
+            hasCustomServiceFaq = true;
+            break;
+          }
+        }
+      }
+      if (!hasCustomServiceFaq) {
+        return {
+          intent: 'services_overview',
+          reply: "We specialize in **Autonomous AI Chatbot Creation & Deployment** for companies of all sizes! 🚀\n\nHere is what our services include:\n• **Custom AI Chatbot Creation**: Tailored bots trained on your company's website, documents, and FAQs.\n• **24/7 Customer Support Automation**: Instant, human-like answers to customer inquiries around the clock.\n• **Autonomous Lead Capture**: Automatically collects and qualifies verified customer names and phone numbers.\n• **Live Product & Catalog Discovery**: Dynamic store & website scraping with real-time pricing and direct store links.\n• **5-Minute No-Code Deployment**: Works seamlessly on WordPress, Shopify, Webflow, React, Next.js, and HTML websites for just $10 flat per bot!\n\nWould you like to deploy a custom chatbot for your business?",
+          suggestedQuickReplies: [
+            { label: 'Get started', payload: 'How do I get started?' },
+            { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+            { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
+          ]
+        };
+      }
     }
 
     // 1. Direct Greetings
@@ -1525,15 +1541,17 @@
       return {
         intent: 'thanks',
         reply: isSaasMode
-          ? "You're very welcome! 😊 Let me know if you need anything else or have questions."
+          ? (isBotlySelf
+              ? "You're very welcome! 😊 Let me know if you have any other questions or need help setting up your bot."
+              : "You're very welcome! 😊 Let me know if you have any other questions or if there's anything else I can assist you with.")
           : "You're very welcome! 😊 What else can I help you with?"
       };
     }
 
     // 3. Human Representative Escalation
     if (/human|agent|representative|speak\s*to|advisor|person|talk\s*to\s*someone|call\s*me/i.test(lower)) {
-      var supportPhone = config.company?.supportPhone || '+1 (800) 555-0199';
-      var supportEmail = config.company?.supportEmail || (isSaasMode ? 'care@botly.ai' : 'care@insurance.example.com');
+      var supportPhone = (config.company && config.company.supportPhone) || '+1 (800) 555-0199';
+      var supportEmail = (config.company && config.company.supportEmail) || (isBotlySelf ? 'care@botly.ai' : (config.company && config.company.websiteUrl ? 'contact@' + config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'our support team'));
       var handoverReply = isSaasMode
         ? "I'd be glad to connect you with our team! You can reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your contact details below and someone will reach out shortly."
         : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your phone or email below and we'll call you right back!";
@@ -2301,7 +2319,7 @@
       (/\b(price|pricing|subscription|plans?|packages?|tier|tiers|fee|rates?|\$10|ten\s*dollars)\b/i.test(lower) || /\b(how\s*much|cost|charge)\b/i.test(lower));
 
     if (isSaasMode && isPricingInquiry) {
-      var isBotlySelf = !compName || compName.toLowerCase() === 'botly' || compName.toLowerCase() === 'botly pro' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
+      var isBotlySelf = !compName || /^(botly|botly\s*(pro|ai|insurance)?)$/i.test(compName) || (/\bbotly\b/i.test(lower) && !/\b(other|different|not)\s*botly\b/i.test(lower));
 
       if (isBotlySelf) {
         var priceFollowUp = (memory && memory.goalStage > 0)
@@ -4130,6 +4148,10 @@
     var text = queryText || 'Can you provide commercial drone delivery fleet protection?';
     this.toggle(true);
     this.handleUserInput(text);
+  };
+
+  BotlyChatbotController.prototype.classify = function(text) {
+    return classifyQuery(text, this.config, (this.config && this.config.customFaqs) || [], this.trainedKnowledge || [], this.conversationMemory || {});
   };
 
   // Public Singleton Instance

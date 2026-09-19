@@ -833,6 +833,59 @@ const dupEngine = new IntentEngine({
 });
 assert(dupEngine.knowledgeBase.length === 1, 'Deduplicates identical Q&As across customFaqs and customKnowledge');
 
+console.log('\n--- ⚖️ 22. Testing Client Isolation & Prohibition of Botly Sales Pitch on Client Bots ---');
+
+// Test 22.1: Law firm client bot with crawled services page returns law firm services, NEVER Botly pitch
+const wanzakiEngine = new IntentEngine({
+  mode: 'saas',
+  company: {
+    name: 'Wanzakivinduadvocates',
+    websiteUrl: 'https://wanzakivinduadvocates.com'
+  },
+  customKnowledge: [
+    {
+      id: 'web_gen_serv_1',
+      question: 'What services and solutions does Wanzakivinduadvocates offer?',
+      answer: 'Wanzakivinduadvocates provides premier legal counsel in commercial litigation, conveyancing, corporate law, and dispute resolution.',
+      keywords: ['services', 'solutions', 'offerings', 'wanzakivinduadvocates']
+    }
+  ]
+});
+
+const lawFirmServicesQuery = wanzakiEngine.classify('What services do you offer?');
+assert(!lawFirmServicesQuery.reply.includes('Autonomous AI Chatbot Creation'), 'Client bot does NOT return Botly sales pitch');
+assert(!lawFirmServicesQuery.reply.includes('$10'), 'Client bot does NOT advertise $10 chatbot creation');
+assert(lawFirmServicesQuery.reply.includes('commercial litigation'), 'Client bot returns law firm actual legal services');
+assert(lawFirmServicesQuery.reply.includes('Wanzakivinduadvocates'), 'Client bot cites law firm name');
+
+// Test 22.2: Law firm client bot with NO services FAQ falls through to lead capture / team, NEVER Botly pitch
+const lawFirmNoFaqEngine = new IntentEngine({
+  mode: 'saas',
+  company: {
+    name: 'Wanzakivinduadvocates',
+    websiteUrl: 'https://wanzakivinduadvocates.com'
+  },
+  customKnowledge: []
+});
+
+const lawFirmNoFaqQuery = lawFirmNoFaqEngine.classify('What services do you offer?');
+assert(!lawFirmNoFaqQuery.reply.includes('Autonomous AI Chatbot Creation'), 'Law firm without service FAQ does NOT return Botly sales pitch');
+assert(!lawFirmNoFaqQuery.reply.includes('$10 flat'), 'Law firm without service FAQ does NOT advertise $10 bot deployment');
+assert(lawFirmNoFaqQuery.reply.includes('Wanzakivinduadvocates'), 'Routes inquiry to Wanzakivinduadvocates team');
+
+// Test 22.3: Law firm client bot asked about pricing directs to law firm, NOT Botly $10
+const lawFirmPricingQuery = lawFirmNoFaqEngine.classify('How much does it cost?');
+assert(!lawFirmPricingQuery.reply.includes('$10 per chatbot'), 'Law firm does NOT return $10 per chatbot pitch');
+assert(lawFirmPricingQuery.reply.includes('Wanzakivinduadvocates'), 'Directs pricing inquiry to Wanzakivinduadvocates');
+
+// Test 22.4: Law firm client bot pleasantry does not talk about setting up bots
+const lawFirmThanks = lawFirmNoFaqEngine.classify('Thank you very much!');
+assert(!lawFirmThanks.reply.includes('setting up your bot'), 'Client bot thanks reply does NOT say setting up your bot');
+
+// Test 22.5: Law firm client bot human escalation does not leak care@botly.ai
+const lawFirmEscalation = lawFirmNoFaqEngine.classify('Can I speak to someone?');
+assert(!lawFirmEscalation.reply.includes('care@botly.ai'), 'Client bot escalation does NOT leak care@botly.ai');
+
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
 console.log(`========================================\n`);

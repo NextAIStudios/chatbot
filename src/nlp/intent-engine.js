@@ -256,6 +256,8 @@ export class IntentEngine {
     const lower = raw.toLowerCase();
 
     const isSaas = this.config.mode === 'saas';
+    const compName = (this.config.company && this.config.company.name) ? this.config.company.name.trim() : '';
+    const isBotlySelf = !compName || /^(botly|botly\s*(pro|ai|insurance)?)$/i.test(compName) || (/\bbotly\b/i.test(lower) && !/\b(other|different|not)\s*botly\b/i.test(lower));
 
     // 1. Direct Greetings & Pleasantries
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening)|howdy)\b/i.test(lower)) {
@@ -274,7 +276,9 @@ export class IntentEngine {
         intent: 'thanks',
         confidence: 0.95,
         reply: isSaas
-          ? `You're very welcome! 😊 Let me know if you have any other questions or need help setting up your bot.`
+          ? (isBotlySelf
+              ? `You're very welcome! 😊 Let me know if you have any other questions or need help setting up your bot.`
+              : `You're very welcome! 😊 Let me know if you have any other questions or if there's anything else I can assist you with.`)
           : `You're very welcome! 😊 Protecting what matters most to you is what we do best. Is there anything else you'd like to check or calculate?`
       };
     }
@@ -290,14 +294,13 @@ export class IntentEngine {
       }
     }
 
-    // 2. Services Overview & Chatbot Creation
-    if (/\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
+    // 2. Services Overview & Chatbot Creation (Scythed strictly to Botly's own bot)
+    // Non-Botly client bots fall straight through to client knowledge base search (uniform 0.45 floor) or lead capture
+    if (isBotlySelf && /\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
       const bestServiceFaq = this.matchKnowledgeBase(queryTokens, null, raw);
-      if (bestServiceFaq && bestServiceFaq.score >= 0.65) {
-        // Handled below by knowledge base search
+      if (bestServiceFaq && bestServiceFaq.score >= 0.45) {
+        // Handled below by standard knowledge base search with uniform 0.45 threshold
       } else {
-        const compName = this.config.company?.name || 'Botly Pro';
-        const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';
         return {
           intent: 'services_overview',
           confidence: 0.95,
@@ -305,12 +308,12 @@ export class IntentEngine {
           suggestedQuickReplies: [
             { label: 'Get started', payload: 'How do I get started?' },
             { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
-            { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
+            { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
           ],
           quickReplies: [
             { label: 'Get started', payload: 'How do I get started?' },
             { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
-            { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
+            { label: 'Talk to someone', payload: 'I want to speak with someone from the team' }
           ]
         };
       }
@@ -319,7 +322,7 @@ export class IntentEngine {
     // 2. Human Agent / Escalation
     if (/human|agent|representative|advisor|speak\s*to\s*(someone|person)|customer\s*service\s*rep/i.test(lower)) {
       const phone = this.config.company?.supportPhone || '+1 (800) 555-0199';
-      const email = this.config.company?.supportEmail || (isSaas ? 'care@botly.ai' : 'care@insurance.example.com');
+      const email = this.config.company?.supportEmail || (isBotlySelf ? 'care@botly.ai' : (this.config.company?.websiteUrl ? `contact@${this.config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '')}` : 'our support team'));
       return {
         intent: 'human_handover',
         confidence: 0.95,
@@ -602,7 +605,6 @@ export class IntentEngine {
     let needTopic = extracted.cleanQuery;
     if (!needTopic || needTopic.length < 2) needTopic = raw;
 
-    const compName = this.config.company?.name || 'our';
     const webUrl = this.config.company?.websiteUrl || '';
 
     // Detect ecommerce or shopping intent
@@ -616,8 +618,6 @@ export class IntentEngine {
       (/\b(price|pricing|subscription|plans?|packages?|tier|tiers|fee|rates?|\$10|ten\s*dollars)\b/i.test(lower) || /\b(how\s*much|cost|charge)\b/i.test(lower));
 
     if (isSaas && isPricingInquiry) {
-      const isBotlySelf = !compName || compName.toLowerCase() === 'botly' || compName.toLowerCase() === 'botly pro' || /botly|chatbot\s*(cost|pricing|price)|buy\s*(a\s*)?chatbot/i.test(lower);
-
       if (isBotlySelf) {
         return {
           intent: 'faq',
