@@ -3983,16 +3983,17 @@ window.addEventListener('botly:payment', async (event) => {
         companyName: cleanName,
         botName: cleanName + ' Concierge',
         botTitle: 'AI Inquiries & Knowledge Concierge',
-        greeting: 'Hello and welcome to ' + cleanName + '! How can I assist you today with our services or inquiries?',
+        greeting: 'Hello and welcome to **' + cleanName + '**! I am your AI concierge. How can I assist you today with our services or inquiries?',
         quickReplies: [
           { label: '💼 Our Services', payload: 'What services or solutions does ' + cleanName + ' offer?' },
+          { label: '💳 Pricing & Plans', payload: 'What are the pricing options for ' + cleanName + '?' },
           { label: '📞 Contact Team', payload: 'How can I get in touch with the team?' }
         ],
         checkoutConfig: {
           itemName: '',
           amount: '',
           currency: 'KES',
-          externalUrl: '',
+          externalUrl: url,
           mpesaBusinessName: cleanName,
           mpesaNumber: '',
           mpesaType: 'buy_goods'
@@ -4000,18 +4001,115 @@ window.addEventListener('botly:payment', async (event) => {
         pages: [
           {
             id: 'gen_home',
-            title: cleanName + ' - Overview',
+            title: cleanName + ' - Official Overview',
             path: '/',
             category: 'overview',
-            wordCount: 180,
-            excerpt: 'Official website for ' + cleanName + '.',
+            wordCount: 340,
+            excerpt: 'Official homepage for ' + cleanName + '. Explore our comprehensive solutions, services, and dedicated customer support.',
             selected: true,
             qas: [
               {
-                id: 'web_gen_home',
+                id: 'web_gen_home_1',
                 question: 'What is ' + cleanName + ' and what do you do?',
-                answer: 'Welcome to ' + cleanName + '! We are dedicated to providing high quality solutions and professional services. Please let us know what you need or how we can assist you.',
+                answer: 'Welcome to ' + cleanName + '! We are dedicated to providing high quality solutions and professional services tailored to our clients.',
                 keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'services', 'welcome']
+              },
+              {
+                id: 'web_gen_home_2',
+                question: 'Why choose ' + cleanName + '?',
+                answer: 'At ' + cleanName + ', we combine expertise, reliable service, and 24/7 responsiveness to deliver exceptional value.',
+                keywords: [cleanName.toLowerCase(), 'benefits', 'choose', 'quality']
+              }
+            ]
+          },
+          {
+            id: 'gen_services',
+            title: 'Services & Solutions - ' + cleanName,
+            path: '/services',
+            category: 'services',
+            wordCount: 420,
+            excerpt: 'Explore our full spectrum of professional services, specialized workflows, and client solutions.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_serv_1',
+                question: 'What services and solutions does ' + cleanName + ' provide?',
+                answer: cleanName + ' offers a comprehensive suite of customized services and solutions tailored to your industry and specific business needs.',
+                keywords: ['services', 'solutions', 'offerings', cleanName.toLowerCase()]
+              },
+              {
+                id: 'web_gen_serv_2',
+                question: 'Do you offer custom tailored packages?',
+                answer: 'Yes! We work closely with each client to design personalized packages and proposals aligned with your goals.',
+                keywords: ['custom', 'packages', 'tailored', 'proposals']
+              }
+            ]
+          },
+          {
+            id: 'gen_pricing',
+            title: 'Pricing & Plans - ' + cleanName,
+            path: '/pricing',
+            category: 'pricing',
+            wordCount: 310,
+            excerpt: 'Transparent pricing models, custom quotes, and flexible options designed for every organization.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_price_1',
+                question: 'What are the pricing options at ' + cleanName + '?',
+                answer: cleanName + ' provides transparent, competitive pricing. Contact our sales team for exact quotes and volume discounts.',
+                keywords: ['pricing', 'plans', 'cost', 'rates', 'quote']
+              }
+            ]
+          },
+          {
+            id: 'gen_about',
+            title: 'About Us - ' + cleanName,
+            path: '/about',
+            category: 'overview',
+            wordCount: 360,
+            excerpt: 'Learn about our company mission, core values, and dedicated team at ' + cleanName + '.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_abt_1',
+                question: 'What is the mission of ' + cleanName + '?',
+                answer: 'Our mission at ' + cleanName + ' is to empower our clients with industry-leading tools, outstanding quality, and dedicated care.',
+                keywords: ['about', 'mission', 'values', cleanName.toLowerCase()]
+              }
+            ]
+          },
+          {
+            id: 'gen_contact',
+            title: 'Contact & Support - ' + cleanName,
+            path: '/contact',
+            category: 'support',
+            wordCount: 280,
+            excerpt: 'Get in touch with the ' + cleanName + ' team, customer care, or request a direct callback.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_cnt_1',
+                question: 'How do I contact ' + cleanName + '?',
+                answer: 'You can reach out to ' + cleanName + ' through our official channels. Leave your contact details below to speak with an advisor.',
+                keywords: ['contact', 'support', 'phone', 'email', 'help']
+              }
+            ]
+          },
+          {
+            id: 'gen_faq',
+            title: 'Frequently Asked Questions - ' + cleanName,
+            path: '/faq',
+            category: 'support',
+            wordCount: 320,
+            excerpt: 'Answers to frequently asked questions about getting started, turnaround times, and guarantees.',
+            selected: true,
+            qas: [
+              {
+                id: 'web_gen_faq_1',
+                question: 'How fast can I get started with ' + cleanName + '?',
+                answer: 'Getting started is fast and straightforward. Our team can onboard your business and activate services rapidly.',
+                keywords: ['start', 'onboarding', 'how fast', 'setup']
               }
             ]
           }
@@ -4089,12 +4187,12 @@ window.addEventListener('botly:payment', async (event) => {
       var crawlTimeout = setTimeout(function() {
         console.warn('Live crawler timed out, applying curated/synthetic profile.');
         applyCrawledProfile(fallbackProfile);
-      }, 7000);
+      }, 25000);
 
       fetch('/api/crawl', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url, max_pages: 6 })
+        body: JSON.stringify({ url: url, max_pages: 20 })
       })
       .then(function(res) {
         if (!res.ok) throw new Error('Live crawl returned ' + res.status);
@@ -4332,8 +4430,8 @@ window.addEventListener('botly:payment', async (event) => {
           if (greetInput) greetInput.value = profile.greeting;
         }
 
-        // Adjust Starter FAQs with top 2 Q&As from the website
-        if (newChunks.length >= 2) {
+        // Adjust Starter FAQs with top distinct Q&As if FAQs are empty
+        if ((!wizardState.faqs || wizardState.faqs.length === 0) && newChunks.length >= 2) {
           wizardState.faqs = [
             {
               question: newChunks[0].question,

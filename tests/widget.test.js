@@ -9,6 +9,7 @@ import { QuoteFlow } from '../src/flows/quote-flow.js';
 import { ClaimsFlow } from '../src/flows/claims-flow.js';
 import { ReceiptGenerator } from '../src/payments/receipt-generator.js';
 import { formatScrapedProductsResult, fetchLiveScrapedProducts, searchProducts } from '../src/tools/tool-registry.js';
+import { LeadCaptureFlow } from '../src/flows/lead-capture-flow.js';
 
 let passed = 0;
 let failed = 0;
@@ -147,7 +148,7 @@ const queryRes = await connector.query('What is the deductible on my corporate f
 assert(queryRes.success === true && queryRes.reply.includes('Backend API Response'), 'BackendConnector processes query and returns structured response');
 
 console.log('\n--- 📋 7. Testing Lead Capture & Human Follow-Up Dynamics ---');
-import { LeadCaptureFlow } from '../src/flows/lead-capture-flow.js';
+
 
 // Test 7.1: Unlisted inquiry triggers LEAD_CAPTURE
 const unlistedRes = engine.classify('Do you offer cyber liability insurance for SaaS cloud infrastructure?');
@@ -770,6 +771,67 @@ assert(searchLive.items.length === 2, 'searchProducts preserves scraped items');
 assert(typeof catalogEngine.classifyAsync === 'function', 'IntentEngine provides classifyAsync method');
 const syncFallback = catalogEngine.classify('milk');
 assert(syncFallback.action === 'PRODUCT_SEARCH', 'Synchronous classify resolves milk to PRODUCT_SEARCH');
+
+console.log('\n--- 🤝 21. Testing Contact Memory, Chatbot Creation Services & Answer Deduplication ---');
+
+// Test 21.1: LeadCaptureFlow remembers contact and does NOT ask again when both name & phone exist
+const memoryLeadFlow = new LeadCaptureFlow({ mode: 'saas', company: { name: 'Botly Pro' } });
+const step1 = memoryLeadFlow.start('Custom CRM Integration');
+assert(memoryLeadFlow.state.step === 'awaiting_name', 'Initial lead inquiry prompts for name');
+const step2 = memoryLeadFlow.handleInput('Sarah Jenkins');
+assert(memoryLeadFlow.state.step === 'awaiting_phone', 'Advances to awaiting phone after name provided');
+assert(memoryLeadFlow.collectedContact.name === 'Sarah Jenkins', 'Remembers collected user name in flow memory');
+const step3 = memoryLeadFlow.handleInput('+254 712 345 678');
+assert(memoryLeadFlow.state.step === 'completed', 'Completes lead capture after phone provided');
+assert(memoryLeadFlow.collectedContact.phone === '+254 712 345 678', 'Remembers collected user phone in flow memory');
+
+// Subsequent inquiry should NOT ask for name or phone again
+const nextInquiry = memoryLeadFlow.start('Enterprise Security SLA');
+assert(memoryLeadFlow.state.active === false, 'Subsequent inquiry does NOT start active prompt for name/phone');
+assert(nextInquiry.message.includes('Sarah Jenkins'), 'Recognizes Sarah Jenkins immediately');
+assert(nextInquiry.message.includes('+254 712 345 678'), 'Confirms team already has phone number on file');
+assert(!nextInquiry.message.includes('May I please have your full name'), 'Does NOT ask for name again');
+assert(nextInquiry.leadCaptured && nextInquiry.leadCaptured.need === 'Enterprise Security SLA', 'Captures new need under known contact');
+
+// Test 21.2: Chatbot Creation Services Query
+const servicesQuery = engine.classify('What services do you offer?');
+assert(servicesQuery.intent === 'services_overview', 'Services query matches services_overview intent');
+assert(servicesQuery.reply.includes('Chatbot Creation'), 'Services overview explicitly includes Chatbot Creation');
+assert(servicesQuery.reply.includes('$10'), 'Services overview mentions $10 flat deployment');
+assert(servicesQuery.reply.includes('Autonomous Lead Capture'), 'Services overview mentions Autonomous Lead Capture');
+
+// Test 21.3: Quick reply label "Our Services" matches chatbot creation
+const ourServicesRes = engine.classify('Our Services');
+assert(ourServicesRes.intent === 'services_overview', 'Our Services matches services overview');
+assert(ourServicesRes.reply.includes('AI Chatbot Creation'), 'Our Services highlights AI Chatbot Creation');
+
+// Test 21.4: Redundant follow-up question prevention
+const customWithQuestion = new IntentEngine({
+  mode: 'saas',
+  customFaqs: [
+    {
+      question: 'How much is it?',
+      answer: 'It costs $10 per bot flat. Want to get started?',
+      keywords: ['cost', 'price']
+    }
+  ]
+});
+const priceQueryRes = customWithQuestion.classify('how much is it?');
+// Answer already ends with "Want to get started?", so no redundant "💬 Would you like..." is appended
+assert(!priceQueryRes.reply.includes('💬'), 'Suppresses redundant follow-up when answer already ends with a question');
+assert(priceQueryRes.reply.includes('Want to get started?'), 'Preserves original closing question');
+
+// Test 21.5: Deduplication of Q&As in IntentEngine
+const dupEngine = new IntentEngine({
+  mode: 'saas',
+  customFaqs: [
+    { question: 'What is your refund policy?', answer: 'We offer a 30-day money back guarantee.', keywords: ['refund'] }
+  ],
+  customKnowledge: [
+    { question: 'What is your refund policy?', answer: 'We offer a 30-day money back guarantee.', keywords: ['refund'] }
+  ]
+});
+assert(dupEngine.knowledgeBase.length === 1, 'Deduplicates identical Q&As across customFaqs and customKnowledge');
 
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);

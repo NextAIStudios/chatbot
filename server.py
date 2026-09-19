@@ -91,7 +91,7 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
                 payload = dict(urllib.parse.parse_qsl(raw_body))
 
             url = (payload.get("url") or "").strip()
-            max_pages = int(payload.get("max_pages", 6))
+            max_pages = min(int(payload.get("max_pages", 20)), 40)
 
             if not url:
                 self._send_json({"success": False, "error": "Missing website 'url' parameter"}, status_code=400)

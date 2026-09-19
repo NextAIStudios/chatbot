@@ -14,9 +14,21 @@ export class IntentEngine {
   }
 
   rebuildKnowledgeBase() {
-    this.knowledgeBase = this.config.mode === 'saas'
+    const rawList = this.config.mode === 'saas'
       ? [...this.customKnowledge]
       : [...this.customKnowledge, ...INSURANCE_KNOWLEDGE_BASE];
+
+    // Deduplicate entries by question and answer
+    const seen = new Set();
+    this.knowledgeBase = [];
+    for (const item of rawList) {
+      if (!item) continue;
+      const key = `${(item.question || '').trim()}:::${(item.answer || '').trim()}`.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        this.knowledgeBase.push(item);
+      }
+    }
   }
 
   addCustomKnowledge(items) {
@@ -278,6 +290,32 @@ export class IntentEngine {
       }
     }
 
+    // 2. Services Overview & Chatbot Creation
+    if (/\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
+      const bestServiceFaq = this.matchKnowledgeBase(queryTokens, null, raw);
+      if (bestServiceFaq && bestServiceFaq.score >= 0.65) {
+        // Handled below by knowledge base search
+      } else {
+        const compName = this.config.company?.name || 'Botly Pro';
+        const teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? `the ${compName} team` : 'the team';
+        return {
+          intent: 'services_overview',
+          confidence: 0.95,
+          reply: `We specialize in **Autonomous AI Chatbot Creation & Deployment** for companies of all sizes! 🚀\n\nHere is what our services include:\n• **Custom AI Chatbot Creation**: Tailored bots trained on your company's website, documents, and FAQs.\n• **24/7 Customer Support Automation**: Instant, human-like answers to customer inquiries around the clock.\n• **Autonomous Lead Capture**: Automatically collects and qualifies verified customer names and phone numbers.\n• **Live Product & Catalog Discovery**: Dynamic store & website scraping with real-time pricing and direct store links.\n• **5-Minute No-Code Deployment**: Works seamlessly on WordPress, Shopify, Webflow, React, Next.js, and HTML websites for just $10 flat per bot!\n\nWould you like to deploy a custom chatbot for your business?`,
+          suggestedQuickReplies: [
+            { label: 'Get started', payload: 'How do I get started?' },
+            { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+            { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
+          ],
+          quickReplies: [
+            { label: 'Get started', payload: 'How do I get started?' },
+            { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+            { label: 'Talk to someone', payload: `I want to speak with someone from ${teamLabel}` }
+          ]
+        };
+      }
+    }
+
     // 2. Human Agent / Escalation
     if (/human|agent|representative|advisor|speak\s*to\s*(someone|person)|customer\s*service\s*rep/i.test(lower)) {
       const phone = this.config.company?.supportPhone || '+1 (800) 555-0199';
@@ -514,14 +552,6 @@ export class IntentEngine {
             label: `🛒 Buy ${prodShort} (${prodSym}${Number(topProd.price).toLocaleString()})`,
             payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}`
           });
-          quickReplies.push({
-            label: '📱 Pay with M-Pesa',
-            payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}:mpesa`
-          });
-          quickReplies.push({
-            label: '💳 Pay with Card',
-            payload: `checkout_item:${encodeURIComponent(topProd.name)}:${topProd.price}:${topProd.currency}:${encodeURIComponent(topProd.url || '')}:card`
-          });
 
           if (focusedProduct && focusedProduct.score >= 5) {
             quickReplies.push({
@@ -552,11 +582,17 @@ export class IntentEngine {
         ];
       }
 
+      // Check if answer already ends with a question to prevent duplicate follow-ups
+      const hasTrailingQuestion = /\?(\s*[*_~`"]*)*$/i.test(finalAnswerText.trim());
+      const replyBody = (hasTrailingQuestion || !followUp)
+        ? `${replyPrefix}${finalAnswerText}`
+        : `${replyPrefix}${finalAnswerText}\n\n${followUp}`;
+
       return {
         intent: 'faq',
         confidence: bestFaq.score,
         matchedItem: bestFaq.item,
-        reply: `${replyPrefix}${finalAnswerText}\n\n${followUp}`,
+        reply: replyBody,
         suggestedQuickReplies: quickReplies,
         quickReplies: quickReplies
       };

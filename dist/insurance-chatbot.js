@@ -1491,6 +1491,21 @@
       }
     }
 
+    // Services Overview & Chatbot Creation
+    if (/\b(our\s*services?|what\s*(are\s*your\s*services?|services?\s*do\s*you\s*(offer|provide)|do\s*you\s*(do|offer|provide))|services?\s*offered|chatbot\s*creation|create\s*(a\s*)?chatbot|build\s*(a\s*)?chatbot|make\s*(a\s*)?chatbot|ai\s*chatbots?)\b/i.test(lower)) {
+      var compName = (config && config.company && config.company.name) ? config.company.name : 'Botly Pro';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
+      return {
+        intent: 'services_overview',
+        reply: "We specialize in **Autonomous AI Chatbot Creation & Deployment** for companies of all sizes! 🚀\n\nHere is what our services include:\n• **Custom AI Chatbot Creation**: Tailored bots trained on your company's website, documents, and FAQs.\n• **24/7 Customer Support Automation**: Instant, human-like answers to customer inquiries around the clock.\n• **Autonomous Lead Capture**: Automatically collects and qualifies verified customer names and phone numbers.\n• **Live Product & Catalog Discovery**: Dynamic store & website scraping with real-time pricing and direct store links.\n• **5-Minute No-Code Deployment**: Works seamlessly on WordPress, Shopify, Webflow, React, Next.js, and HTML websites for just $10 flat per bot!\n\nWould you like to deploy a custom chatbot for your business?",
+        suggestedQuickReplies: [
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
+        ]
+      };
+    }
+
     // 1. Direct Greetings
     if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower)) {
       var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly Pro';
@@ -1561,9 +1576,21 @@
     }
 
     // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
-    var allFaqs = isSaasMode
+    var allFaqsRaw = isSaasMode
       ? (customKnowledge || []).concat(customFaqs || [])
       : (customKnowledge || []).concat(customFaqs || []).concat(INSURANCE_KNOWLEDGE_BASE);
+
+    // Deduplicate answers / Q&As
+    var seenFaqKeys = {};
+    var allFaqs = [];
+    allFaqsRaw.forEach(function(item) {
+      if (!item) return;
+      var k = ((item.question || '') + ':::' + (item.answer || '')).trim().toLowerCase();
+      if (!seenFaqKeys[k]) {
+        seenFaqKeys[k] = true;
+        allFaqs.push(item);
+      }
+    });
 
     var stopWords = {
       'do': 1, 'you': 1, 'we': 1, 'i': 1, 'the': 1, 'a': 1, 'an': 1, 'and': 1, 'or': 1, 'of': 1, 'for': 1, 'in': 1,
@@ -2193,16 +2220,6 @@
             payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '')
           });
 
-          faqQuickReplies.push({
-            label: '📱 Pay with M-Pesa',
-            payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '') + ':mpesa'
-          });
-
-          faqQuickReplies.push({
-            label: '💳 Pay with Card',
-            payload: 'checkout_item:' + encodeURIComponent(topProd.name) + ':' + topProd.price + ':' + topProd.currency + ':' + encodeURIComponent(topProd.url || '') + ':card'
-          });
-
           if (focusedProduct && focusedProduct.score >= 5) {
             faqQuickReplies.push({
               label: '🔍 View all options',
@@ -2251,9 +2268,15 @@
         ];
       }
 
+      // Check if answer already ends with a question to prevent duplicate follow-ups
+      var hasTrailingQuestion = /\?(\s*[*_~`"]*)*$/i.test((finalAnswerText || '').trim());
+      var replyBody = (hasTrailingQuestion || !followUpText)
+        ? (replyPrefix + finalAnswerText)
+        : (replyPrefix + finalAnswerText + '\n\n' + followUpText);
+
       return {
         intent: 'faq',
-        reply: replyPrefix + finalAnswerText + '\n\n' + followUpText,
+        reply: replyBody,
         suggestedQuickReplies: faqQuickReplies,
         lastFollowUp: typeof followUpObj === 'object' ? followUpObj : null,
         topic: best.question || ''
@@ -2481,6 +2504,21 @@
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
     this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
+    this.collectedContact = { name: '', phone: '' };
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        var storedContact = localStorage.getItem('botly_user_contact');
+        if (storedContact) {
+          var parsedContact = JSON.parse(storedContact);
+          if (parsedContact && typeof parsedContact === 'object') {
+            this.collectedContact = {
+              name: parsedContact.name || '',
+              phone: parsedContact.phone || ''
+            };
+          }
+        }
+      } catch (e) {}
+    }
     this.conversationMemory = {
       turns: 0,
       history: [],
@@ -2698,6 +2736,12 @@
 
   BotlyChatbotController.prototype.appendBot = function(text, opts) {
     opts = opts || {};
+    var now = Date.now();
+    if (this._lastBotText === text && (now - (this._lastBotTime || 0)) < 450) {
+      return; // Deduplicate rapid duplicate bot message
+    }
+    this._lastBotText = text;
+    this._lastBotTime = now;
     this.removeTyping();
 
     var row = document.createElement('div');
@@ -2795,6 +2839,13 @@
 
   BotlyChatbotController.prototype.handleUserMessage = function(text) {
     var self = this;
+    var now = Date.now();
+    if (this._lastUserMsg === text && (now - (this._lastUserMsgTime || 0)) < 350) {
+      return; // Deduplicate rapid double submission
+    }
+    this._lastUserMsg = text;
+    this._lastUserMsgTime = now;
+
     if (text && text.indexOf('checkout_item:') === 0) {
       // Payments removed — route to lead capture
       this.startLeadCapture('Purchase inquiry', null);
@@ -2965,11 +3016,83 @@
   };
 
   BotlyChatbotController.prototype.startLeadCapture = function(inquiredNeed, customIntro) {
-    var cleanNeed = (inquiredNeed || '').trim();
+    var cleanNeed = (inquiredNeed || '').trim() || 'Custom Service & Solution Inquiry';
+
+    // If both name and phone have already been collected, do not ask again!
+    if (this.collectedContact && this.collectedContact.name && this.collectedContact.phone) {
+      this.leadState = {
+        active: false,
+        step: 'completed',
+        inquiredNeed: cleanNeed,
+        name: this.collectedContact.name,
+        phone: this.collectedContact.phone
+      };
+
+      var leadRecord = {
+        id: 'LEAD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
+        name: this.collectedContact.name,
+        phone: this.collectedContact.phone,
+        need: cleanNeed,
+        goal: this.config.goal || 'lead_generation',
+        timestamp: new Date().toISOString(),
+        createdAtFormatted: new Date().toLocaleString(),
+        status: 'New',
+        company: this.config.company?.name || 'Botly AI'
+      };
+
+      saveStoredLead(leadRecord);
+
+      if (this.config.webhooks?.onLeadCaptured && typeof this.config.webhooks.onLeadCaptured === 'function') {
+        try { this.config.webhooks.onLeadCaptured(leadRecord); } catch(e) {}
+      }
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        try { window.dispatchEvent(new CustomEvent('botly:leadCaptured', { detail: leadRecord })); } catch(e) {}
+      }
+
+      var isSaas = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
+      var compName = (this.config.company && this.config.company.name) ? this.config.company.name : '';
+      var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'the team';
+      var followUp = (this.config.leadCapture && this.config.leadCapture.followUpQuestion) ||
+        (isSaas
+          ? "💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services."
+          : "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant rates or view an overview of our coverage?");
+
+      var confirmKnownMsg = "🎉 **Thank you, " + this.escape(this.collectedContact.name) + "!**\n\nI've logged your request regarding **" + this.escape(cleanNeed) + "**.\n\nOur specialist team already has your contact details (**" + this.escape(this.collectedContact.phone) + "**) and will reach out shortly.\n\n" + followUp;
+
+      this.appendBot(confirmKnownMsg, {
+        quickReplies: isSaas ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
+        ] : [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+        ]
+      });
+      return;
+    }
+
+    // If only name has been collected, skip asking for name and ask directly for phone
+    if (this.collectedContact && this.collectedContact.name && !this.collectedContact.phone) {
+      this.leadState = {
+        active: true,
+        step: 'awaiting_phone',
+        inquiredNeed: cleanNeed,
+        name: this.collectedContact.name,
+        phone: ''
+      };
+      this.appendBot("Wonderful to connect with you again, **" + this.escape(this.collectedContact.name) + "**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you regarding **" + this.escape(cleanNeed) + "**?", {
+        quickReplies: [
+          { label: 'Cancel & Main Menu', payload: 'intent_cancel_lead' }
+        ]
+      });
+      return;
+    }
+
     this.leadState = {
       active: true,
       step: 'awaiting_name',
-      inquiredNeed: cleanNeed || 'Custom Service & Solution Inquiry',
+      inquiredNeed: cleanNeed,
       name: '',
       phone: ''
     };
@@ -3012,7 +3135,6 @@
         ] : [
           { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
           { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-          { label: '💳 Make a Payment', payload: 'intent_pay' },
           { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
         ]
       });
@@ -3026,6 +3148,10 @@
         return;
       }
       this.leadState.name = name;
+      this.collectedContact.name = name;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+      }
       this.leadState.step = 'awaiting_phone';
 
       var phonePrompt = '';
@@ -3045,6 +3171,10 @@
         return;
       }
       this.leadState.phone = input;
+      this.collectedContact.phone = input;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+      }
       this.leadState.step = 'completed';
       this.leadState.active = false;
 
@@ -3094,7 +3224,6 @@
           { label: 'Talk to someone', payload: 'I want to speak with someone from ' + teamLabel }
         ] : [
           { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
-          { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
           { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
         ]
       });

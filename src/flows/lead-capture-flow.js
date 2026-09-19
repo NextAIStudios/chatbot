@@ -8,6 +8,21 @@ export class LeadCaptureFlow {
   constructor(config = {}, onLeadCaptured = null) {
     this.config = config;
     this.onLeadCaptured = onLeadCaptured;
+    this.collectedContact = { name: '', phone: '' };
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const stored = localStorage.getItem('botly_user_contact');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object') {
+            this.collectedContact = {
+              name: parsed.name || '',
+              phone: parsed.phone || ''
+            };
+          }
+        }
+      } catch (e) {}
+    }
     this.state = {
       active: false,
       step: 'idle', // 'idle' | 'awaiting_name' | 'awaiting_phone' | 'completed'
@@ -21,11 +36,82 @@ export class LeadCaptureFlow {
    * Start lead capture for an unlisted inquiry or custom request
    */
   start(inquiredNeed = '') {
-    const cleanNeed = (inquiredNeed || '').trim();
+    const cleanNeed = (inquiredNeed || '').trim() || 'Custom Service & Solution Inquiry';
+
+    // If both name and phone have already been collected, do not ask again!
+    if (this.collectedContact.name && this.collectedContact.phone) {
+      this.state = {
+        active: false,
+        step: 'completed',
+        inquiredNeed: cleanNeed,
+        name: this.collectedContact.name,
+        phone: this.collectedContact.phone
+      };
+
+      const goalKey = this.config.goal || 'lead_generation';
+      const leadRecord = {
+        id: 'LEAD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
+        name: this.collectedContact.name,
+        phone: this.collectedContact.phone,
+        need: cleanNeed,
+        goal: goalKey,
+        timestamp: new Date().toISOString(),
+        createdAtFormatted: new Date().toLocaleString(),
+        status: 'New',
+        company: this.config.company?.name || 'Botly AI'
+      };
+
+      LeadCaptureFlow.saveLeadToStorage(leadRecord);
+
+      if (this.onLeadCaptured) {
+        try { this.onLeadCaptured(leadRecord); } catch (e) {}
+      }
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        try { window.dispatchEvent(new CustomEvent('botly:leadCaptured', { detail: leadRecord })); } catch {}
+      }
+
+      const isSaas = this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0);
+      const compName = this.config.company?.name || 'our';
+      const followUp = this.config.leadCapture?.followUpQuestion ||
+        (isSaas
+          ? `💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services.`
+          : `💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant rates or view an overview of our coverage?`);
+
+      return {
+        message: `🎉 **Thank you, ${this.escapeHtml(this.collectedContact.name)}!**\n\nI've logged your request regarding **${this.escapeHtml(cleanNeed)}**. Our specialist team already has your contact details (**${this.escapeHtml(this.collectedContact.phone)}**) and will follow up with you directly.\n\n${followUp}`,
+        leadCaptured: leadRecord,
+        quickReplies: isSaas ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Get started', payload: 'How do I get started?' },
+          { label: 'Talk to someone', payload: `I want to speak with someone from the team` }
+        ] : [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
+        ]
+      };
+    }
+
+    // If only name has been collected, skip asking for name and ask for phone directly
+    if (this.collectedContact.name && !this.collectedContact.phone) {
+      this.state = {
+        active: true,
+        step: 'awaiting_phone',
+        inquiredNeed: cleanNeed,
+        name: this.collectedContact.name,
+        phone: ''
+      };
+      return {
+        message: `Wonderful to connect with you again, **${this.escapeHtml(this.collectedContact.name)}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you regarding **${this.escapeHtml(cleanNeed)}**?`,
+        quickReplies: [
+          { label: 'Cancel & Main Menu', payload: 'intent_cancel_lead' }
+        ]
+      };
+    }
+
     this.state = {
       active: true,
       step: 'awaiting_name',
-      inquiredNeed: cleanNeed || 'Custom Service & Solution Inquiry',
+      inquiredNeed: cleanNeed,
       name: '',
       phone: ''
     };
@@ -80,7 +166,6 @@ export class LeadCaptureFlow {
         quickReplies: [
           { label: '🚗 Auto Quote', payload: 'intent_quote_auto' },
           { label: '🏥 Health Plans', payload: 'intent_quote_health' },
-          { label: '💳 Make a Payment', payload: 'intent_pay' },
           { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
         ]
       };
@@ -97,6 +182,10 @@ export class LeadCaptureFlow {
       }
 
       this.state.name = name;
+      this.collectedContact.name = name;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+      }
       this.state.step = 'awaiting_phone';
 
       let phonePrompt = '';
@@ -123,6 +212,10 @@ export class LeadCaptureFlow {
       }
 
       this.state.phone = phone;
+      this.collectedContact.phone = phone;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+      }
       this.state.step = 'completed';
       this.state.active = false;
 
@@ -182,7 +275,6 @@ export class LeadCaptureFlow {
         { label: 'Talk to someone', payload: `I want to speak with someone from ${this.config.company?.name ? 'the ' + this.config.company.name + ' team' : 'the team'}` }
       ] : [
         { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
-        { label: '💳 In-Chat Payment Checkout', payload: 'intent_pay' },
         { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
       ];
 
