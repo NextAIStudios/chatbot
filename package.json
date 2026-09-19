@@ -30,5 +30,8 @@
   "bugs": {
     "url": "https://github.com/NextAIStudios/chatbot/issues"
   },
-  "homepage": "https://github.com/NextAIStudios/chatbot#readme"
+  "homepage": "https://github.com/NextAIStudios/chatbot#readme",
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  }
 }

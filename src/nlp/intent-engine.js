@@ -5,11 +5,25 @@
 
 import { INSURANCE_KNOWLEDGE_BASE } from './knowledge-base.js';
 import { buildProductSearchUrl, searchProducts, getDepartmentHint, fetchLiveScrapedProducts, formatScrapedProductsResult } from '../tools/tool-registry.js';
+import {
+  chunkPages,
+  KnowledgeStore,
+  RELEVANCE_THRESHOLD,
+  getToolsForBot,
+  buildCheckoutInstructions,
+  answerQuery,
+  answerQuerySync,
+  defaultEmbedFn,
+  defaultComposeFn,
+  embedTextsSync
+} from '../retrieve-and-respond.js';
+import { ingestSite } from '../ingest.js';
 
 export class IntentEngine {
   constructor(config = {}) {
     this.config = config;
     this.customKnowledge = [...(config.customKnowledge || []), ...(config.customFaqs || [])];
+    this.knowledgeStore = new KnowledgeStore();
     this.rebuildKnowledgeBase();
   }
 
@@ -29,6 +43,55 @@ export class IntentEngine {
         this.knowledgeBase.push(item);
       }
     }
+
+    // Index into KnowledgeStore using chunkPages
+    this.knowledgeStore = new KnowledgeStore();
+    this.botId = (this.config.bot && this.config.bot.name) || (this.config.company && this.config.company.name) || 'default_bot';
+
+    const pages = [];
+    for (let i = 0; i < this.knowledgeBase.length; i++) {
+      const item = this.knowledgeBase[i];
+      let contentType = item.contentType || item.category;
+      if (!contentType) {
+        if ((item.products && Array.isArray(item.products) && item.products.length > 0) ||
+            (item.answer && /[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i.test(item.answer))) {
+          contentType = 'product';
+        } else if (item.category === 'policies' || item.category === 'policy' || /\b(return|refund|warranty|shipping|delivery|payment|pay)\b/i.test(item.question || '')) {
+          contentType = 'policy';
+        } else if (item.category === 'support' || /\b(contact|location|hours|phone)\b/i.test(item.question || '')) {
+          contentType = 'support';
+        } else if (item.category === 'service' || /\b(service|services|consultation)\b/i.test(item.question || '')) {
+          contentType = 'service';
+        } else {
+          contentType = 'overview';
+        }
+      }
+      item.contentType = contentType;
+
+      const keywordsStr = Array.isArray(item.keywords) ? item.keywords.join(' ') : (item.keywords || '');
+      const tagsStr = Array.isArray(item.tags) ? item.tags.join(' ') : (item.tags || '');
+      const fullText = (item.question ? item.question + '. ' : '') + (item.answer || '') + (keywordsStr ? ' ' + keywordsStr : '') + (tagsStr ? ' ' + tagsStr : '');
+
+      pages.push({
+        url: item.url || ((this.config.company?.websiteUrl || 'https://example.com') + '#' + (item.id || i)),
+        title: item.question || item.title || 'Knowledge Base Item',
+        category: item.category || contentType,
+        contentType: contentType,
+        text: fullText,
+        structuredData: item.products ? { products: item.products } : null,
+        crawledAt: new Date().toISOString(),
+        sourceTier: 2
+      });
+    }
+
+    const chunks = chunkPages(pages);
+    for (let i = 0; i < chunks.length; i++) {
+      if (i < this.knowledgeBase.length) {
+        chunks[i].kbItem = this.knowledgeBase[i];
+        chunks[i].category = this.knowledgeBase[i].category || chunks[i].contentType;
+      }
+    }
+    this.knowledgeStore.upsertSync(this.botId, chunks);
   }
 
   addCustomKnowledge(items) {
@@ -905,192 +968,43 @@ export class IntentEngine {
   }
 
   /**
-   * Search knowledge base for highest scoring match
+   * Search knowledge base for highest scoring match using KnowledgeStore & RELEVANCE_THRESHOLD
    */
   matchKnowledgeBase(queryTokens, categoryFilter = null, rawQuery = '') {
-    const stopWords = new Set([
-      'do', 'you', 'we', 'i', 'the', 'a', 'an', 'and', 'or', 'of', 'for', 'in',
-      'on', 'to', 'is', 'are', 'it', 'can', 'how', 'what', 'offer', 'have',
-      'insurance', 'policy', 'looking', 'look', 'want', 'need', 'find', 'show',
-      'give', 'buy', 'purchase', 'order', 'sell', 'store', 'mall', 'products',
-      'product', 'item', 'items', 'shopping', 'online', 'available', 'stock',
-      'get', 'deal', 'deals', 'selling', 'carry',
-      // Domain & URL boilerplate tokens
-      'https', 'http', 'www', 'com', 'co', 'ke', 'org', 'net',
-      'catalog', 'search', 'query', 'url', 'website', 'web', 'page', 'site',
-      'jumia', 'botly'
-    ]);
-    let best = null;
-    let highestScore = 0;
+    const raw = (rawQuery || (queryTokens ? queryTokens.join(' ') : '')).trim();
+    if (!raw) return null;
 
-    const extracted = this.extractQueryKeywords(rawQuery);
-    const topicalKeywords = extracted.keywords;
-    const isProductInquiry = extracted.isProductInquiry;
-    const isAboutCompany = extracted.isAboutCompany;
-    const cleanSubject = (extracted.cleanQuery || '').toLowerCase();
-    const isPolicyInquiry = /\b(return|refund|returns|refunds|warranty|shipping|delivery|dispatch|timeline|fee|courier|pay|payment|mpesa|m-pesa|card|checkout|terms|privacy|policy|policies)\b/i.test(rawQuery);
-
-    for (const item of this.knowledgeBase) {
-      if (categoryFilter && item.category !== categoryFilter) continue;
-
-      // 1. Tag Content Type
-      let contentType = item.contentType;
-      if (!contentType) {
-        if ((item.products && Array.isArray(item.products) && item.products.length > 0) ||
-            (item.answer && /[•\*\-]+\s*\*\*([^*]+)\*\*.*?[—–\-:]\s*\*\*([A-Z\$]{1,4})?\s*([0-9,]+(?:\.[0-9]{2})?)\*\*/i.test(item.answer))) {
-          contentType = 'product_listing';
-        } else if (item.category === 'overview' || item.id === 'web_jumia_home' || /^(what\s*is\s*([a-z0-9]+\s+)?(company|jumia|botly|this|you)|who\s*(we\s*are|are\s*you)|about\s*(us|the\s*company))/i.test(item.question || '')) {
-          contentType = 'overview';
-        } else if (item.category === 'policies' || item.category === 'policy' || /\b(return|refund|warranty|shipping|delivery|dispatch|courier|guarantee|terms|privacy|payment|pay|m-pesa|mpesa|escrow)\b/i.test(item.question || '')) {
-          contentType = 'policy';
-        } else {
-          contentType = 'faq';
-        }
-      }
-      item.contentType = contentType;
-
-      // 2. Strict Content-Type Gating
-      // Overview / Company definition FAQs cannot match specific product or item inquiries
-      if (contentType === 'overview' && (isProductInquiry || (!isAboutCompany && topicalKeywords.length > 0))) {
-        continue;
-      }
-
-      // Policy FAQs cannot match item/product inquiries unless the query specifically asks about policy terms
-      if (contentType === 'policy' && isProductInquiry && !isPolicyInquiry) {
-        continue;
-      }
-
-      // Product Listing Chunks: Strict Domain / Category Alignment
-      // A product listing chunk (e.g. laptops, watches, phones) can ONLY match if the query's topical keywords
-      // or clean subject specifically align with this chunk's product categories or items.
-      if (contentType === 'product_listing' && (isProductInquiry || topicalKeywords.length > 0)) {
-        const allowedProductTokens = new Set();
-        (item.keywords || []).forEach(k => {
-          this.tokenize(k).forEach(t => {
-            if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
-          });
-        });
-        this.tokenize(item.question || '').forEach(t => {
-          if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
-        });
-        if (item.products && Array.isArray(item.products)) {
-          item.products.forEach(p => {
-            this.tokenize(p.name || '').forEach(t => {
-              if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
-            });
-          });
-        }
-        if (item.answer) {
-          const bMatches = item.answer.match(/\*\*([^*]+)\*\*/g) || [];
-          bMatches.forEach(b => {
-            this.tokenize(b).forEach(t => {
-              if (!stopWords.has(t) && t.length >= 2) allowedProductTokens.add(t.toLowerCase());
-            });
-          });
-        }
-
-        let chunkHasProductMatch = false;
-        for (const tk of topicalKeywords) {
-          for (const ap of allowedProductTokens) {
-            if (this.wordsMatch(tk, ap)) {
-              chunkHasProductMatch = true;
-              break;
-            }
-          }
-          if (chunkHasProductMatch) break;
-        }
-
-        // Exact cleanSubject substring check against question/keywords
-        if (!chunkHasProductMatch && cleanSubject && cleanSubject.length >= 3) {
-          if ((item.question || '').toLowerCase().includes(cleanSubject) ||
-              (item.keywords || []).some(k => k.toLowerCase().includes(cleanSubject))) {
-            chunkHasProductMatch = true;
-          }
-        }
-
-        if (!chunkHasProductMatch) {
-          continue;
-        }
-      }
-
-      const qTokens = new Set([...this.tokenize(item.question), ...(item.keywords || []).flatMap(k => this.tokenize(k))]);
-      const isDocOrWeb = item.source === 'document' || item.source === 'website' || item.category === 'document' || item.category === 'website';
-      const aTokens = isDocOrWeb ? new Set(this.tokenize(item.answer || '')) : null;
-      let keyMatches = 0;
-
-      // Exact cleanSubject match bonus
-      if (cleanSubject && cleanSubject.length >= 3) {
-        if ((item.question || '').toLowerCase().includes(cleanSubject)) {
-          keyMatches += 4.0;
-        } else if ((item.keywords || []).some(k => k.toLowerCase().includes(cleanSubject))) {
-          keyMatches += 3.5;
-        } else if (item.answer && item.answer.toLowerCase().includes(cleanSubject)) {
-          keyMatches += 2.5;
-        }
-      }
-
-      // Check topical keyword matches
-      let topicalMatched = false;
-      if (topicalKeywords.length > 0) {
-        for (const tk of topicalKeywords) {
-          for (const qt of qTokens) {
-            if (this.wordsMatch(tk, qt)) {
-              keyMatches += (tk === qt ? 3.0 : 2.0);
-              topicalMatched = true;
-              break;
-            }
-          }
-        }
-      }
-
-      for (const token of queryTokens) {
-        if (!stopWords.has(token) && token.length >= 2) {
-          let matched = false;
-          for (const qt of qTokens) {
-            if (this.wordsMatch(token, qt)) {
-              keyMatches += (token === qt ? 2.5 : 2.0);
-              matched = true;
-              break;
-            }
-          }
-          if (!matched && aTokens) {
-            for (const at of aTokens) {
-              if (this.wordsMatch(token, at)) {
-                keyMatches += (token === at ? 1.5 : 1.2);
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      // If the query has specific topical keywords, require that at least one topical keyword matched
-      if (topicalKeywords.length > 0 && !topicalMatched && !((item.question || '').toLowerCase().includes(cleanSubject))) {
-        continue;
-      }
-
-      let score = this.computeScore(queryTokens, item.question + ' ' + item.answer, item.keywords || []);
-      if (keyMatches > 0) {
-        score += keyMatches * 0.2;
-      } else {
-        // If NO domain keywords or question words matched at all, penalize
-        score *= 0.1;
-      }
-
-      // Custom user-trained knowledge receives priority boost so company-specific answers win
-      if (item.isCustomTrained) {
-        score *= 1.35;
-      }
-      if (score > highestScore) {
-        highestScore = score;
-        best = item;
-      }
+    if (!this.knowledgeStore) {
+      this.rebuildKnowledgeBase();
     }
 
-    if (best && highestScore >= 0.45) {
-      return { item: best, score: highestScore };
+    const qEmbed = embedTextsSync([raw])[0];
+    const opts = { topK: 5, rawQuery: raw };
+    if (categoryFilter) {
+      opts.contentTypeFilter = [categoryFilter === 'payments' ? 'policy' : categoryFilter];
     }
-    return null;
+
+    const results = this.knowledgeStore.search(this.botId, qEmbed, opts);
+    if (!results || results.length === 0) return null;
+
+    const top = results[0];
+    if (top.score < RELEVANCE_THRESHOLD) return null;
+
+    const item = top.chunk.kbItem || this.knowledgeBase.find(k =>
+      (k.question && top.chunk.pageTitle && k.question.trim() === top.chunk.pageTitle.trim()) ||
+      (k.answer && top.chunk.text && top.chunk.text.includes(k.answer.trim()))
+    ) || {
+      question: top.chunk.pageTitle || 'Knowledge Match',
+      answer: top.chunk.text,
+      contentType: top.chunk.contentType,
+      sourceUrl: top.chunk.pageUrl
+    };
+
+    return {
+      item,
+      score: top.score,
+      chunk: top.chunk
+    };
   }
 }
 

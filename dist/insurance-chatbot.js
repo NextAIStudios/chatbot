@@ -3388,6 +3388,60 @@
     }
   };
 
+  function buildCheckoutInstructions(bot, item) {
+    item = item || {};
+    var cred = bot && (bot.verifiedPaymentCredential || (bot.checkout && bot.checkout.verifiedPaymentCredential));
+    if (!cred || !cred.verifiedAt) {
+      return { ok: false, reason: 'no_verified_payment_credential' };
+    }
+    var businessName = cred.businessName || (bot.company && bot.company.name) || '';
+    var currency = item.currency || 'KES';
+    var priceFormatted = Number(item.price || 0).toLocaleString();
+
+    if (cred.type === 'mpesa_till' || cred.type === 'buy_goods') {
+      var till = cred.till || cred.number;
+      if (!till) return { ok: false, reason: 'missing_till_number' };
+      return {
+        ok: true,
+        type: 'buy_goods',
+        till: String(till),
+        businessName: businessName,
+        instructionsHtml:
+          '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via M-Pesa Till:</div>' +
+          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+            '<li>Select <strong>Buy Goods and Services</strong></li>' +
+            '<li>Enter Till Number: <strong style="color:#059669; font-size:13px;">' + String(till) + '</strong> (' + businessName + ')</li>' +
+            '<li>Enter Amount: <strong>' + currency + ' ' + priceFormatted + '</strong></li>' +
+            '<li>Enter your M-Pesa PIN and send</li>' +
+          '</ol>'
+      };
+    }
+    if (cred.type === 'paybill') {
+      var paybill = cred.paybill || cred.number;
+      if (!paybill) return { ok: false, reason: 'missing_paybill_number' };
+      var account = cred.account || item.name || 'ORDER';
+      return {
+        ok: true,
+        type: 'paybill',
+        paybill: String(paybill),
+        account: String(account),
+        businessName: businessName,
+        instructionsHtml:
+          '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Paybill:</div>' +
+          '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
+            '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
+            '<li>Select <strong>Paybill</strong></li>' +
+            '<li>Enter Business No: <strong style="color:#059669; font-size:13px;">' + String(paybill) + '</strong> (' + businessName + ')</li>' +
+            '<li>Enter Account No: <strong style="color:#059669; font-size:13px;">' + String(account) + '</strong></li>' +
+            '<li>Enter Amount: <strong>' + currency + ' ' + priceFormatted + '</strong></li>' +
+            '<li>Enter your M-Pesa PIN and send</li>' +
+          '</ol>'
+      };
+    }
+    return { ok: false, reason: 'unsupported_payment_type' };
+  }
+
   BotlyChatbotController.prototype.startInChatCheckout = function(methodOrItem, customItem, customAmount, customUrl, customCurrency) {
     var self = this;
     var chk = this.config.checkout || {};
@@ -3442,12 +3496,42 @@
     var activeUrl = this.activeCheckoutUrl || (chk && chk.externalUrl) || (card && card.url) || '';
 
     if (isCustomCheckout) {
+      var checkoutRes = buildCheckoutInstructions(this.config, { name: activeItem, price: activeAmount, currency: activeCur });
+      var hasVerifiedMpesa = !!(checkoutRes && checkoutRes.ok);
+      var hasCardUrl = !!activeUrl;
+
       if (method === 'mpesa') {
+        if (!hasVerifiedMpesa) {
+          var compName = (this.config.company && this.config.company.name) || 'this business';
+          this.appendBot("⚠️ **Online M-Pesa Checkout Unavailable:** " + self.escape(compName) + " does not have an active verified payment credential on file. To protect against unauthorized transactions, in-chat payment instructions cannot be issued. Please contact the business directly.");
+          return;
+        }
         this.renderMpesaCheckoutCard(activeItem, activeAmount, activeCur);
         return;
       }
       if (method === 'card') {
+        if (!hasCardUrl) {
+          var compName = (this.config.company && this.config.company.name) || 'this business';
+          this.appendBot("⚠️ **Card Checkout Unavailable:** " + self.escape(compName) + " has not configured an external payment link. Please contact the business directly.");
+          return;
+        }
         this.renderCardCheckoutCard(activeItem, activeAmount, activeCur, activeUrl);
+        return;
+      }
+
+      if (!hasVerifiedMpesa && !hasCardUrl) {
+        var compName = (this.config.company && this.config.company.name) || 'this business';
+        this.appendBot("⚠️ **Online Checkout Not Available:** " + self.escape(compName) + " does not have verified payment credentials on file. Please contact the business directly or leave your contact details so our team can assist you.");
+        return;
+      }
+
+      if (!hasVerifiedMpesa && hasCardUrl) {
+        this.renderCardCheckoutCard(activeItem, activeAmount, activeCur, activeUrl);
+        return;
+      }
+
+      if (hasVerifiedMpesa && !hasCardUrl) {
+        this.renderMpesaCheckoutCard(activeItem, activeAmount, activeCur);
         return;
       }
 
@@ -3610,44 +3694,18 @@
     var itemName = customItem || this.activeCheckoutItem || mpesa.item || chk.item || (this.activeQuote ? this.activeQuote.productName : 'Standard Package');
     var cardId = 'chk-mpesa-' + Math.random().toString(36).substring(2, 7);
 
-    var mpesaType = mpesa.type || 'buy_goods';
-    var mpesaNumber = mpesa.number || '123456';
-    var mpesaAccount = mpesa.account || '';
-    var businessName = mpesa.businessName || this.config.company?.name || 'NextGen Ke';
-
-    var mpesaTypeTitle = 'Buy Goods and Services (Till)';
-    var stepInstructions = '';
-    if (mpesaType === 'buy_goods') {
-      mpesaTypeTitle = 'Buy Goods (Till Number)';
-      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via M-Pesa Till:</div>' +
-        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
-          '<li>Select <strong>Buy Goods and Services</strong></li>' +
-          '<li>Enter Till Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-          '<li>Enter your M-Pesa PIN and send</li>' +
-        '</ol>';
-    } else if (mpesaType === 'paybill') {
-      mpesaTypeTitle = 'Paybill Number';
-      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Paybill:</div>' +
-        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Lipa na M-Pesa</strong></li>' +
-          '<li>Select <strong>Paybill</strong></li>' +
-          '<li>Enter Business No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-          (mpesaAccount ? '<li>Enter Account No: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaAccount) + '</strong></li>' : '<li>Enter Account No: <strong>' + self.escape(itemName) + '</strong></li>') +
-          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-          '<li>Enter your M-Pesa PIN and send</li>' +
-        '</ol>';
-    } else {
-      mpesaTypeTitle = 'Send Money (Phone)';
-      stepInstructions = '<div style="font-weight:700; margin-bottom:4px; color:#18221c;">How to Pay via Send Money:</div>' +
-        '<ol style="margin:0; padding-left:18px; color:#334155; line-height:1.6;">' +
-          '<li>Go to <strong>M-Pesa</strong> on your phone &amp; select <strong>Send Money</strong></li>' +
-          '<li>Enter Phone Number: <strong style="color:#059669; font-size:13px;">' + self.escape(mpesaNumber) + '</strong> (' + self.escape(businessName) + ')</li>' +
-          '<li>Enter Amount: <strong>' + sym + Number(amount).toLocaleString() + '</strong></li>' +
-          '<li>Enter your M-Pesa PIN and send</li>' +
-        '</ol>';
+    // buildCheckoutInstructions: strictly refuses unverified credentials, preventing fraud
+    var checkoutRes = buildCheckoutInstructions(this.config, { name: itemName, price: amount, currency: curCode });
+    if (!checkoutRes || !checkoutRes.ok) {
+      var businessName = (this.config.company && this.config.company.name) || 'this business';
+      this.appendBot("⚠️ **Payment Instructions Unavailable:** " + self.escape(businessName) + " does not have an active verified payment credential on file. To protect against fraud, payment instructions cannot be issued. Please contact the business directly.");
+      return;
     }
+
+    var mpesaNumber = checkoutRes.till || checkoutRes.paybill;
+    var businessName = checkoutRes.businessName || (this.config.company && this.config.company.name) || '';
+    var mpesaTypeTitle = checkoutRes.type === 'paybill' ? 'Paybill Number' : 'Buy Goods (Till Number)';
+    var stepInstructions = checkoutRes.instructionsHtml;
 
     var checkoutHtml = '<div class="inchat-checkout-card" id="' + cardId + '">' +
       '<div class="checkout-header">' +
@@ -3842,16 +3900,16 @@
     var amountFormatted = sym + Number(amountVal).toLocaleString();
 
     var mType = (details.mpesaDetails && details.mpesaDetails.type) || mpesa.type || 'buy_goods';
-    var mNum = (details.mpesaDetails && details.mpesaDetails.number) || mpesa.number || '123456';
+    var mNum = (details.mpesaDetails && details.mpesaDetails.number) || (this.config.verifiedPaymentCredential && (this.config.verifiedPaymentCredential.till || this.config.verifiedPaymentCredential.number)) || mpesa.number || '';
     var mAcc = (details.mpesaDetails && details.mpesaDetails.account) || mpesa.account || '';
     var mBiz = (details.mpesaDetails && details.mpesaDetails.businessName) || mpesa.businessName || compName;
 
     var typeLabels = {
-      buy_goods: 'Buy Goods (Till: ' + mNum + ')',
-      paybill: 'Paybill (' + mNum + (mAcc ? ' / Acc: ' + mAcc : '') + ')',
-      send_money: 'Send Money (' + mNum + ')'
+      buy_goods: mNum ? ('Buy Goods (Till: ' + mNum + ')') : 'Buy Goods (Till)',
+      paybill: mNum ? ('Paybill (' + mNum + (mAcc ? ' / Acc: ' + mAcc : '') + ')') : 'Paybill',
+      send_money: mNum ? ('Send Money (' + mNum + ')') : 'Send Money'
     };
-    var methodLabel = typeLabels[mType] || ('M-Pesa ' + mNum);
+    var methodLabel = typeLabels[mType] || (mNum ? ('M-Pesa ' + mNum) : 'M-Pesa');
 
     var leadRecord = {
       id: 'PAY-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),

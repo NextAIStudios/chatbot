@@ -10,6 +10,8 @@ import { ClaimsFlow } from '../src/flows/claims-flow.js';
 import { ReceiptGenerator } from '../src/payments/receipt-generator.js';
 import { formatScrapedProductsResult, fetchLiveScrapedProducts, searchProducts } from '../src/tools/tool-registry.js';
 import { LeadCaptureFlow } from '../src/flows/lead-capture-flow.js';
+import { buildCheckoutInstructions, getToolsForBot, answerQuery, KnowledgeStore, RELEVANCE_THRESHOLD } from '../src/retrieve-and-respond.js';
+import { ingestSite } from '../src/ingest.js';
 
 let passed = 0;
 let failed = 0;
@@ -885,6 +887,131 @@ assert(!lawFirmThanks.reply.includes('setting up your bot'), 'Client bot thanks 
 // Test 22.5: Law firm client bot human escalation does not leak care@botly.ai
 const lawFirmEscalation = lawFirmNoFaqEngine.classify('Can I speak to someone?');
 assert(!lawFirmEscalation.reply.includes('care@botly.ai'), 'Client bot escalation does NOT leak care@botly.ai');
+
+console.log('\n--- 🛡️ 23. Testing Ingestion & Retrieval Pipelines & Payment Credential Verification ---');
+
+// Test 23.1: buildCheckoutInstructions refuses outright without verified payment credential
+const unverifiedBot = {
+  id: 'jumia_demo',
+  name: 'Jumia Kenya',
+  company: { name: 'Jumia Kenya' },
+  capabilities: { checkout: { enabled: false } }
+};
+const unverifiedRes = buildCheckoutInstructions(unverifiedBot, { name: 'Curren Chronograph', price: 2499, currency: 'KES' });
+assert(!unverifiedRes.ok, 'buildCheckoutInstructions refuses when verifiedPaymentCredential is missing');
+assert(unverifiedRes.reason === 'no_verified_payment_credential', 'buildCheckoutInstructions returns no_verified_payment_credential reason');
+
+// Test 23.2: buildCheckoutInstructions refuses when verifiedAt timestamp is missing/falsy
+const unverifiedAtBot = {
+  id: 'jumia_demo_unverified',
+  name: 'Jumia Kenya',
+  verifiedPaymentCredential: {
+    type: 'mpesa_till',
+    till: '898989',
+    businessName: 'Jumia Kenya'
+    // verifiedAt is intentionally omitted
+  }
+};
+const unverifiedAtRes = buildCheckoutInstructions(unverifiedAtBot, { name: 'Curren Chronograph', price: 2499, currency: 'KES' });
+assert(!unverifiedAtRes.ok, 'buildCheckoutInstructions refuses when verifiedAt is missing');
+assert(unverifiedAtRes.reason === 'no_verified_payment_credential', 'buildCheckoutInstructions requires verifiedAt');
+
+// Test 23.3: buildCheckoutInstructions succeeds with verified M-Pesa till credential
+const verifiedTillBot = {
+  id: 'jumia_verified',
+  name: 'Jumia Kenya',
+  verifiedPaymentCredential: {
+    type: 'mpesa_till',
+    till: '556677',
+    businessName: 'Jumia Official Store',
+    verifiedAt: '2026-09-18T12:00:00Z'
+  }
+};
+const verifiedTillRes = buildCheckoutInstructions(verifiedTillBot, { name: 'Curren Chronograph', price: 2499, currency: 'KES' });
+assert(verifiedTillRes.ok === true, 'buildCheckoutInstructions succeeds with verified credentials');
+assert(verifiedTillRes.instructions.includes('556677'), 'Checkout instructions include verified till number');
+assert(verifiedTillRes.instructions.includes('2,499'), 'Checkout instructions include formatted price');
+assert(verifiedTillRes.instructions.includes('Jumia Official Store'), 'Checkout instructions include verified business name');
+
+// Test 23.4: buildCheckoutInstructions succeeds with verified Paybill credential
+const verifiedPaybillBot = {
+  id: 'jumia_paybill_verified',
+  name: 'Jumia Kenya',
+  verifiedPaymentCredential: {
+    type: 'paybill',
+    paybill: '400200',
+    account: 'JUMIA123',
+    businessName: 'Jumia Kenya Paybill',
+    verifiedAt: '2026-09-18T12:00:00Z'
+  }
+};
+const verifiedPaybillRes = buildCheckoutInstructions(verifiedPaybillBot, { name: 'Curren Chronograph', price: 2499, currency: 'KES' });
+assert(verifiedPaybillRes.ok === true, 'buildCheckoutInstructions succeeds with verified Paybill');
+assert(verifiedPaybillRes.instructions.includes('400200'), 'Checkout instructions include verified Paybill number');
+assert(verifiedPaybillRes.instructions.includes('JUMIA123'), 'Checkout instructions include account number');
+
+// Test 23.5: ingestSite hardcodes checkout.enabled to false regardless of crawled page contents
+const mockStoreFetch = async () => ({
+  status: 200,
+  headers: { get: () => 'text/html' },
+  text: async () => '<!DOCTYPE html><html><head><title>Online Boutique</title></head><body><h1>Shop Now</h1><button>Buy Now</button><div>Pay with M-Pesa Till 898989</div></body></html>'
+});
+const ingestedStore = await ingestSite('https://boutique.co.ke', { fetchImpl: mockStoreFetch });
+assert(ingestedStore.capabilities.checkout.enabled === false, 'ingestSite hardcodes checkout capability to false');
+assert(ingestedStore.capabilities.checkout.reason.includes('never inferred from crawled content'), 'ingestSite explicitly documents checkout requires human verification');
+
+// Test 23.6: getToolsForBot capability gating: law firm has NO search_products tool
+const lawFirmToolBot = {
+  id: 'wanzaki_law',
+  capabilities: {
+    catalogBrowsing: { enabled: false },
+    appointmentBooking: { enabled: true },
+    leadCapture: { enabled: true }
+  }
+};
+const lawTools = getToolsForBot(lawFirmToolBot);
+assert(!lawTools.some(t => t.name === 'search_products'), 'getToolsForBot does NOT expose search_products for law firm bot');
+assert(lawTools.some(t => t.name === 'check_availability'), 'getToolsForBot exposes check_availability for booking capability');
+assert(lawTools.some(t => t.name === 'capture_lead'), 'getToolsForBot exposes capture_lead for lead capture capability');
+
+// Test 23.7: getToolsForBot capability gating: ecommerce bot HAS search_products tool
+const ecommerceToolBot = {
+  id: 'jumia_store',
+  capabilities: {
+    catalogBrowsing: { enabled: true },
+    appointmentBooking: { enabled: false },
+    leadCapture: { enabled: true }
+  }
+};
+const ecomTools = getToolsForBot(ecommerceToolBot);
+assert(ecomTools.some(t => t.name === 'search_products'), 'getToolsForBot exposes search_products for ecommerce bot');
+assert(!ecomTools.some(t => t.name === 'check_availability'), 'getToolsForBot does NOT expose check_availability when booking is disabled');
+
+// Test 23.8: answerQuery honest fallback for unindexed items below RELEVANCE_THRESHOLD
+const isolatedStore = new KnowledgeStore();
+await isolatedStore.upsert('store_test', [{
+  id: 'chunk_laptop_only',
+  pageUrl: 'https://jumia.co.ke/laptops',
+  pageTitle: 'Computing & Laptops',
+  contentType: 'product',
+  text: 'Explore HP 15, Lenovo IdeaPad, and Apple MacBook Air laptops on official sale with 1-year warranty.'
+}]);
+const unindexedQueryRes = await answerQuery({
+  bot: {
+    id: 'store_test',
+    domain: 'jumia.co.ke',
+    capabilities: {
+      catalogBrowsing: { enabled: true },
+      appointmentBooking: { enabled: false },
+      checkout: { enabled: false }
+    }
+  },
+  store: isolatedStore,
+  message: 'do you have fresh eggs?'
+});
+assert(unindexedQueryRes.retrieved === false, 'answerQuery flags retrieved=false when relevance is below threshold');
+assert(!unindexedQueryRes.reply.includes('HP 15') && !unindexedQueryRes.reply.includes('MacBook'), 'answerQuery does NOT synthesize unindexed query into laptop result');
+assert(unindexedQueryRes.reply.includes('jumia.co.ke') || unindexedQueryRes.reply.includes('fresh eggs') || unindexedQueryRes.reply.includes("I don't have") || (unindexedQueryRes.quickReplies && unindexedQueryRes.quickReplies.some(q => q.url && q.url.includes('eggs'))), 'answerQuery returns honest fallback message');
 
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
