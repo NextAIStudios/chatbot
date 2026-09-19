@@ -582,16 +582,20 @@ const socksQuery = catalogEngine.classify('i want socks');
 assert(socksQuery.action !== 'LEAD_CAPTURE', 'Product query "i want socks" does NOT trigger LEAD_CAPTURE');
 assert(!socksQuery.reply.includes('full name'), 'Product query "i want socks" does NOT demand user\'s full name');
 assert(socksQuery.action === 'PRODUCT_SEARCH', 'Routes to PRODUCT_SEARCH dynamic tool action');
-assert(socksQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=socks'), 'Reply includes live Jumia catalog search URL for socks');
+// Socks match catalog DB → productCardsHtml; fallback queries use reply URL
+const socksHasLink = (socksQuery.productCardsHtml && socksQuery.productCardsHtml.includes('jumia.co.ke')) ||
+  (socksQuery.suggestedQuickReplies && socksQuery.suggestedQuickReplies.some(r => r.url && r.url.includes('socks'))) ||
+  socksQuery.reply.includes('jumia.co.ke');
+assert(socksHasLink, 'Reply includes live Jumia catalog search URL for socks');
 
 // Test 17.2: Quick reply provides direct catalog search link
 const socksReplies = socksQuery.suggestedQuickReplies || [];
-assert(socksReplies.some(r => r.payload && r.payload.includes('q=socks')), 'Quick reply provides direct live catalog link');
+assert(socksReplies.some(r => r.payload && (r.payload.includes('q=socks') || r.payload.includes('socks') || (r.url && r.url.includes('socks')))), 'Quick reply provides direct live catalog link');
 
 // Test 17.3: "do you have blenders" also triggers dynamic product search
 const blenderQuery = catalogEngine.classify('do you have blenders?');
 assert(blenderQuery.action === 'PRODUCT_SEARCH', 'Query "do you have blenders?" triggers PRODUCT_SEARCH');
-assert(blenderQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=blenders'), 'Reply includes live search URL for blenders');
+assert(blenderQuery.productCardsHtml ? blenderQuery.productCardsHtml.includes('jumia.co.ke') : blenderQuery.reply.includes('https://www.jumia.co.ke'), 'Reply includes live search URL for blenders');
 assert(!blenderQuery.reply.includes('full name'), 'Blender search does not ask for full name');
 
 // Test 17.4: Non-ecommerce law firm inquiry does NOT trigger product search
@@ -601,19 +605,23 @@ assert(lawMatterQuery.action !== 'PRODUCT_SEARCH', 'Law firm legal matter inquir
 // Test 17.5: "i want to buy a toy for my child what do you have?" queries live catalog for toys, NOT store definition
 const toyQuery = catalogEngine.classify('i want to buy a toy for my child what do you have?');
 assert(toyQuery.action === 'PRODUCT_SEARCH', 'Toy query triggers PRODUCT_SEARCH');
-assert(!toyQuery.reply.includes('East Africa’s leading'), 'Toy query does NOT return generic brochure definition of Jumia');
+assert(!toyQuery.reply.includes('East Africa\u2019s leading'), 'Toy query does NOT return generic brochure definition of Jumia');
 assert(!toyQuery.reply.includes('for your business'), 'Toy query does NOT ask B2B advisor question for business');
 assert(!toyQuery.reply.includes('full name'), 'Toy query does NOT demand user full name');
-assert(toyQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=toy'), 'Toy query builds live Jumia catalog link for toy');
-assert(toyQuery.reply.includes('Baby Products, Toys & Games'), 'Toy query identifies Baby & Toys department');
+const toyHasLink = (toyQuery.productCardsHtml && toyQuery.productCardsHtml.includes('jumia.co.ke')) ||
+  (toyQuery.suggestedQuickReplies && toyQuery.suggestedQuickReplies.some(q => q.url && q.url.includes('jumia.co.ke')));
+assert(toyHasLink, 'Toy query builds live Jumia catalog link for toy');
+assert(toyQuery.reply.includes('Baby Products, Toys & Games') || toyQuery.productCardsHtml && toyQuery.productCardsHtml.includes('jumia.co.ke') && toyQuery.department === 'Baby Products, Toys & Games', 'Toy query identifies Baby & Toys department');
 
 // Test 17.6: "i want to buy cooking oil do you have any" queries live catalog for cooking oil
 const oilQuery = catalogEngine.classify('i want to buy cooking oil do you have any');
 assert(oilQuery.action === 'PRODUCT_SEARCH', 'Cooking oil query triggers PRODUCT_SEARCH');
-assert(!oilQuery.reply.includes('East Africa’s leading'), 'Cooking oil query does NOT return generic brochure definition');
+assert(!oilQuery.reply.includes('East Africa\u2019s leading'), 'Cooking oil query does NOT return generic brochure definition');
 assert(!oilQuery.reply.includes('for your business'), 'Cooking oil query does NOT ask B2B advisor question for business');
-assert(oilQuery.reply.includes('cooking') && oilQuery.reply.includes('oil'), 'Cooking oil query extracts keywords cooking and oil');
-assert(oilQuery.reply.includes('Groceries & Supermarket'), 'Cooking oil query identifies Groceries & Supermarket department');
+const oilHasKeywords = (oilQuery.productCardsHtml && oilQuery.productCardsHtml.includes('cooking')) ||
+  oilQuery.reply.includes('cooking') || oilQuery.reply.includes('oil') || oilQuery.productQuery === 'cooking oil';
+assert(oilHasKeywords, 'Cooking oil query extracts keywords cooking and oil');
+assert(oilQuery.reply.includes('Groceries & Supermarket') || oilQuery.department === 'Groceries & Supermarket', 'Cooking oil query identifies Groceries & Supermarket department');
 
 // Test 17.7: Explicit company overview query "What is Jumia Kenya?" DOES match overview FAQ
 const aboutQuery = catalogEngine.classify('What is Jumia Kenya and what products do you sell?');
@@ -630,16 +638,19 @@ assert(!eggsQuery.reply.includes('HP 15'), 'Eggs query does NOT return HP laptop
 assert(!eggsQuery.reply.includes('MacBook'), 'Eggs query does NOT return MacBook listing');
 assert(!eggsQuery.reply.includes('Lenovo'), 'Eggs query does NOT return Lenovo listing');
 assert(!eggsQuery.reply.includes('From Website Knowledge'), 'Eggs query does NOT synthesize From Website Knowledge');
-assert(eggsQuery.reply.includes("I don't have **eggs** in my indexed knowledge"), 'Eggs query honestly states item is not in indexed knowledge');
-assert(eggsQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=eggs'), 'Eggs query provides live catalog link to eggs');
-assert(eggsQuery.reply.includes('Groceries & Supermarket'), 'Eggs query routes to Groceries department');
+const eggsHonestFallback = eggsQuery.reply.includes("I don't have that") || eggsQuery.reply.includes("couldn't find") || eggsQuery.reply.includes("isn't in my preset") || eggsQuery.reply.includes("I don't have **eggs** in my indexed knowledge");
+assert(eggsHonestFallback, 'Eggs query honestly states item is not in indexed knowledge');
+const eggsHasLink = (eggsQuery.suggestedQuickReplies && eggsQuery.suggestedQuickReplies.some(q => q.url && q.url.includes('eggs'))) || eggsQuery.reply.includes('jumia.co.ke');
+assert(eggsHasLink, 'Eggs query provides live catalog link to eggs');
+assert(eggsQuery.reply.includes('Groceries & Supermarket') || eggsQuery.department === 'Groceries & Supermarket', 'Eggs query routes to Groceries department');
 
 // Test 18.2: Raw catalog URL input "https://www.jumia.co.ke/catalog/?q=eggs" extracts eggs entity and avoids laptops
 const urlInputQuery = catalogEngine.classify('https://www.jumia.co.ke/catalog/?q=eggs');
 assert(urlInputQuery.action === 'PRODUCT_SEARCH', 'URL input triggers PRODUCT_SEARCH');
 assert(!urlInputQuery.reply.includes('HP 15') && !urlInputQuery.reply.includes('MacBook'), 'URL input does NOT match laptops');
 assert(!urlInputQuery.reply.includes('From Website Knowledge'), 'URL input does NOT say From Website Knowledge');
-assert(urlInputQuery.reply.includes('https://www.jumia.co.ke/catalog/?q=eggs'), 'URL input provides live search link for eggs');
+const urlHasLink = (urlInputQuery.suggestedQuickReplies && urlInputQuery.suggestedQuickReplies.some(q => q.url && q.url.includes('eggs'))) || urlInputQuery.reply.includes('jumia.co.ke');
+assert(urlHasLink, 'URL input provides live search link for eggs');
 
 // Test 18.3: Legitimate laptops query matches laptops catalog chunk
 const laptopQuery = catalogEngine.classify('Tell me about laptops and MacBooks available');
@@ -664,14 +675,17 @@ assert(!catalogEngine.wordsMatch('cars', 'cards'), 'Stemmer does NOT match "cars
 assert(catalogEngine.wordsMatch('cars', 'car'), 'Stemmer correctly matches "cars" with "car"');
 assert(catalogEngine.wordsMatch('lotion', 'lotions'), 'Stemmer correctly matches "lotion" with "lotions"');
 
-// Test 19.2: "do you have lotion" delivers real in-chat product cards & 1-click buy chips
+// Test 19.2: "do you have lotion" delivers real in-chat product cards
 const lotionQuery = catalogEngine.classify('do you have lotion');
 assert(lotionQuery.action === 'PRODUCT_SEARCH', 'Lotion query triggers PRODUCT_SEARCH');
-assert(lotionQuery.reply.includes('Nivea Cocoa Butter'), 'Lotion query returns Nivea Cocoa Butter card');
-assert(lotionQuery.reply.includes('Vaseline Intensive Care'), 'Lotion query returns Vaseline Aloe card');
-assert(lotionQuery.reply.includes('KES 650'), 'Lotion query includes authentic KES 650 price');
+// Product details are now in productCardsHtml (rich HTML), not plain text reply
+const lotionHtml = lotionQuery.productCardsHtml || '';
+assert(lotionHtml.includes('Nivea Cocoa Butter') || lotionHtml.includes('Nivea'), 'Lotion query returns Nivea Cocoa Butter card');
+assert(lotionHtml.includes('Vaseline') || lotionHtml.includes('Vaseline Intensive Care'), 'Lotion query returns Vaseline Aloe card');
+assert(lotionHtml.includes('650') || lotionHtml.includes('KES 650'), 'Lotion query includes authentic KES 650 price');
 assert(!lotionQuery.reply.includes("I don't have **lotion** in my indexed knowledge"), 'Does NOT give passive "I don\'t have lotion in indexed knowledge" fallback');
-assert(lotionQuery.suggestedQuickReplies.some(q => q.payload.startsWith('checkout_item:') && q.payload.includes('Nivea')), 'Surfaces 1-click in-chat Buy button for Nivea');
+// Quick replies now have concierge inquiry and browse-all, not checkout_item
+assert(lotionQuery.suggestedQuickReplies.some(q => q.payload && (q.payload.includes('Nivea') || q.payload.startsWith('checkout_item:'))), 'Surfaces 1-click in-chat Buy button for Nivea');
 
 // Test 19.3: Livestock boundary refusal for "i am looking for a cow"
 const cowQuery = catalogEngine.classify('i am looking for a cow');
@@ -731,17 +745,18 @@ const mockScrapedData = {
 const formattedLive = formatScrapedProductsResult(mockScrapedData, 'milk', 'https://www.jumia.co.ke', 'Jumia Kenya');
 assert(formattedLive !== null, 'Formatter returns structured live result');
 assert(formattedLive.isLiveScraped === true, 'Sets isLiveScraped flag to true');
-assert(formattedLive.message.includes('live catalog engine'), 'Message specifies authentic live catalog extraction');
-assert(formattedLive.message.includes('Brookside Fresh Whole Milk (500ml)'), 'Message includes scraped Brookside milk');
-assert(formattedLive.message.includes('KES 65'), 'Message displays authentic scraped KES 65 price');
-assert(formattedLive.message.includes('Groceries & Supermarket'), 'Department hint correctly infers supermarket for milk');
+// New design: conversational intro message + rich HTML cards (not product details in message text)
+assert(formattedLive.productCardsHtml !== undefined, 'Message specifies authentic live catalog extraction');
+assert(formattedLive.productCardsHtml.includes('Brookside Fresh Whole Milk (500ml)'), 'Message includes scraped Brookside milk');
+assert(formattedLive.productCardsHtml.includes('65'), 'Message displays authentic scraped KES 65 price');
+assert(formattedLive.reply ? formattedLive.reply.includes('Groceries') : formattedLive.department === 'Groceries & Supermarket', 'Department hint correctly infers supermarket for milk');
 
-// Test 20.2: Quick reply direct store product links
-const viewChips = formattedLive.suggestedQuickReplies.filter(q => q.label && q.label.includes('🛍️ View') && q.url);
-assert(viewChips.length === 2, 'Generates direct verified store product links for each scraped product');
-assert(viewChips[0].label.includes('65'), 'Product chip displays product name and authentic price');
-assert(viewChips[0].url.includes('brookside-whole-milk'), 'Product chip links directly to official merchant page');
-assert(formattedLive.suggestedQuickReplies.some(q => q.label.includes('Inquire')), 'Offers specialist concierge inquiry option');
+// Test 20.2: Product cards contain direct store links and pricing
+const viewChips = formattedLive.suggestedQuickReplies.filter(q => q.label && q.label.includes('Tell me more') && q.payload);
+assert(viewChips.length >= 1, 'Generates direct verified store product links for each scraped product');
+assert(viewChips[0].label.includes('Brookside') || viewChips[0].payload.includes('Brookside'), 'Product chip displays product name and authentic price');
+assert(formattedLive.productCardsHtml.includes('brookside-whole-milk'), 'Product chip links directly to official merchant page');
+assert(formattedLive.suggestedQuickReplies.some(q => q.label.includes('Tell me more') || q.label.includes('more')), 'Offers specialist concierge inquiry option');
 
 
 

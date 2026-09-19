@@ -630,6 +630,8 @@ export class IntentEngine {
         productQuery: searchKey,
         searchUrl: searchUrl,
         reply: searchResult.message,
+        productCardsHtml: searchResult.productCardsHtml || null,
+        department: searchResult.department || null,
         suggestedQuickReplies,
         quickReplies: suggestedQuickReplies
       };

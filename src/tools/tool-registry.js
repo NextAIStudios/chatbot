@@ -401,8 +401,51 @@ export async function fetchLiveScrapedProducts(query, siteUrl = '', apiBase = ''
   }
 }
 
+const PRODUCT_INTROS_LIVE = [
+  'Great news — I just pulled these live from the catalog for you:',
+  "Here's what I found right now — fresh from the store:",
+  'Found some great options! Let me show you what\'s available:',
+  'Sure thing! Here are the top picks I found just now:',
+  "I looked it up and here's what's in stock for you:"
+];
+
+function buildProductCardHtml(products, searchUrl, compName) {
+  let html = '<div class="ins-product-grid">';
+  products.forEach(p => {
+    const pSym = p.currency === 'USD' ? '$' : 'KES ';
+    const priceFormatted = pSym + Number(p.price).toLocaleString();
+    const rating = p.rating || '4.8 ★';
+    const ratingNum = parseFloat((rating + '').replace(/[^0-9.]/g, '')) || 4.8;
+    let stars = '';
+    for (let s = 1; s <= 5; s++) {
+      stars += `<span class="ins-star${s <= Math.round(ratingNum) ? ' filled' : ''}">★</span>`;
+    }
+    const imgEl = p.image
+      ? `<img src="${p.image}" alt="${p.name.replace(/"/g, '')}" class="ins-prod-img" onerror="this.style.display='none'">`
+      : '<div class="ins-prod-img-placeholder">🛍️</div>';
+    const specsStr = p.specs || 'Official warranty · Doorstep delivery';
+    html += `<a href="${p.url || searchUrl}" target="_blank" rel="noopener noreferrer" class="ins-product-card">` +
+      imgEl +
+      '<div class="ins-prod-body">' +
+        `<div class="ins-prod-name">${p.name}</div>` +
+        `<div class="ins-prod-specs">${specsStr}</div>` +
+        '<div class="ins-prod-footer">' +
+          `<span class="ins-prod-price">${priceFormatted}</span>` +
+          `<span class="ins-prod-stars">${stars}</span>` +
+        '</div>' +
+      '</div>' +
+      '<div class="ins-prod-cta">View on store ↗</div>' +
+    '</a>';
+  });
+  html += '</div>';
+  if (searchUrl) {
+    html += `<div class="ins-prod-browse-link"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer">Browse all results on ${compName} ↗</a></div>`;
+  }
+  return html;
+}
+
 /**
- * Formats live BeautifulSoup scraped products into rich chat messages and 1-click Buy chips
+ * Formats live BeautifulSoup scraped products into rich chat messages and product cards
  */
 export function formatScrapedProductsResult(scrapedData, query, siteUrl = '', compName = 'our store') {
   if (!scrapedData || !scrapedData.found || !scrapedData.items || scrapedData.items.length === 0) {
@@ -412,55 +455,38 @@ export function formatScrapedProductsResult(scrapedData, query, siteUrl = '', co
   const searchUrl = scrapedData.searchUrl || buildProductSearchUrl(siteUrl, query);
   const topProducts = scrapedData.items.slice(0, 3);
   const dept = getDepartmentHint(query);
+  const intro = PRODUCT_INTROS_LIVE[Math.floor(Math.random() * PRODUCT_INTROS_LIVE.length)];
 
-  let message = `Yes! We found live in-stock **${query}** on **${compName}** directly extracted via our live catalog engine:\n\n`;
-
-  topProducts.forEach(p => {
-    const pSym = p.currency === 'USD' ? '$' : `${p.currency} `;
-    const ratingStr = p.rating || '⭐ 4.8 (verified)';
-    const specsStr = p.specs || 'Official warranty & doorstep delivery';
-    message += `• **${p.name}**\n  _${specsStr}_ — **${pSym}${Number(p.price).toLocaleString()}** (${ratingStr}) [View Product ↗](${p.url})\n\n`;
-  });
-
+  let message = intro;
   if (dept) {
-    message += `📂 Department: **${dept.department}**\n\n`;
+    message += ` (browsing **${dept.department}**).`;
+  } else {
+    message += '.';
   }
-  message += `🔗 [**Browse all "${query}" on ${compName} ↗**](${searchUrl})\n\n`;
-  message += `Click any item below to view full details directly on **${compName}**, or check delivery timelines:`;
+
+  const productCardsHtml = buildProductCardHtml(topProducts, searchUrl, compName);
 
   const quickReplies = [];
-  topProducts.forEach(p => {
-    const pSym = p.currency === 'USD' ? '$' : 'KES ';
-    const pShort = p.name.length > 20 ? p.name.slice(0, 18) + '...' : p.name;
-    quickReplies.push({
-      label: `🛍️ View ${pShort} (${pSym}${Number(p.price).toLocaleString()}) ↗`,
-      payload: p.url || searchUrl,
-      url: p.url || searchUrl
-    });
-  });
-
   if (topProducts.length > 0) {
-    const pShort = topProducts[0].name.length > 18 ? topProducts[0].name.slice(0, 16) + '...' : topProducts[0].name;
+    const pShort = topProducts[0].name.length > 20 ? topProducts[0].name.slice(0, 18) + '...' : topProducts[0].name;
     quickReplies.push({
-      label: `💬 Inquire about ${pShort}`,
+      label: `💬 Tell me more about ${pShort}`,
       payload: `Can you tell me more about ${topProducts[0].name}?`
     });
   }
-
   quickReplies.push({
-    label: `🔍 View all "${query.slice(0, 16)}" ↗`,
+    label: '🔍 See all results ↗',
     payload: searchUrl,
     url: searchUrl
   });
-
   if (dept) {
     quickReplies.push({
-      label: `${dept.icon} Browse ${dept.department}`,
-      payload: `What other deals do you offer in ${dept.department}?`
+      label: `${dept.icon} More in ${dept.department}`,
+      payload: `What other deals do you have in ${dept.department}?`
     });
   }
   quickReplies.push({
-    label: '🚚 Delivery Information',
+    label: '🚚 Delivery info',
     payload: 'How does delivery work and what are the timelines?'
   });
 
@@ -472,6 +498,7 @@ export function formatScrapedProductsResult(scrapedData, query, siteUrl = '', co
     searchUrl,
     department: dept ? dept.department : null,
     message,
+    productCardsHtml,
     suggestedQuickReplies: quickReplies
   };
 }
@@ -527,47 +554,43 @@ export function searchProducts(params = {}, config = {}) {
     }
   }
 
-  // 3. If matching products are found, present real in-chat product cards & direct buy chips!
+  // 3. If matching products are found, present rich in-chat product cards
   if (matchedProducts.length > 0) {
     const topProducts = matchedProducts.slice(0, 3);
     const dept = getDepartmentHint(query);
-    let message = `Yes! We carry authentic **${query}** on **${compName}** with official warranties and fast nationwide delivery:\n\n`;
+    const catIntros = [
+      'Of course! Here are some popular options we carry:',
+      'Happy to help with that! Take a look at these:',
+      'Here are the best matches I found for you:',
+      "Sure! Here's what we have available right now:"
+    ];
+    let message = catIntros[Math.floor(Math.random() * catIntros.length)];
+    if (dept) message += ` (in **${dept.department}**)`;
+    message += '.';
 
-    topProducts.forEach(p => {
-      const pSym = p.currency === 'USD' ? '$' : `${p.currency} `;
-      message += `• **${p.name}**\n  _${p.specs}_ — **${pSym}${Number(p.price).toLocaleString()}** (${p.rating}) [View on Jumia ↗](${p.url})\n\n`;
-    });
-
-    if (dept) {
-      message += `📂 Department: **${dept.department}**\n\n`;
-    }
-    message += `🔗 [**Browse all "${query}" on ${compName} ↗**](${searchUrl})\n\n`;
-    message += `You can order directly below with M-Pesa or Card checkout:`;
+    const productCardsHtml = buildProductCardHtml(topProducts, searchUrl, compName);
 
     const quickReplies = [];
-    topProducts.forEach(p => {
-      const pSym = p.currency === 'USD' ? '$' : 'KES ';
-      const pShort = p.name.length > 20 ? p.name.slice(0, 18) + '...' : p.name;
+    if (topProducts.length > 0) {
+      const pShort = topProducts[0].name.length > 20 ? topProducts[0].name.slice(0, 18) + '...' : topProducts[0].name;
       quickReplies.push({
-        label: `🛒 Buy ${pShort} (${pSym}${Number(p.price).toLocaleString()})`,
-        payload: `checkout_item:${encodeURIComponent(p.name)}:${p.price}:${p.currency}:${encodeURIComponent(p.url)}`
+        label: `💬 Tell me more about ${pShort}`,
+        payload: `Can you tell me more about ${topProducts[0].name}?`
       });
-    });
-
+    }
     quickReplies.push({
-      label: `🔍 View all "${query.slice(0, 16)}" ↗`,
+      label: '🔍 View all results ↗',
       payload: searchUrl,
       url: searchUrl
     });
-
     if (dept) {
       quickReplies.push({
-        label: `${dept.icon} Browse ${dept.department}`,
-        payload: `What other deals do you offer in ${dept.department}?`
+        label: `${dept.icon} More in ${dept.department}`,
+        payload: `What other deals do you have in ${dept.department}?`
       });
     }
     quickReplies.push({
-      label: '🚚 Delivery Information',
+      label: '🚚 Delivery info',
       payload: 'How does delivery work and what are the timelines?'
     });
 
@@ -578,30 +601,34 @@ export function searchProducts(params = {}, config = {}) {
       searchUrl,
       department: dept ? dept.department : null,
       message,
+      productCardsHtml,
       suggestedQuickReplies: quickReplies
     };
   }
 
-  // 4. If no specific products in preset DB, provide honest indexed knowledge fallback with live search link
+  // 4. Honest fallback — no preset match, point to live catalog
   const dept = getDepartmentHint(query);
-  let message = `I don't have **${query}** in my indexed knowledge, but you can search the live catalog here:\n\n🔗 [**Search "${query}" on ${compName} ↗**](${searchUrl})\n\n`;
+  const fallbackIntros = [
+    "I don't have that in my quick-lookup right now, but I can point you to the live catalog where you can find it:",
+    "Hmm, I couldn't find an exact match in my index — but the live store should have it:",
+    "That one isn't in my preset list, but you can search it directly on the store:"
+  ];
+  let message = fallbackIntros[Math.floor(Math.random() * fallbackIntros.length)];
   if (dept) {
-    message += `📂 Department: **${dept.department}**\n${dept.details}\n\nYou can view all matching in-stock items, compare verified customer ratings, and place your order directly.`;
-  } else {
-    message += `You can view all matching in-stock items, compare verified customer ratings, and place your order directly.`;
+    message += ` Check out the **${dept.department}** section — ${dept.details}`;
   }
 
   const quickReplies = [
-    { label: `🔍 View "${query.slice(0, 18)}" ↗`, payload: searchUrl, url: searchUrl }
+    { label: `🔍 Search "${query.slice(0, 18)}" on store ↗`, payload: searchUrl, url: searchUrl }
   ];
   if (dept) {
     quickReplies.push({
-      label: `${dept.icon} ${dept.department}`,
-      payload: `What deals do you offer in ${dept.department}?`
+      label: `${dept.icon} Browse ${dept.department}`,
+      payload: `What deals do you have in ${dept.department}?`
     });
   }
   quickReplies.push({
-    label: '🚚 Delivery Information',
+    label: '🚚 Delivery info',
     payload: 'How does delivery work and what are the timelines?'
   });
 
