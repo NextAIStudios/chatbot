@@ -3976,7 +3976,9 @@ window.addEventListener('botly:payment', async (event) => {
     // Clean dynamic synthesizer for custom domains (absence of evidence produces NO fake plans or checkout)
     function generateSyntheticDomainPages(url) {
       var domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
-      var baseName = domain.split('.')[0];
+      // Strip www. prefix so the company name is never "Www"
+      var strippedDomain = domain.replace(/^www\./, '');
+      var baseName = strippedDomain.split('.')[0];
       var cleanName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
 
       return {
@@ -3998,122 +4000,11 @@ window.addEventListener('botly:payment', async (event) => {
           mpesaNumber: '',
           mpesaType: 'buy_goods'
         },
-        pages: [
-          {
-            id: 'gen_home',
-            title: cleanName + ' - Official Overview',
-            path: '/',
-            category: 'overview',
-            wordCount: 340,
-            excerpt: 'Official homepage for ' + cleanName + '. Explore our comprehensive solutions, services, and dedicated customer support.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_home_1',
-                question: 'What is ' + cleanName + ' and what do you do?',
-                answer: 'Welcome to ' + cleanName + '! We are dedicated to providing high quality solutions and professional services tailored to our clients.',
-                keywords: [cleanName.toLowerCase(), domain, 'about', 'overview', 'services', 'welcome']
-              },
-              {
-                id: 'web_gen_home_2',
-                question: 'Why choose ' + cleanName + '?',
-                answer: 'At ' + cleanName + ', we combine expertise, reliable service, and 24/7 responsiveness to deliver exceptional value.',
-                keywords: [cleanName.toLowerCase(), 'benefits', 'choose', 'quality']
-              }
-            ]
-          },
-          {
-            id: 'gen_services',
-            title: 'Services & Solutions - ' + cleanName,
-            path: '/services',
-            category: 'services',
-            wordCount: 420,
-            excerpt: 'Explore our full spectrum of professional services, specialized workflows, and client solutions.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_serv_1',
-                question: 'What services and solutions does ' + cleanName + ' provide?',
-                answer: cleanName + ' offers a comprehensive suite of customized services and solutions tailored to your industry and specific business needs.',
-                keywords: ['services', 'solutions', 'offerings', cleanName.toLowerCase()]
-              },
-              {
-                id: 'web_gen_serv_2',
-                question: 'Do you offer custom tailored packages?',
-                answer: 'Yes! We work closely with each client to design personalized packages and proposals aligned with your goals.',
-                keywords: ['custom', 'packages', 'tailored', 'proposals']
-              }
-            ]
-          },
-          {
-            id: 'gen_pricing',
-            title: 'Pricing & Plans - ' + cleanName,
-            path: '/pricing',
-            category: 'pricing',
-            wordCount: 310,
-            excerpt: 'Transparent pricing models, custom quotes, and flexible options designed for every organization.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_price_1',
-                question: 'What are the pricing options at ' + cleanName + '?',
-                answer: cleanName + ' provides transparent, competitive pricing. Contact our sales team for exact quotes and volume discounts.',
-                keywords: ['pricing', 'plans', 'cost', 'rates', 'quote']
-              }
-            ]
-          },
-          {
-            id: 'gen_about',
-            title: 'About Us - ' + cleanName,
-            path: '/about',
-            category: 'overview',
-            wordCount: 360,
-            excerpt: 'Learn about our company mission, core values, and dedicated team at ' + cleanName + '.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_abt_1',
-                question: 'What is the mission of ' + cleanName + '?',
-                answer: 'Our mission at ' + cleanName + ' is to empower our clients with industry-leading tools, outstanding quality, and dedicated care.',
-                keywords: ['about', 'mission', 'values', cleanName.toLowerCase()]
-              }
-            ]
-          },
-          {
-            id: 'gen_contact',
-            title: 'Contact & Support - ' + cleanName,
-            path: '/contact',
-            category: 'support',
-            wordCount: 280,
-            excerpt: 'Get in touch with the ' + cleanName + ' team, customer care, or request a direct callback.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_cnt_1',
-                question: 'How do I contact ' + cleanName + '?',
-                answer: 'You can reach out to ' + cleanName + ' through our official channels. Leave your contact details below to speak with an advisor.',
-                keywords: ['contact', 'support', 'phone', 'email', 'help']
-              }
-            ]
-          },
-          {
-            id: 'gen_faq',
-            title: 'Frequently Asked Questions - ' + cleanName,
-            path: '/faq',
-            category: 'support',
-            wordCount: 320,
-            excerpt: 'Answers to frequently asked questions about getting started, turnaround times, and guarantees.',
-            selected: true,
-            qas: [
-              {
-                id: 'web_gen_faq_1',
-                question: 'How fast can I get started with ' + cleanName + '?',
-                answer: 'Getting started is fast and straightforward. Our team can onboard your business and activate services rapidly.',
-                keywords: ['start', 'onboarding', 'how fast', 'setup']
-              }
-            ]
-          }
-        ]
+        // NOTE: No synthetic Q&A pages are generated. The live crawler timed out or is unavailable.
+        // Injecting fabricated answers about a business we have never crawled is worse than
+        // saying nothing — it produces hallucinated content specific to that business.
+        // The bot will use only real FAQs manually entered by the business owner.
+        pages: []
       };
     }
 
@@ -4176,12 +4067,38 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.activeWebProfile = profile;
         wizardState.indexedWebsitePages = JSON.parse(JSON.stringify(profile.pages));
 
-        if (pagesPanel) pagesPanel.style.display = 'flex';
-        renderDiscoveredWebPages();
+        var isSyntheticEmpty = !profile.pages || profile.pages.length === 0;
 
-        // Automatically train initial selected pages
+        if (isSyntheticEmpty) {
+          // Live crawl failed or timed out and there is no curated profile for this domain.
+          // Do NOT inject fabricated pages. Show a clear notice to the business owner.
+          if (pagesPanel) pagesPanel.style.display = 'none';
+          var noDataNotice = document.getElementById('website-no-crawl-notice');
+          if (!noDataNotice) {
+            noDataNotice = document.createElement('div');
+            noDataNotice.id = 'website-no-crawl-notice';
+            noDataNotice.style.cssText = 'margin-top:14px; padding:14px 16px; background:#fef3c7; border:1.5px solid #f59e0b; border-radius:10px; font-size:13px; color:#78350f; line-height:1.6;';
+            noDataNotice.innerHTML =
+              '<strong>⚠️ Live crawl unavailable</strong> — the crawler could not reach <strong>' + escapeHtml(domain) + '</strong> right now.<br>' +
+              'Your bot has been named <strong>' + escapeHtml(profile.companyName || domain) + '</strong>. ' +
+              'To give it real knowledge about your business, please add your FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, ' +
+              'or re-scan once the site is publicly accessible.';
+            var panelParent = pagesPanel && pagesPanel.parentNode;
+            if (panelParent) panelParent.insertBefore(noDataNotice, pagesPanel);
+          } else {
+            noDataNotice.style.display = 'block';
+          }
+        } else {
+          var existingNotice = document.getElementById('website-no-crawl-notice');
+          if (existingNotice) existingNotice.style.display = 'none';
+          if (pagesPanel) pagesPanel.style.display = 'flex';
+          renderDiscoveredWebPages();
+        }
+
+        // Automatically train initial selected pages (or apply name/greeting only if empty)
         trainBotWithSelectedPages(true);
       }
+
 
       // Live crawl via Python BeautifulSoup server endpoint
       var crawlTimeout = setTimeout(function() {
@@ -4292,9 +4209,10 @@ window.addEventListener('botly:payment', async (event) => {
       list.innerHTML = '';
 
       if (pages.length === 0) {
-        list.innerHTML = '<div style="font-size: 12px; color: #94a3b8; padding: 12px; text-align: center;">No pages discovered yet. Enter a website link above and click Scan.</div>';
+        list.innerHTML = '<div style="font-size: 12px; color: #94a3b8; padding: 12px; text-align: center;">No pages indexed yet. Once the live crawl succeeds, discovered pages will appear here. In the meantime, add your FAQs manually in the FAQ &amp; Knowledge tab.</div>';
         return;
       }
+
 
       var totalWords = 0;
       var selectedCount = 0;
@@ -4372,9 +4290,33 @@ window.addEventListener('botly:payment', async (event) => {
       var selectedPages = pages.filter(function(p) { return p.selected; });
 
       if (selectedPages.length === 0) {
+        if (isInitialScan) {
+          // Crawler timed out and synthetic profile has no pages — this is expected.
+          // Apply safe metadata (company name, greeting) but do NOT inject any fake KB content.
+          var profile = wizardState.activeWebProfile;
+          if (profile && profile.companyName) {
+            wizardState.companyName = profile.companyName;
+            var compInput = document.getElementById('wiz-company-name');
+            if (compInput) compInput.value = profile.companyName;
+          }
+          if (profile && profile.botName) {
+            wizardState.botName = profile.botName;
+            var botInput = document.getElementById('wiz-bot-name');
+            if (botInput) botInput.value = profile.botName;
+          }
+          if (profile && profile.greeting) {
+            wizardState.greeting = profile.greeting;
+            var greetInput = document.getElementById('wiz-bot-greeting');
+            if (greetInput) greetInput.value = profile.greeting;
+          }
+          wizardState.websiteChunks = [];
+          applyBotLiveConfig();
+          return;
+        }
         alert('Please select at least 1 page to train your bot with.');
         return;
       }
+
 
       // Collect all Q&As from selected pages
       var newChunks = [];
