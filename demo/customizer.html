@@ -1031,6 +1031,9 @@
         </div>
       </a>
 
+      <!-- Active Bot Context Pill -->
+      <div id="active-bot-pill" title="The bot you are currently editing &mdash; switch bots from the Chatbots sidebar." style="font-size: 12px; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 9999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw;">Editing: <strong>My Company</strong> &mdash; Botly Pro</div>
+
       <!-- Actions (Desktop View) -->
       <div class="customizer-nav-actions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
         <!-- Chatbots Workspace Sidebar Toggle -->
@@ -1998,7 +2001,7 @@
           </div>
           <div>
             <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: #0f172a;">Captured Leads &amp; Customer Inquiries</h3>
-            <span style="font-size: 12px; color: #64748b;">Qualified visitor inquiries automatically recorded by your bot.</span>
+            <span id="leads-modal-subtitle" style="font-size: 12px; color: #64748b;">Qualified visitor inquiries automatically recorded by your bot.</span>
           </div>
         </div>
         <button onclick="closeLeadsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
@@ -5083,6 +5086,7 @@ window.addEventListener('botly:payment', async (event) => {
 '<script>\n' +
 '  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
+'    botId: ' + JSON.stringify(getActiveBotId()) + ', // keeps this bot\'s leads & contacts separate\n' +
 '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
@@ -5278,6 +5282,7 @@ window.addEventListener('botly:payment', async (event) => {
       try {
         BotlyChatbot.init({
           mode: 'saas',
+          botId: getActiveBotId(), // isolates this bot's leads & remembered contacts from other bots
           // Free-text mode: no suggestion chips — the user types, the bot answers.
           disableQuickReplies: true,
           goals: wizardState.purposes,
@@ -5750,6 +5755,10 @@ window.addEventListener('botly:payment', async (event) => {
         if (window.BotlyChatbot && typeof window.BotlyChatbot.reset === 'function') {
           window.BotlyChatbot.reset();
         }
+        // Per-bot Leads tab: badge + table follow the newly loaded bot.
+        if (typeof updateLeadsBadge === 'function') updateLeadsBadge();
+        if (typeof renderLeadsTable === 'function') renderLeadsTable();
+        if (typeof updateActiveBotPill === 'function') updateActiveBotPill();
       }
 
       function switchBot(botId) {
@@ -5846,7 +5855,11 @@ window.addEventListener('botly:payment', async (event) => {
     window.BotlyChatbotManager = BotlyChatbotManager;
 
     function handleCreateNewCompanyBot() {
-      BotlyChatbotManager.createNewBot();
+      var _nc = null;
+      try { _nc = window.prompt('What company is this new bot for?', ''); } catch (e) { _nc = ''; }
+      if (_nc === null) return; // user cancelled — don't create a bot
+      _nc = (_nc || '').trim();
+      BotlyChatbotManager.createNewBot(_nc || undefined, undefined);
       if (typeof switchStudioMobileTab === 'function') {
         switchStudioMobileTab('customize');
       }
@@ -5980,9 +5993,44 @@ window.addEventListener('botly:payment', async (event) => {
       if (m) m.style.display = 'none';
     }
 
+    // Multi-bot isolation: each bot reads/writes its own leads key. Mirrors the
+    // widget's botlyLeadKey() namespacing (botId sanitized the same way).
+    function studioLeadsKey() {
+      var id = 'default';
+      try { id = getActiveBotId() || 'default'; } catch (e) {}
+      var s = String(id).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'default';
+      return 'botly_captured_leads__' + s.slice(0, 40);
+    }
+
+    // One-time migration: pre-isolation leads lived under the global key. Move them
+    // to the active bot once (captured under the single-bot assumption), then drop
+    // the orphaned legacy keys so stale contacts never bleed across bots.
+    function migrateLegacyStudioLeads() {
+      try {
+        var legacy = localStorage.getItem('botly_captured_leads');
+        if (legacy) {
+          if (!localStorage.getItem(studioLeadsKey())) localStorage.setItem(studioLeadsKey(), legacy);
+          localStorage.removeItem('botly_captured_leads');
+        }
+        localStorage.removeItem('botly_user_contact');
+      } catch (e) {}
+    }
+
+    // Active-bot context pill: always shows which bot is being edited (multi-bot clarity).
+    function updateActiveBotPill() {
+      try {
+        var pill = document.getElementById('active-bot-pill');
+        if (pill) {
+          pill.innerHTML = 'Editing: <strong>' + escapeHtml(wizardState.companyName || 'My Company') + '</strong> &mdash; ' + escapeHtml(wizardState.botName || 'Botly Pro');
+        }
+        var leadsBtn = document.querySelector('.customizer-leads-btn');
+        if (leadsBtn) leadsBtn.title = 'Captured leads for ' + (wizardState.companyName || 'this bot') + ' (each bot has its own inbox)';
+      } catch (e) {}
+    }
+
     function updateLeadsBadge() {
       try {
-        var leads = JSON.parse(localStorage.getItem('botly_captured_leads') || '[]');
+        var leads = JSON.parse(localStorage.getItem(studioLeadsKey()) || '[]');
         var count = leads.length;
         var badge = document.getElementById('nav-leads-badge');
         if (badge) badge.textContent = count;
@@ -5995,13 +6043,15 @@ window.addEventListener('botly:payment', async (event) => {
 
     function renderLeadsTable() {
       try {
-        var leads = JSON.parse(localStorage.getItem('botly_captured_leads') || '[]');
+        var leads = JSON.parse(localStorage.getItem(studioLeadsKey()) || '[]');
         var search = (document.getElementById('leads-search-input')?.value || '').toLowerCase();
         var tbody = document.getElementById('leads-table-body');
         var empty = document.getElementById('leads-empty-state');
         var countEl = document.getElementById('leads-total-count');
 
         if (countEl) countEl.textContent = leads.length + ' Inquiries Recorded';
+        var subEl = document.getElementById('leads-modal-subtitle');
+        if (subEl) subEl.textContent = 'Inbox for ' + (wizardState.companyName || 'this bot') + ' (' + (wizardState.botName || '') + ') \u2014 each bot keeps its own leads.';
 
         if (!tbody) return;
         tbody.innerHTML = '';
@@ -6051,8 +6101,8 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     function clearAllLeads() {
-      if (confirm('Are you sure you want to clear all captured customer inquiries?')) {
-        localStorage.removeItem('botly_captured_leads');
+      if (confirm('Clear all captured inquiries for THIS bot only? (Other bots\u2019 leads are kept.)')) {
+        localStorage.removeItem(studioLeadsKey());
         updateLeadsBadge();
         renderLeadsTable();
       }
@@ -6694,11 +6744,12 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       renderFaqsList();
       updatePurposeUI();
       applyBotLiveConfig();
+      migrateLegacyStudioLeads();
       updateLeadsBadge();
 
       ['wiz-company-name', 'wiz-bot-name', 'wiz-bot-title', 'wiz-bot-greeting', 'wiz-support-email', 'wiz-support-phone'].forEach(function(id) {
         var el = document.getElementById(id);
-        if (el) el.addEventListener('input', applyBotLiveConfig);
+        if (el) el.addEventListener('input', function() { applyBotLiveConfig(); if (typeof updateActiveBotPill === 'function') updateActiveBotPill(); });
       });
 
       window.addEventListener('botly:leadCaptured', function() {

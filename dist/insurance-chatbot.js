@@ -2517,36 +2517,57 @@
 
   // 3.5. PERSISTENT LEAD CAPTURE & INQUIRY STORAGE
   var LEAD_STORAGE_KEY = 'botly_captured_leads';
+  // Multi-bot isolation: every bot gets its own lead/contact storage namespace
+  // (config.botId, else company name). A visitor chatting with Company B never
+  // inherits names/phones captured by Company A's bot on the same browser.
+  var BOTLY_STORAGE_NS = 'default';
+  function botlySanitizeNs(ns) {
+    var s = String(ns || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    return (s || 'default').slice(0, 40);
+  }
+  function botlySetStorageNs(ns) { BOTLY_STORAGE_NS = botlySanitizeNs(ns); }
+  function botlyLeadKey() { return LEAD_STORAGE_KEY + '__' + BOTLY_STORAGE_NS; }
+  function botlyContactKey() { return 'botly_user_contact__' + BOTLY_STORAGE_NS; }
+  function botlyMemLeadsGet() {
+    var m = window.__botly_memory_leads;
+    if (m && !Array.isArray(m)) return m[BOTLY_STORAGE_NS] || [];
+    return [];
+  }
+  function botlyMemLeadsSet(arr) {
+    if (!window.__botly_memory_leads || Array.isArray(window.__botly_memory_leads)) window.__botly_memory_leads = {};
+    window.__botly_memory_leads[BOTLY_STORAGE_NS] = arr;
+  }
   function getStoredLeads() {
     try {
       if (typeof localStorage !== 'undefined') {
-        var raw = localStorage.getItem(LEAD_STORAGE_KEY);
+        var raw = localStorage.getItem(botlyLeadKey());
         if (raw) return JSON.parse(raw);
       }
     } catch(e) {}
-    return window.__botly_memory_leads || [];
+    return botlyMemLeadsGet();
   }
   function saveStoredLead(lead) {
     try {
       var current = getStoredLeads();
       var updated = [lead].concat(current);
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(updated));
+        localStorage.setItem(botlyLeadKey(), JSON.stringify(updated));
       }
-      window.__botly_memory_leads = updated;
+      botlyMemLeadsSet(updated);
       return updated;
     } catch(e) {
-      if (!window.__botly_memory_leads) window.__botly_memory_leads = [];
-      window.__botly_memory_leads.unshift(lead);
-      return window.__botly_memory_leads;
+      var _memLeads = botlyMemLeadsGet();
+      _memLeads.unshift(lead);
+      botlyMemLeadsSet(_memLeads);
+      return _memLeads;
     }
   }
   function clearStoredLeads() {
     try {
       if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(LEAD_STORAGE_KEY);
+        localStorage.removeItem(botlyLeadKey());
       }
-      window.__botly_memory_leads = [];
+      botlyMemLeadsSet([]);
       return true;
     } catch(e) { return false; }
   }
@@ -2588,6 +2609,7 @@
   // 4. MAIN CHATBOT WIDGET CONTROLLER
   function BotlyChatbotController(userConfig) {
     this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});
+    botlySetStorageNs((userConfig && (userConfig.botId || (userConfig.company && userConfig.company.name))) || 'default');
     this.trainedKnowledge = [];
     if (this.config.customKnowledge && Array.isArray(this.config.customKnowledge)) {
       this.trainedKnowledge = this.config.customKnowledge.map(function(item) {
@@ -2601,7 +2623,7 @@
     this.collectedContact = { name: '', phone: '', email: '' };
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        var storedContact = localStorage.getItem('botly_user_contact');
+        var storedContact = localStorage.getItem(botlyContactKey());
         if (storedContact) {
           var parsedContact = JSON.parse(storedContact);
           if (parsedContact && typeof parsedContact === 'object') {
@@ -3253,7 +3275,7 @@
       this.leadState.name = name;
       this.collectedContact.name = name;
       if (typeof window !== 'undefined' && window.localStorage) {
-        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+        try { localStorage.setItem(botlyContactKey(), JSON.stringify(this.collectedContact)); } catch (e) {}
       }
       this.leadState.step = 'awaiting_phone';
 
@@ -3283,7 +3305,7 @@
         this.collectedContact.phone = input;
       }
       if (typeof window !== 'undefined' && window.localStorage) {
-        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
+        try { localStorage.setItem(botlyContactKey(), JSON.stringify(this.collectedContact)); } catch (e) {}
       }
       this.leadState.step = 'completed';
       this.leadState.active = false;

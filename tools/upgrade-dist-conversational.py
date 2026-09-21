@@ -549,6 +549,132 @@ PATCHES = [
         '"' + (l.email || '').replace(/"/g, '""') + '"',""",
         1,
     ),
+    (
+        "P54 storage namespace machinery",
+        """  var LEAD_STORAGE_KEY = 'botly_captured_leads';""",
+        """  var LEAD_STORAGE_KEY = 'botly_captured_leads';
+  // Multi-bot isolation: every bot gets its own lead/contact storage namespace
+  // (config.botId, else company name). A visitor chatting with Company B never
+  // inherits names/phones captured by Company A's bot on the same browser.
+  var BOTLY_STORAGE_NS = 'default';
+  function botlySanitizeNs(ns) {
+    var s = String(ns || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    return (s || 'default').slice(0, 40);
+  }
+  function botlySetStorageNs(ns) { BOTLY_STORAGE_NS = botlySanitizeNs(ns); }
+  function botlyLeadKey() { return LEAD_STORAGE_KEY + '__' + BOTLY_STORAGE_NS; }
+  function botlyContactKey() { return 'botly_user_contact__' + BOTLY_STORAGE_NS; }
+  function botlyMemLeadsGet() {
+    var m = window.__botly_memory_leads;
+    if (m && !Array.isArray(m)) return m[BOTLY_STORAGE_NS] || [];
+    return [];
+  }
+  function botlyMemLeadsSet(arr) {
+    if (!window.__botly_memory_leads || Array.isArray(window.__botly_memory_leads)) window.__botly_memory_leads = {};
+    window.__botly_memory_leads[BOTLY_STORAGE_NS] = arr;
+  }""",
+        1,
+    ),
+    (
+        "P55 getStoredLeads namespaced",
+        """  function getStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        var raw = localStorage.getItem(LEAD_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      }
+    } catch(e) {}
+    return window.__botly_memory_leads || [];
+  }""",
+        """  function getStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        var raw = localStorage.getItem(botlyLeadKey());
+        if (raw) return JSON.parse(raw);
+      }
+    } catch(e) {}
+    return botlyMemLeadsGet();
+  }""",
+        1,
+    ),
+    (
+        "P56 saveStoredLead namespaced",
+        """  function saveStoredLead(lead) {
+    try {
+      var current = getStoredLeads();
+      var updated = [lead].concat(current);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(updated));
+      }
+      window.__botly_memory_leads = updated;
+      return updated;
+    } catch(e) {
+      if (!window.__botly_memory_leads) window.__botly_memory_leads = [];
+      window.__botly_memory_leads.unshift(lead);
+      return window.__botly_memory_leads;
+    }
+  }""",
+        """  function saveStoredLead(lead) {
+    try {
+      var current = getStoredLeads();
+      var updated = [lead].concat(current);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(botlyLeadKey(), JSON.stringify(updated));
+      }
+      botlyMemLeadsSet(updated);
+      return updated;
+    } catch(e) {
+      var _memLeads = botlyMemLeadsGet();
+      _memLeads.unshift(lead);
+      botlyMemLeadsSet(_memLeads);
+      return _memLeads;
+    }
+  }""",
+        1,
+    ),
+    (
+        "P57 clearStoredLeads namespaced",
+        """  function clearStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(LEAD_STORAGE_KEY);
+      }
+      window.__botly_memory_leads = [];
+      return true;
+    } catch(e) { return false; }
+  }""",
+        """  function clearStoredLeads() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(botlyLeadKey());
+      }
+      botlyMemLeadsSet([]);
+      return true;
+    } catch(e) { return false; }
+  }""",
+        1,
+    ),
+    (
+        "P58 stored-contact read namespaced",
+        """        var storedContact = localStorage.getItem('botly_user_contact');""",
+        """        var storedContact = localStorage.getItem(botlyContactKey());""",
+        1,
+    ),
+    (
+        "P59 stored-contact writes namespaced",
+        """        try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}""",
+        """        try { localStorage.setItem(botlyContactKey(), JSON.stringify(this.collectedContact)); } catch (e) {}""",
+        2,
+    ),
+    (
+        "P60 constructor sets storage namespace",
+        """  function BotlyChatbotController(userConfig) {
+    this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});""",
+        """  function BotlyChatbotController(userConfig) {
+    this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});
+    botlySetStorageNs((userConfig && (userConfig.botId || (userConfig.company && userConfig.company.name))) || 'default');""",
+        1,
+    ),
 ]
 
 
