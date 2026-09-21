@@ -213,11 +213,14 @@ Run the automated test suite:
 npm test
 ```
 
-Start the local showcase server:
+Start the local showcase + crawler backend server (required for website crawling in the Studio):
 
 ```bash
-# Start local server on port 8080
-python3 -m http.server 8080
+# One-time: install the Python crawler dependencies
+pip install -r requirements.txt
+
+# Start server on port 8080 (serves the files AND the /api/crawl + /api/scrape-products APIs)
+python3 server.py 8080
 
 # View in browser:
 # http://localhost:8080/index.html            (Botly Landing Page)

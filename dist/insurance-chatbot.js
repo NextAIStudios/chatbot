@@ -22,8 +22,8 @@
         { label: '📞 Talk to Specialist', payload: 'intent_human_handover' },
         { label: '❓ Coverage Overview', payload: 'intent_coverage_overview' }
       ],
-      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all those details right here in my instant memory, our team can help you with exactly what you need.\n\nMay I please have your **full name**?",
-      askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) for our solutions specialist to reach you?",
+      askNamePrompt: "Good question! I want to make sure you get the right answer{needTopic}, so let me have our specialist put together exactly what you need.\n\nWhat's your **full name**?",
+      askPhonePrompt: "Thank you, **{name}**! What is your direct **phone number** (or WhatsApp) or **email address** for our solutions specialist to reach you?",
       confirmationMessage: "🎉 **Thank you, {name}!** Your custom inquiry for **{need}** has been assigned to our senior specialist. We will reach out to **{phone}** with your proposal.",
       followUpQuestion: "Would you also like an estimated price breakdown while you wait, or shall our specialist call you directly?",
       followUpTone: 'sales',
@@ -63,7 +63,7 @@
         { label: '🆘 Speak with Human Agent', payload: 'intent_human_handover' }
       ],
       askNamePrompt: "I want to make sure you get the exact, accurate assistance for that! Let me connect you directly with a dedicated support specialist. Could you please share your **full name**?",
-      askPhonePrompt: "Thank you, **{name}**! What is the best **phone number** for our support agent to call you back?",
+      askPhonePrompt: "Thank you, **{name}**! What is the best **phone number** or **email address** for our support agent to reach you?",
       confirmationMessage: "📋 **Support ticket logged, {name}!** Your inquiry regarding **{need}** has been marked for immediate agent callback at **{phone}**.",
       followUpQuestion: "Did that help resolve your current concern, or is there another account matter I can check for you?",
       followUpTone: 'support',
@@ -83,7 +83,7 @@
         { label: '💼 View Advisory Services', payload: 'intent_coverage_overview' }
       ],
       askNamePrompt: "That sounds like a great topic to discuss during a dedicated consultation! Let's get your advisor session scheduled. May I have your **full name**?",
-      askPhonePrompt: "Thank you, **{name}**! What is your preferred **phone number** to confirm your consultation schedule?",
+      askPhonePrompt: "Thank you, **{name}**! What is your preferred **phone number** or **email address** to confirm your consultation schedule?",
       confirmationMessage: "📅 **Consultation booked, {name}!** An advisor will contact you at **{phone}** to finalize your consultation for **{need}**.",
       followUpQuestion: "Would morning or afternoon work better for your consultation call?",
       followUpTone: 'consultative',
@@ -97,10 +97,10 @@
     leadCapture: {
       enabled: true,
       triggerOnUnlisted: true,
-      askNamePrompt: "That's a fantastic inquiry{needTopic}! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?",
-      askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you?",
+      askNamePrompt: "Good question! I want to make sure you get the right answer{needTopic}, so let me bring in a specialist from our team who can sort you out properly.\n\nWhat's your **full name**?",
+      askPhonePrompt: "Wonderful to meet you, **{name}**! 🤝\n\nWhat is the best **phone number** or **email address** for our specialist team to reach you?",
       confirmationMessage: "🎉 **Thank you, {name}!**\n\nYour request for **{need}** has been saved and routed directly to our specialist team. An advisor will reach out to you at **{phone}** shortly.",
-      followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant quote rates or see an overview of our coverage?",
+      followUpQuestion: "💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services.",
       storageKey: 'botly_captured_leads',
       requirePhone: true
     },
@@ -342,6 +342,10 @@
     var s1 = getStem(v1);
     var s2 = getStem(v2);
     if (s1.length >= 2 && s2.length >= 2 && s1 === s2) return true;
+    // Conversational upgrade (V3): shared-root containment for long words, so
+    // morphological cousins like agriculture/agricultural still match. The
+    // length floor keeps short words (smart, custom, price) strict.
+    if (s1.length >= 7 && s2.length >= 7 && (s1.indexOf(s2) !== -1 || s2.indexOf(s1) !== -1)) return true;
     return false;
   }
 
@@ -1428,7 +1432,13 @@
 
     if (isAffirmative && memory.lastFollowUp && lower.length < 40) {
       var followType = memory.lastFollowUp.type;
-      var topicDesc = memory.lastFollowUp.topic || memory.lastTopic || 'your inquiry';
+      var _rawTopicDesc = memory.lastFollowUp.topic || memory.lastTopic || 'your inquiry';
+      var topicDesc = _rawTopicDesc
+        .replace(/^(what\s+about|what\s+is|what\s+are|who\s+is|how\s+do\s+i|how\s+can\s+i|tell\s+me\s+about)\s+/i, '')
+        .replace(/^what\s+services\s+or\s+solutions\s+does\s+.+?\s+offer\??\s*$/i, 'our services')
+        .replace(/\?+\s*$/, '').trim();
+      if (!topicDesc) topicDesc = 'your inquiry';
+      if (topicDesc.length > 70) topicDesc = topicDesc.substring(0, 67) + '...';
 
       if (followType === 'payment_checkout') {
         memory.lastFollowUp = null;
@@ -1444,7 +1454,7 @@
           intent: 'consultation_booking',
           action: 'LEAD_CAPTURE',
           inquiredNeed: '1-on-1 Consultation Session (' + topicDesc + ')',
-          leadIntro: "Awesome! Let's get your 1-on-1 consultation session scheduled. May I please have your **full name**?"
+          leadIntro: "Awesome — let's get your 1-on-1 consultation scheduled! What's your **full name**?"
         };
       }
 
@@ -1454,7 +1464,7 @@
           intent: 'lead_generation',
           action: 'LEAD_CAPTURE',
           inquiredNeed: topicDesc ? 'Follow-up regarding ' + topicDesc : 'Specialist Follow-Up & Consultation',
-          leadIntro: "Wonderful! I'll have our specialist prepare a custom proposal and reach out directly. May I please have your **full name**?"
+          leadIntro: "Wonderful! I'll have our specialist put together a custom proposal and reach out directly. What's your **full name**?"
         };
       }
 
@@ -1466,7 +1476,7 @@
           intent: 'human_handover',
           action: 'LEAD_CAPTURE',
           inquiredNeed: 'Support Specialist Callback (' + topicDesc + ')',
-          leadIntro: "I'd be glad to connect you with our support team! You can also reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nCould you please share your **full name** so an agent can call you right back?"
+          leadIntro: "I'd be glad to connect you with our support team! You can also reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nWhat's your **full name**, so an agent can call you right back?"
         };
       }
     }
@@ -1477,7 +1487,7 @@
         intent: 'consultation_booking',
         action: 'LEAD_CAPTURE',
         inquiredNeed: '1-on-1 Consultation Demo (' + (memory.lastTopic || 'General Consultation') + ')',
-        leadIntro: "Awesome! Let's get your 1-on-1 consultation session scheduled. May I please have your **full name**?"
+        leadIntro: "Awesome — let's get your 1-on-1 consultation scheduled! What's your **full name**?"
       };
     }
 
@@ -1549,7 +1559,7 @@
     }
 
     // 3. Human Representative Escalation
-    if (/human|agent|representative|speak\s*to|advisor|person|talk\s*to\s*someone|call\s*me/i.test(lower)) {
+    if (/human|agent|representative|speak\s*(to|with)\s*(someone|person|a\s*human|an?\s*agent|human|agent)?|advisor|person|talk\s*to\s*(someone|person)|call\s*me/i.test(lower)) {
       var supportPhone = (config.company && config.company.supportPhone) || '+1 (800) 555-0199';
       var supportEmail = (config.company && config.company.supportEmail) || (isBotlySelf ? 'care@botly.ai' : (config.company && config.company.websiteUrl ? 'contact@' + config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'our support team'));
       var handoverReply = isSaasMode
@@ -1557,6 +1567,11 @@
         : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your phone or email below and we'll call you right back!";
       return {
         intent: 'human_handover',
+        action: 'LEAD_CAPTURE',
+        inquiredNeed: 'Support callback request',
+        leadIntro: isSaasMode
+          ? "I'd be glad to connect you with our team! You can reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nTo have a specialist reach out, what's your **full name**?"
+          : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nTo have an advisor call you right back, what's your **full name**?",
         reply: handoverReply
       };
     }
@@ -1649,8 +1664,24 @@
       item.contentType = contentType;
 
       // 2. Strict Content-Type Gating
+      // Conversational upgrade: overview chunks that actually mention the query's
+      // topic stay in the race — only generic ones are skipped. (Keeps product
+      // questions like "I want an educational tool" answerable from knowledge.)
       if (contentType === 'overview' && (isProductInquiry || (!isAboutCompany && topicalKeywords.length > 0))) {
-        return;
+        var _ovTokens = tokenize((item.question || '') + ' ' + (item.keywords || []).join(' '));
+        var _ovTopical = false;
+        for (var _oi = 0; _oi < topicalKeywords.length && !_ovTopical; _oi++) {
+          for (var _oj = 0; _oj < _ovTokens.length; _oj++) {
+            if (wordsMatch(topicalKeywords[_oi], _ovTokens[_oj])) { _ovTopical = true; break; }
+          }
+        }
+        if (!_ovTopical && cleanSearchSubject && cleanSearchSubject.length >= 3 &&
+            (item.question || '').toLowerCase().indexOf(cleanSearchSubject) !== -1) {
+          _ovTopical = true;
+        }
+        if (!_ovTopical) {
+          return;
+        }
       }
       if (contentType === 'policy' && isProductInquiry && !isPolicyInquiry) {
         return;
@@ -1890,19 +1921,19 @@
           candidateList.push({
             key: 'lead_custom_pricing',
             type: 'lead_generation',
-            text: '💬 Would you like our specialist to send you a customized pricing breakdown for your team?'
+            text: '💬 Want our specialist to send over a customized pricing breakdown for your team?'
           });
           candidateList.push({
             key: 'lead_discount_followup',
             type: 'lead_generation',
-            text: '💬 Shall I have an advisor follow up with you directly to discuss discount options and volume tiers?'
+            text: '💬 Shall I have an advisor follow up about discount options and volume tiers?'
           });
         }
         if (goals.indexOf('customer_support') !== -1 || candidateList.length === 0) {
           candidateList.push({
             key: 'sup_pricing_help',
             type: 'customer_support',
-            text: '💬 Did this pricing information help, or would you like to speak directly with an advisor?'
+            text: '💬 Did that pricing info help, or would you like to speak directly with an advisor?'
           });
         }
       }
@@ -1913,18 +1944,18 @@
             candidateList.push({
               key: 'lead_which_service',
               type: 'lead_generation',
-              text: '💬 Which of these services aligns best with your current project, or would you like a tailored recommendation from our team?'
+              text: '💬 Which of these sounds most like what you\'re looking for? Happy to dig into any of them with you.'
             });
           }
           candidateList.push({
             key: 'lead_custom_proposal',
             type: 'lead_generation',
-            text: '💬 Would you like our specialist to prepare a custom scope breakdown and proposal for your team?'
+            text: '💬 Want me to have our specialist put together a custom proposal for your team?'
           });
           candidateList.push({
             key: 'lead_advisor_connect',
             type: 'lead_generation',
-            text: '💬 Shall I connect you directly with a specialist to review requirements and share personalized options?'
+            text: '💬 I can connect you with a specialist to talk through your requirements — shall I set that up?'
           });
         }
         if (goals.indexOf('consultation_booking') !== -1) {
@@ -1959,12 +1990,12 @@
         candidateList.push({
           key: 'sup_direct_callback',
           type: 'customer_support',
-          text: '💬 Did this answer address your inquiry, or would you prefer a quick callback from our support specialist?'
+          text: '💬 Did that answer your question, or would you like a quick callback from our support team?'
         });
         candidateList.push({
           key: 'sup_phone_escalate',
           type: 'customer_support',
-          text: '💬 Our team is available at **' + phoneNum + '**. Would you like an advisor to reach out directly?'
+          text: '💬 Our team is available at **' + phoneNum + '** — want an advisor to reach out to you directly?'
         });
       }
       // 4. If topic is Onboarding / Getting Started
@@ -1973,7 +2004,7 @@
           candidateList.push({
             key: 'lead_onboard_step',
             type: 'lead_generation',
-            text: '💬 Would you like our team to guide you through getting started with a personalized walkthrough?'
+            text: '💬 Want our team to walk you through getting started, step by step?'
           });
         }
         if (goals.indexOf('consultation_booking') !== -1) {
@@ -2028,19 +2059,19 @@
           candidateList.push({
             key: 'lead_default_progress',
             type: 'lead_generation',
-            text: '💬 Would you like our team to follow up with you directly, or can I help with anything else?'
+            text: '💬 Want our team to follow up with you directly, or can I help with anything else?'
           });
           candidateList.push({
             key: 'lead_default_progress_2',
             type: 'lead_generation',
-            text: '💬 Shall I have an advisor follow up with tailored recommendations for your inquiry?'
+            text: '💬 Shall I have an advisor follow up with some tailored recommendations?'
           });
         }
         if (goals.indexOf('customer_support') !== -1) {
           candidateList.push({
             key: 'sup_default_progress',
             type: 'customer_support',
-            text: '💬 Does this help address your inquiry, or would you like more details?'
+            text: '💬 Does that help, or would you like more details?'
           });
         }
       }
@@ -2104,6 +2135,25 @@
     if (best && highest >= 0.45) {
       var followUpObj = generateFollowUpQuestion(best, memory, config, isSaasMode);
       var followUpText = (typeof followUpObj === 'string') ? followUpObj : (followUpObj ? followUpObj.text : '');
+      // Conversational upgrade (V2): detect a contact sub-intent ("who do I talk
+      // to?") and pre-compute the matched topic in short human form.
+      var _wantsContact = /\b(talk\s+to|speak\s+(to|with)|contact|callback|call|phone|email|reach|human|agent|someone|support)\b/i.test(raw);
+      var _contactItem = null;
+      for (var _ci = 0; _ci < allFaqs.length; _ci++) {
+        var _cand = allFaqs[_ci];
+        if (!_cand) continue;
+        if (_cand.category === 'contact' || /\b(contact|phone|email|reach\s+us|talk\s+to|support)\b/i.test(_cand.question || '')) {
+          _contactItem = _cand;
+          break;
+        }
+      }
+      var _bestIsContact = best.category === 'contact' || /\b(contact|phone|email)\b/i.test(best.question || '');
+      var _shortTopic = (best.question || '')
+        .replace(/^(what\s+about|what\s+is|what\s+are|who\s+is|how\s+do\s+i|how\s+can\s+i|tell\s+me\s+about)\s+/i, '')
+        .replace(/^what\s+services\s+or\s+solutions\s+does\s+.+?\s+offer\??\s*$/i, 'our services')
+        .replace(/\?+\s*$/, '').trim();
+      if (_shortTopic.length > 60) _shortTopic = _shortTopic.substring(0, 57) + '...';
+      if (!_shortTopic) _shortTopic = 'this';
       var replyPrefix = '';
       var host = best.sourceUrl ? best.sourceUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'Website';
       var compTitle = (config && config.company && config.company.name) ? config.company.name : 'our company';
@@ -2222,6 +2272,31 @@
           finalAnswerText = 'Here are the details for **' + targetProd.name + '**:\n\n' +
             matchingLine + '\n\n' +
             footerText + '\n\nYou can order directly below:';
+        }
+      }
+
+      // Conversational upgrade (V2): contact-aware answers + topic-aware
+      // follow-ups driven by the trained knowledge, not generic templates.
+      if (_wantsContact && _contactItem && _contactItem !== best) {
+        finalAnswerText += '\n\n' + (_contactItem.answer || '');
+      } else if (_wantsContact && !_contactItem) {
+        var _cfgPhone = (config && config.company && config.company.supportPhone) || '';
+        var _cfgEmail = (config && config.company && config.company.supportEmail) || '';
+        if (_cfgPhone || _cfgEmail) {
+          var _reachBits = [];
+          if (_cfgPhone) _reachBits.push('**' + _cfgPhone + '**');
+          if (_cfgEmail) _reachBits.push('**' + _cfgEmail + '**');
+          finalAnswerText += '\n\nYou can reach our team directly at ' + _reachBits.join(' or ') + '.';
+        }
+      }
+      var _isGenericOverview = best && best.id && best.id.toLowerCase().indexOf('overview') !== -1;
+      if (!_bestIsContact && _shortTopic && _shortTopic !== 'this') {
+        if (_wantsContact) {
+          followUpText = '💬 Want me to connect you with our team about **' + _shortTopic + '**?';
+          followUpObj = { key: '_topic_followup', type: 'lead_generation', text: followUpText, topic: _shortTopic };
+        } else if (isProductInquiry && !_isGenericOverview) {
+          followUpText = '💬 Is **' + _shortTopic + '** what you\'re looking for? I can share more details or connect you with our team.';
+          followUpObj = { key: '_topic_followup', type: 'lead_generation', text: followUpText, topic: _shortTopic };
         }
       }
 
@@ -2412,8 +2487,8 @@
         action: 'LEAD_CAPTURE',
         inquiredNeed: needTopic,
         reply: isSaasMode
-          ? "Great inquiry regarding **" + needTopic + "**! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nCould you please share your **full name**?"
-          : "That's a fantastic inquiry regarding **" + needTopic + "**! While that isn't directly covered in my standard knowledge base right now, I want to make sure you get an accurate, personalized answer from our specialist team.\n\nCould you please share your **full name**?"
+          ? "Good question! I want to make sure you get the right answer about **" + needTopic + "**, so let me connect you with the **" + compName + "** team who can sort you out properly.\n\nWhat's your **full name**?"
+          : "Good question! I want to make sure you get the right answer about **" + needTopic + "**, so let me connect you with our specialist team who can sort you out properly.\n\nWhat's your **full name**?"
       };
     }
 
@@ -2477,13 +2552,14 @@
   }
   function exportLeadsToCsv() {
     var leads = getStoredLeads();
-    if (!leads || leads.length === 0) return 'ID,Name,Phone,Need,Goal,Status,Payment Method,M-Pesa Code,Amount,Date\n';
-    var headers = ['ID', 'Name', 'Phone', 'Need', 'Goal', 'Status', 'Payment Method', 'M-Pesa Code', 'Amount', 'Date'];
+    if (!leads || leads.length === 0) return 'ID,Name,Phone,Email,Need,Goal,Status,Payment Method,M-Pesa Code,Amount,Date\n';
+    var headers = ['ID', 'Name', 'Phone', 'Email', 'Need', 'Goal', 'Status', 'Payment Method', 'M-Pesa Code', 'Amount', 'Date'];
     var rows = leads.map(function(l) {
       return [
         '"' + (l.id || '').replace(/"/g, '""') + '"',
         '"' + (l.name || '').replace(/"/g, '""') + '"',
         '"' + (l.phone || '').replace(/"/g, '""') + '"',
+        '"' + (l.email || '').replace(/"/g, '""') + '"',
         '"' + (l.need || '').replace(/"/g, '""') + '"',
         '"' + (l.goal || 'lead_generation').replace(/"/g, '""') + '"',
         '"' + (l.status || '').replace(/"/g, '""') + '"',
@@ -2521,8 +2597,8 @@
     this.activeQuote = null;
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
-    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
-    this.collectedContact = { name: '', phone: '' };
+    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '', email: '' };
+    this.collectedContact = { name: '', phone: '', email: '' };
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         var storedContact = localStorage.getItem('botly_user_contact');
@@ -2531,7 +2607,8 @@
           if (parsedContact && typeof parsedContact === 'object') {
             this.collectedContact = {
               name: parsedContact.name || '',
-              phone: parsedContact.phone || ''
+              phone: parsedContact.phone || '',
+              email: parsedContact.email || ''
             };
           }
         }
@@ -2754,6 +2831,10 @@
 
   BotlyChatbotController.prototype.appendBot = function(text, opts) {
     opts = opts || {};
+    // Conversational upgrade (V4): pure free-text mode — no suggestion chips.
+    if (this.config && this.config.disableQuickReplies) {
+      opts.quickReplies = null;
+    }
     var now = Date.now();
     if (this._lastBotText === text && (now - (this._lastBotTime || 0)) < 450) {
       return; // Deduplicate rapid duplicate bot message
@@ -3037,19 +3118,21 @@
     var cleanNeed = (inquiredNeed || '').trim() || 'Custom Service & Solution Inquiry';
 
     // If both name and phone have already been collected, do not ask again!
-    if (this.collectedContact && this.collectedContact.name && this.collectedContact.phone) {
+    if (this.collectedContact && this.collectedContact.name && (this.collectedContact.phone || this.collectedContact.email)) {
       this.leadState = {
         active: false,
         step: 'completed',
         inquiredNeed: cleanNeed,
         name: this.collectedContact.name,
-        phone: this.collectedContact.phone
+        phone: this.collectedContact.phone,
+        email: this.collectedContact.email || ''
       };
 
       var leadRecord = {
         id: 'LEAD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
         name: this.collectedContact.name,
         phone: this.collectedContact.phone,
+        email: this.collectedContact.email || '',
         need: cleanNeed,
         goal: this.config.goal || 'lead_generation',
         timestamp: new Date().toISOString(),
@@ -3075,7 +3158,7 @@
           ? "💬 **In the meantime, how else can I assist you right now?** Feel free to ask any other questions about our services."
           : "💬 **In the meantime, how else can I assist you right now?** Would you like to check our instant rates or view an overview of our coverage?");
 
-      var confirmKnownMsg = "🎉 **Thank you, " + this.escape(this.collectedContact.name) + "!**\n\nI've logged your request regarding **" + this.escape(cleanNeed) + "**.\n\nOur specialist team already has your contact details (**" + this.escape(this.collectedContact.phone) + "**) and will reach out shortly.\n\n" + followUp;
+      var confirmKnownMsg = "🎉 **Thank you, " + this.escape(this.collectedContact.name) + "!**\n\nI've logged your request regarding **" + this.escape(cleanNeed) + "**.\n\nOur specialist team already has your contact details (**" + this.escape(this.collectedContact.phone || this.collectedContact.email) + "**) and will reach out shortly.\n\n" + followUp;
 
       this.appendBot(confirmKnownMsg, {
         quickReplies: isSaas ? [
@@ -3091,15 +3174,16 @@
     }
 
     // If only name has been collected, skip asking for name and ask directly for phone
-    if (this.collectedContact && this.collectedContact.name && !this.collectedContact.phone) {
+    if (this.collectedContact && this.collectedContact.name && !(this.collectedContact.phone || this.collectedContact.email)) {
       this.leadState = {
         active: true,
         step: 'awaiting_phone',
         inquiredNeed: cleanNeed,
         name: this.collectedContact.name,
-        phone: ''
+        phone: '',
+        email: ''
       };
-      this.appendBot("Wonderful to connect with you again, **" + this.escape(this.collectedContact.name) + "**! 🤝\n\nWhat is the best **phone number** (or direct contact) for our specialist team to reach you regarding **" + this.escape(cleanNeed) + "**?", {
+      this.appendBot("Wonderful to connect with you again, **" + this.escape(this.collectedContact.name) + "**! 🤝\n\nWhat is the best **phone number** or **email address** for our specialist team to reach you regarding **" + this.escape(cleanNeed) + "**?", {
         quickReplies: [
           { label: 'Cancel & Main Menu', payload: 'intent_cancel_lead' }
         ]
@@ -3112,7 +3196,8 @@
       step: 'awaiting_name',
       inquiredNeed: cleanNeed,
       name: '',
-      phone: ''
+      phone: '',
+      email: ''
     };
     var compName = (this.config.company && this.config.company.name) ? this.config.company.name : 'our';
     var isSaas = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
@@ -3125,9 +3210,9 @@
           .replace(/\{needTopic\}/g, needDisplay)
           .replace(/\{companyName\}/g, compName);
       } else if (isSaas) {
-        startMsg = "That's a great question" + needDisplay + "! While I don't have those specific details in my instant memory right now, I'd love to connect you with the **" + compName + "** team so someone can assist you directly.\n\nMay I please have your **full name**?";
+        startMsg = "Good question" + needDisplay + "! I want to make sure you get the right answer, so let me connect you with the **" + compName + "** team who can sort you out properly.\n\nWhat's your **full name**?";
       } else {
-        startMsg = "That's a fantastic inquiry" + needDisplay + "! While I don't have all the exact specifications for that right here in my instant guide, I'd love to connect you with our specialist team so they can prepare a custom solution and assist you directly.\n\nMay I please have your **full name**?";
+        startMsg = "Good question" + needDisplay + "! I want to make sure you get the right answer, so let me connect you with our specialist team who can sort you out properly.\n\nWhat's your **full name**?";
       }
     }
     this.appendBot(startMsg, {
@@ -3176,7 +3261,7 @@
       if (this.config.leadCapture && this.config.leadCapture.askPhonePrompt) {
         phonePrompt = this.config.leadCapture.askPhonePrompt.replace(/\{name\}/g, this.escape(name));
       } else {
-        phonePrompt = "Nice to meet you, **" + this.escape(name) + "**! What's the best number to reach you?";
+        phonePrompt = "Nice to meet you, **" + this.escape(name) + "**! What's the best number or email address to reach you?";
       }
       this.appendBot(phonePrompt);
       return;
@@ -3184,12 +3269,19 @@
 
     if (this.leadState.step === 'awaiting_phone') {
       var digitsOnly = input.replace(/\D/g, '');
-      if (digitsOnly.length < 6) {
-        this.appendBot("Please provide a valid phone number (e.g. **+1 555-0199** or **0712 345 678**) so our advisor can reach you:");
+      var looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input);
+      if (!looksLikeEmail && digitsOnly.length < 6) {
+        this.appendBot("Please share a valid **phone number** or **email address** (e.g. **+1 555-0199**, **0712 345 678** or **you@example.com**) so our advisor can reach you:");
         return;
       }
-      this.leadState.phone = input;
-      this.collectedContact.phone = input;
+      if (looksLikeEmail) {
+        this.leadState.email = input;
+        this.leadState.phone = '';
+        this.collectedContact.email = input;
+      } else {
+        this.leadState.phone = input;
+        this.collectedContact.phone = input;
+      }
       if (typeof window !== 'undefined' && window.localStorage) {
         try { localStorage.setItem('botly_user_contact', JSON.stringify(this.collectedContact)); } catch (e) {}
       }
@@ -3200,6 +3292,7 @@
         id: 'LEAD-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
         name: this.leadState.name,
         phone: this.leadState.phone,
+        email: this.leadState.email || '',
         need: this.leadState.inquiredNeed,
         goal: this.config.goal || 'lead_generation',
         timestamp: new Date().toISOString(),
@@ -3222,9 +3315,9 @@
         confirmMsg = this.config.leadCapture.confirmationMessage
           .replace(/\{name\}/g, this.escape(this.leadState.name))
           .replace(/\{need\}/g, this.escape(this.leadState.inquiredNeed))
-          .replace(/\{phone\}/g, this.escape(this.leadState.phone));
+          .replace(/\{phone\}/g, this.escape(this.leadState.phone || this.leadState.email));
       } else {
-        confirmMsg = "Got it, **" + this.escape(this.leadState.name) + "**! Your details are saved. Someone from our team will reach out to **" + this.escape(this.leadState.phone) + "** shortly.";
+        confirmMsg = "Got it, **" + this.escape(this.leadState.name) + "**! Your details are saved. Someone from our team will reach out to **" + this.escape(this.leadState.phone || this.leadState.email) + "** shortly.";
       }
 
       var isSaasConfirmMode = !!(this.config.mode === 'saas' || (this.config.customKnowledge && this.config.customKnowledge.length > 0) || (this.config.customFaqs && this.config.customFaqs.length > 0));
@@ -4091,7 +4184,7 @@
   BotlyChatbotController.prototype.reset = function() {
     this.quoteState = { active: false, step: 0, type: 'auto', tierId: null };
     this.claimState = { active: false, step: 0 };
-    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '' };
+    this.leadState = { active: false, step: 'idle', inquiredNeed: '', name: '', phone: '', email: '' };
     this.conversationMemory = {
       turns: 0,
       history: [],

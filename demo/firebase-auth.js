@@ -14,10 +14,15 @@
   var initialAuthResolved = false;
   var pendingAction = null;
 
+  function hasUsableApiKey(config) {
+    var key = config && config.apiKey ? String(config.apiKey) : '';
+    return !!(key && key.length > 20 && key.indexOf('YOUR_') === -1 && key.indexOf('PASTE_') === -1);
+  }
+
   var BotlyAuth = {
     init: function() {
       var config = window.BOTLY_FIREBASE_CONFIG;
-      var hasRealKeys = config && config.apiKey && config.apiKey !== 'YOUR_API_KEY';
+      var hasRealKeys = hasUsableApiKey(config);
 
       if (window.firebase && hasRealKeys) {
         try {
@@ -58,8 +63,7 @@
     },
 
     isConfigured: function() {
-      var config = window.BOTLY_FIREBASE_CONFIG;
-      return !!(config && config.apiKey && config.apiKey !== 'YOUR_API_KEY');
+      return hasUsableApiKey(window.BOTLY_FIREBASE_CONFIG);
     },
 
     getUser: function() {
@@ -87,7 +91,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
+          reject(new Error('Firebase is not configured yet. Get your Web API key: console.firebase.google.com > project "botly-662d7" > Project settings (gear icon) > General > "Web API Key". Paste it as apiKey in demo/firebase-config.local.js (recommended, gitignored) or demo/firebase-config.js, reload, and sign in again. Full steps: FIREBASE_SETUP_GUIDE.md'));
           return;
         }
 
@@ -107,7 +111,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
+          reject(new Error('Firebase is not configured yet. Get your Web API key: console.firebase.google.com > project "botly-662d7" > Project settings (gear icon) > General > "Web API Key". Paste it as apiKey in demo/firebase-config.local.js (recommended, gitignored) or demo/firebase-config.js, reload, and sign in again. Full steps: FIREBASE_SETUP_GUIDE.md'));
           return;
         }
 
@@ -126,7 +130,7 @@
       var self = this;
       return new Promise(function(resolve, reject) {
         if (!self.isConfigured()) {
-          reject(new Error('Firebase is not yet configured with your API key. Please provide your apiKey in demo/firebase-config.js.'));
+          reject(new Error('Firebase is not configured yet. Get your Web API key: console.firebase.google.com > project "botly-662d7" > Project settings (gear icon) > General > "Web API Key". Paste it as apiKey in demo/firebase-config.local.js (recommended, gitignored) or demo/firebase-config.js, reload, and sign in again. Full steps: FIREBASE_SETUP_GUIDE.md'));
           return;
         }
 
@@ -183,6 +187,15 @@
       var msgEl = document.getElementById('auth-modal-message');
       var errEl = document.getElementById('auth-error-banner');
       if (errEl) errEl.style.display = 'none';
+
+      if (!BotlyAuth.isConfigured() && errEl) {
+        errEl.innerHTML = 'Firebase setup needed: paste your <strong>Web API key</strong> as ' +
+          '<code>apiKey</code> in <code>demo/firebase-config.local.js</code> ' +
+          '(recommended, gitignored). Get it at <a href="https://console.firebase.google.com/project/botly-662d7/settings/general" ' +
+          'target="_blank" rel="noopener" style="color:#1d4ed8;">Firebase Console &gt; Project settings &gt; General &gt; Web API Key</a>. ' +
+          'Then reload this page. Full steps: <code>FIREBASE_SETUP_GUIDE.md</code>.';
+        errEl.style.display = 'block';
+      }
 
       if (msgEl && customMessage) {
         msgEl.textContent = customMessage;

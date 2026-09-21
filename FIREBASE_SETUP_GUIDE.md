@@ -36,7 +36,7 @@ This guide walks you through setting up Firebase Authentication on [console.fire
    };
    ```
 7. Copy the values inside that object.
-8. Open `demo/firebase-config.js` in your project and paste your keys:
+8. Open `demo/firebase-config.local.js` in your project (recommended — gitignored, so your key is never committed) and paste your keys. If that file doesn't exist, create it, or paste into `demo/firebase-config.js` instead:
    ```javascript
    window.BOTLY_FIREBASE_CONFIG = {
      apiKey: "AIzaSy...",
@@ -82,18 +82,31 @@ This guide walks you through setting up Firebase Authentication on [console.fire
 
 ## Step 5: Test the Integration in the Sandbox
 
-1. Start your local server (`python3 -m http.server 8080` or your dev server).
-2. Open **`http://localhost:8080/demo/customizer.html`**.
-3. In the top navbar, you will see the **Sign In** button.
-4. Click **Sign In**:
+1. Install the crawler backend dependencies (one time only):
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Start the Botly backend server from the repo root. This is **required** for Step 4
+   "Teach Your Bot" website crawling (`/api/crawl`). A plain static server such as
+   `python3 -m http.server` will NOT work for crawling:
+   ```bash
+   python3 server.py 8080
+   ```
+3. Open **`http://localhost:8080/demo/customizer.html`**.
+4. In the top navbar, you will see the **Sign In** button.
+5. Click **Sign In**:
    - A modal appears offering **Continue with Google** or **Email & Password**.
-5. Once signed in, your profile picture, display name, and a **Sign Out** menu will appear in the top navbar.
-6. When users attempt to copy embed code, export JSON, or checkout, they will be authenticated and their bots tied to their Firebase user account.
+6. Once signed in, your profile picture, display name, and a **Sign Out** menu will appear in the top navbar.
+7. When users attempt to copy embed code, export JSON, or checkout, they will be authenticated and their bots tied to their Firebase user account.
 
 ---
 
 ## Troubleshooting
 
+- **"Crawler backend not detected" / "Live crawl unavailable" in Step 4 (Teach Your Bot)**:
+  You are serving the Studio with a static file server. Stop it and run `python3 server.py 8080`
+  from the repo root (after `pip install -r requirements.txt`), then press Re-scan again.
+  The website crawler needs the Python backend (`/api/crawl`).
 - **"auth/unauthorized-domain" error**:
   Ensure the domain in your browser URL (e.g., `localhost`) is added in **Authentication > Settings > Authorized domains**.
 - **"auth/popup-closed-by-user"**:

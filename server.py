@@ -9,6 +9,7 @@ Serves static repository assets alongside live BeautifulSoup endpoints:
 
 import json
 import os
+import subprocess
 import sys
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -73,6 +74,11 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
             self._send_json(result)
             return
 
+        # Self-heal: restore dist/ bundles on demand if a sandbox wiped them
+        # under a live server (the startup check alone cannot catch that case).
+        if path == "/dist/insurance-chatbot.js" or path == "/dist/insurance-chatbot.css":
+            _ensure_dist_assets(os.getcwd())
+
         # Fallback to serving static repository files
         super().do_GET()
 
@@ -91,23 +97,69 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
                 payload = dict(urllib.parse.parse_qsl(raw_body))
 
             url = (payload.get("url") or "").strip()
-            max_pages = min(int(payload.get("max_pages", 20)), 40)
+            try:
+                max_pages = max(1, min(int(payload.get("max_pages", 20)), 40))
+            except (TypeError, ValueError):
+                max_pages = 20
 
             if not url:
                 self._send_json({"success": False, "error": "Missing website 'url' parameter"}, status_code=400)
                 return
 
-            result = scraper.crawl_website(url, max_pages=max_pages)
+            try:
+                result = scraper.crawl_website(url, max_pages=max_pages)
+            except Exception as exc:
+                result = {"success": False, "url": url, "pages": [], "error": f"Crawler crashed: {exc}"}
             self._send_json(result)
             return
 
         self._send_json({"error": f"Endpoint not found: {path}"}, status_code=404)
 
 
+def _ensure_dist_assets(repo_root: str) -> None:
+    """Restore tracked dist/ bundles if missing, then apply upgrades.
+
+    Some sandboxes/snapshots exclude build directories (dist/), which would
+    otherwise silently break the Studio Live Preview (it loads
+    ../dist/insurance-chatbot.js).
+
+    dist/ is also a build artifact, so the conversational upgrades live in
+    tracked source (tools/upgrade-dist-conversational.py) and are re-applied
+    here on every boot — idempotently — instead of as hand edits that any
+    `git checkout -- dist` would revert.
+    """
+    dist_js = os.path.join(repo_root, "dist", "insurance-chatbot.js")
+    dist_css = os.path.join(repo_root, "dist", "insurance-chatbot.css")
+    if not (os.path.exists(dist_js) and os.path.exists(dist_css)):
+        print("WARNING: dist/ bundles missing - attempting to restore tracked copies via git...")
+        try:
+            subprocess.run(
+                ["git", "checkout", "--", "dist"],
+                cwd=repo_root,
+                timeout=30,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        except Exception as exc:
+            print(f"WARNING: Could not restore dist/ bundles: {exc}")
+    if os.path.exists(dist_js):
+        try:
+            subprocess.run(
+                [sys.executable, os.path.join(repo_root, "tools", "upgrade-dist-conversational.py")],
+                cwd=repo_root,
+                timeout=60,
+                check=False,
+            )
+        except Exception as exc:
+            print(f"WARNING: Could not apply dist conversational upgrades: {exc}")
+
+
 def run_server(port: int = 8080, host: str = "0.0.0.0"):
     # Ensure current directory is the root of the chatbot repo
     repo_root = os.path.dirname(os.path.abspath(__file__))
     os.chdir(repo_root)
+    _ensure_dist_assets(repo_root)
 
     server_address = (host, port)
     httpd = HTTPServer(server_address, ChatbotServerHandler)

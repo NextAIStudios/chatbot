@@ -283,23 +283,34 @@ def discover_sitemap_urls(base_origin: str, session: requests.Session, headers: 
         if p not in sitemap_candidates:
             sitemap_candidates.append(p)
 
-    # 3. Fetch and parse sitemaps
+    # 3. Fetch and parse sitemaps — concurrently, so one slow host never
+    #    stalls discovery, and ALL candidates (not just the first 3).
     sub_sitemaps_to_fetch = []
-    for sm in sitemap_candidates[:3]:
+
+    def _fetch_sitemap_xml(sm_url: str) -> str | None:
         try:
-            resp = session.get(sm, headers=headers, timeout=4)
+            resp = session.get(sm_url, headers=headers, timeout=5)
             if resp.status_code == 200 and resp.text and ("<loc>" in resp.text or "<url>" in resp.text or "<sitemap>" in resp.text):
-                locs = re.findall(r"<loc>(https?://[^<]+)</loc>", resp.text, re.IGNORECASE)
-                for loc in locs:
-                    clean_loc = loc.strip()
-                    if clean_loc.endswith(".xml") or "sitemap" in clean_loc.lower():
-                        if clean_loc not in sub_sitemaps_to_fetch and clean_loc != sm:
-                            sub_sitemaps_to_fetch.append(clean_loc)
-                    else:
-                        if clean_loc not in discovered_urls:
-                            discovered_urls.append(clean_loc)
+                return resp.text
         except Exception:
+            pass
+        return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as _sm_pool:
+        _sitemap_bodies = list(_sm_pool.map(_fetch_sitemap_xml, sitemap_candidates))
+
+    for sm, _body in zip(sitemap_candidates, _sitemap_bodies):
+        if not _body:
             continue
+        locs = re.findall(r"<loc>(https?://[^<]+)</loc>", _body, re.IGNORECASE)
+        for loc in locs:
+            clean_loc = loc.strip()
+            if clean_loc.endswith(".xml") or "sitemap" in clean_loc.lower():
+                if clean_loc not in sub_sitemaps_to_fetch and clean_loc != sm:
+                    sub_sitemaps_to_fetch.append(clean_loc)
+            else:
+                if clean_loc not in discovered_urls:
+                    discovered_urls.append(clean_loc)
 
     # 4. Fetch child sitemaps (prioritize pages, services, products)
     def rank_sitemap(s: str) -> int:
@@ -312,19 +323,103 @@ def discover_sitemap_urls(base_origin: str, session: requests.Session, headers: 
 
     sub_sitemaps_to_fetch.sort(key=rank_sitemap, reverse=True)
 
-    for child_sm in sub_sitemaps_to_fetch[:4]:
-        try:
-            resp = session.get(child_sm, headers=headers, timeout=4)
-            if resp.status_code == 200 and resp.text:
-                locs = re.findall(r"<loc>(https?://[^<]+)</loc>", resp.text, re.IGNORECASE)
-                for loc in locs:
-                    clean_loc = loc.strip()
-                    if not clean_loc.endswith(".xml") and clean_loc not in discovered_urls:
-                        discovered_urls.append(clean_loc)
-        except Exception:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as _child_pool:
+        _child_bodies = list(_child_pool.map(_fetch_sitemap_xml, sub_sitemaps_to_fetch[:4]))
+
+    for _child_body in _child_bodies:
+        if not _child_body:
             continue
+        locs = re.findall(r"<loc>(https?://[^<]+)</loc>", _child_body, re.IGNORECASE)
+        for loc in locs:
+            clean_loc = loc.strip()
+            if not clean_loc.endswith(".xml") and clean_loc not in discovered_urls:
+                discovered_urls.append(clean_loc)
 
     return discovered_urls
+
+
+# Boilerplate URL paths that must NEVER become knowledge pages. WordPress and
+# similar CMS platforms expose these in sitemaps/nav (sample page, hello-world
+# post, login/admin screens, feeds); indexing them fills bot memory with
+# "Log In / Powered by WordPress / Sample Page" answers about the WRONG topic.
+JUNK_PAGE_PATH_PARTS = (
+    "wp-login", "wp-admin", "wp-json", "xmlrpc", "/feed", "comments/feed",
+    "sample-page", "hello-world", "uncategorized",
+)
+
+# Boilerplate headings that must NEVER become Q&A chunks (hero counters, years,
+# CMS chrome, sidebar widgets). Applied BEFORE the 8-heading slice so real
+# content sections keep their slots.
+JUNK_HEADINGS_EXACT = frozenset({
+    "log in", "log out", "login", "powered by wordpress", "sample page",
+    "hello world", "search", "menu", "navigation", "archives", "categories",
+    "meta", "recent posts", "recent comments", "entries feed", "comments feed",
+    "wordpress.org", "skip to content", "share this", "follow us",
+    "related posts", "you may also like",
+})
+_JUNK_HEADING_RES = (
+    re.compile(r"^\d{4}$"),  # lone years: "2022"
+    # bare counters: "0 K+", "100%", "1,200+", "$50"
+    re.compile(r"^[\d\s.,+%$\u20AC\u00A3]+\s*[kmb]?\+?%?$", re.IGNORECASE),
+)
+_LOGIN_TITLE_RE = re.compile(r"^(log\s?in|sign\s?in|login|register)\b", re.IGNORECASE)
+
+
+def is_junk_page_url(path: str) -> bool:
+    """True when a URL path is CMS boilerplate (login/admin/feed/sample)."""
+    pl = (path or "").lower()
+    return any(part in pl for part in JUNK_PAGE_PATH_PARTS)
+
+
+def is_junk_heading(text: str) -> bool:
+    """True when a heading is CMS chrome/counter junk, not real content."""
+    t = (text or "").strip().lower().rstrip(" .!\u2026")
+    if not t or t in JUNK_HEADINGS_EXACT:
+        return True
+    return any(rx.match(t) for rx in _JUNK_HEADING_RES)
+
+
+def is_login_chrome_page(page: dict) -> bool:
+    """True when a parsed page is just a login/admin screen (title check)."""
+    title = (page.get("title") or "").strip()
+    return bool(title) and len(title) <= 40 and bool(_LOGIN_TITLE_RE.match(title))
+
+
+def extract_heading_answer(h, h_text: str, company_name: str, page_path: str) -> str:
+    """Best-effort answer text for a heading element.
+
+    Stages: (1) next content sibling, (2) paragraphs inside the parent
+    element, (3) smallest substantive ancestor (card/tile content — e.g.
+    Elementor practice cards where the description sits in a sibling div of
+    the header block), (4) honest stub. The ancestor must contribute at
+    least 40 chars BEYOND the heading text itself, so bare header wrappers
+    ("Eyebrow + Heading") are skipped in favour of the real card body.
+    """
+    next_node = h.find_next_sibling(["p", "div", "ul", "ol", "table"])
+    ans_text = next_node.get_text(" ", strip=True) if next_node else ""
+    if not ans_text or len(ans_text) < 15:
+        parent = h.parent
+        if parent:
+            sibling_ps = parent.find_all(["p", "li"])
+            if sibling_ps:
+                ans_text = " ".join([p.get_text(" ", strip=True) for p in sibling_ps[:2]])
+    if not ans_text or len(ans_text) < 15:
+        node = h.parent
+        for _ in range(3):
+            node = node.parent if node is not None else None
+            if node is None or getattr(node, "name", None) in ("body", "html", "main", "article"):
+                break
+            cand = node.get_text(" ", strip=True)
+            rest = re.sub(r"\s+", "", cand).replace(re.sub(r"\s+", "", h_text), "", 1)
+            if len(rest) >= 40:
+                ans_text = cand
+                break
+    if not ans_text or len(ans_text) < 15:
+        ans_text = (
+            f"{h_text} is featured on {company_name}. For more information, "
+            f"explore {page_path} or connect with our team."
+        )
+    return ans_text
 
 
 def rank_and_filter_urls(urls: list[str], base_origin: str, domain: str, clean_domain: str) -> list[str]:
@@ -375,6 +470,9 @@ def rank_and_filter_urls(urls: list[str], base_origin: str, domain: str, clean_d
             continue
 
         if any(clean.lower().endswith(ext) for ext in ignored_exts):
+            continue
+
+        if is_junk_page_url(urllib.parse.urlparse(clean).path):
             continue
 
         if clean not in seen:
@@ -542,6 +640,32 @@ def generate_synthetic_company_profile(url: str, clean_domain: str, company_name
     }
 
 
+def detect_waf_block(status_code, headers, body_snippet=""):
+    """
+    Detect bot-firewall / WAF blocks from a failed fetch.
+    Returns a vendor label ('AWS WAF', 'Cloudflare', ...) or generic
+    'bot firewall', or None when the failure does not look like a block.
+    """
+    if status_code not in (401, 403, 405, 429, 503):
+        return None
+    h = {str(k).lower(): str(v).lower() for k, v in (headers or {}).items()}
+    body = (body_snippet or "").lower()
+    if "x-amzn-waf-action" in h or "awselb" in h.get("server", "") or "aws waf" in body:
+        return "AWS WAF"
+    if ("cf-mitigated" in h or "cloudflare" in h.get("server", "")
+            or "__cf_bm" in h.get("set-cookie", "")
+            or ("attention required" in body and "cloudflare" in body)):
+        return "Cloudflare"
+    if "x-iinfo" in h or "incapsula" in body or "imperva" in body:
+        return "Imperva/Incapsula"
+    if "akamai" in h.get("server", "") or "akamai" in body:
+        return "Akamai"
+    if "captcha" in body:
+        return "bot firewall (CAPTCHA challenge)"
+    # Status-only fallback: a public business homepage should never 403/405 real visitors.
+    return "bot firewall"
+
+
 def crawl_website(url: str, max_pages: int = 20) -> dict:
     """
     Crawls a target merchant or business website using BeautifulSoup.
@@ -562,6 +686,39 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
 
     headers = dict(DEFAULT_HEADERS)
     session = requests.Session()
+
+    # 0. Host fallback: many small-business sites only answer on ONE of the
+    #    apex / www hostnames (DNS or TLS misconfiguration is common, e.g. a
+    #    certificate that covers www.example.com but not example.com). If the
+    #    given host fails outright, retry once with the www <-> apex variant.
+    # Last failed root-probe details (status/headers/snippet) for block diagnosis.
+    root_probe: dict = {"ok": False, "status": None, "headers": {}, "snippet": ""}
+
+    def _probe_root(candidate_url: str) -> bool:
+        try:
+            r = session.get(candidate_url, headers=headers, timeout=5, allow_redirects=True)
+            if r.status_code == 200 and r.text:
+                root_probe["ok"] = True
+                return True
+            root_probe.update({
+                "status": r.status_code,
+                "headers": dict(r.headers or {}),
+                "snippet": (r.text or "")[:1500],
+            })
+        except Exception as exc:
+            root_probe.update({"status": None, "headers": {}, "snippet": f"{type(exc).__name__}: {exc}"[:300]})
+        return False
+
+    if not _probe_root(url):
+        alt_netloc = domain[4:] if domain.startswith("www.") else ("www." + domain)
+        alt_url = f"{parsed_root.scheme}://{alt_netloc}{parsed_root.path or ''}"
+        if alt_url != url and _probe_root(alt_url):
+            url = alt_url
+            parsed_root = urllib.parse.urlparse(url)
+            base_origin = f"{parsed_root.scheme}://{parsed_root.netloc}"
+            domain = parsed_root.netloc.lower()
+            clean_domain = domain.replace("www.", "")
+            company_name = clean_domain.split(".")[0].capitalize()
 
     # 1. Sitemap Discovery
     sitemap_urls = discover_sitemap_urls(base_origin, session, headers)
@@ -595,144 +752,278 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
     visited_urls = set()
     internal_links_discovered = []
 
-    def fetch_single_url(target_u: str) -> tuple[str, str | None]:
+    # Non-200 fetch outcomes, used to diagnose firewall blocks vs offline sites.
+    block_evidence: list[dict] = []
+
+    def fetch_single_url(target_u: str) -> tuple[str, str | None, str]:
+        """Fetch one URL. Returns (requested_url, html_or_None, final_url_after_redirects)."""
         try:
-            r = session.get(target_u, headers=headers, timeout=5, allow_redirects=True)
-            if r.status_code == 200 and r.text:
-                return (target_u, r.text)
+            r = session.get(target_u, headers=headers, timeout=6, allow_redirects=True)
+            content_type = (r.headers.get("Content-Type") or "").lower()
+            is_html = ("html" in content_type or "xml" in content_type or not content_type)
+            if r.status_code == 200 and r.text and is_html:
+                return (target_u, r.text, r.url or target_u)
+            block_evidence.append({
+                "status": r.status_code,
+                "headers": dict(r.headers or {}),
+                "snippet": (r.text or "")[:800],
+            })
         except Exception:
             pass
-        return (target_u, None)
+        return (target_u, None, target_u)
 
-    # Fetch ranked URLs concurrently
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(fetch_single_url, u): u for u in to_visit[:max_pages]}
-        for future in concurrent.futures.as_completed(futures):
-            target_u, html = future.result()
-            if not html:
-                continue
+    def parse_page_html(html: str, final_u: str, page_index: int) -> tuple[dict | None, list[str]]:
+        """Parse one HTML document into a knowledge page plus discovered internal links."""
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "noscript", "svg", "iframe"]):
+                tag.decompose()
 
-            norm_url = target_u.split("#")[0].rstrip("/")
-            if norm_url in visited_urls:
-                continue
-            visited_urls.add(norm_url)
+            # Extract Title
+            title = ""
+            if soup.title and soup.title.string:
+                title = soup.title.string.strip()
+            elif soup.find("h1"):
+                title = soup.find("h1").get_text(strip=True)
+            if not title:
+                title = f"{company_name} - Page"
 
-            try:
-                soup = BeautifulSoup(html, "html.parser")
-                for tag in soup(["script", "style", "noscript", "svg", "iframe"]):
-                    tag.decompose()
+            # Extract Meta Description
+            meta_desc = ""
+            desc_tag = soup.find("meta", attrs={"name": re.compile(r"description", re.I)}) or \
+                       soup.find("meta", attrs={"property": "og:description"})
+            if desc_tag and desc_tag.get("content"):
+                meta_desc = desc_tag.get("content").strip()
 
-                # Extract Title
-                title = ""
-                if soup.title and soup.title.string:
-                    title = soup.title.string.strip()
-                elif soup.find("h1"):
-                    title = soup.find("h1").get_text(strip=True)
-                if not title:
-                    title = f"{company_name} - Page"
+            # Extract Main Body Text
+            main_el = soup.find("main") or soup.find("article") or soup.find("body")
+            body_text = ""
+            if main_el:
+                paras = [p.get_text(" ", strip=True) for p in main_el.find_all(["p", "li"]) if len(p.get_text(strip=True)) > 15]
+                body_text = " ".join(paras)
 
-                # Extract Meta Description
-                meta_desc = ""
-                desc_tag = soup.find("meta", attrs={"name": re.compile(r"description", re.I)}) or \
-                           soup.find("meta", attrs={"property": "og:description"})
-                if desc_tag and desc_tag.get("content"):
-                    meta_desc = desc_tag.get("content").strip()
+            words = body_text.split()
+            word_count = len(words)
+            body_excerpt = (" ".join(words[:45]) + "..." if words else f"Information from {title}")
+            # Stub meta descriptions ("Law Firm") produce useless overview answers — use body text.
+            excerpt = meta_desc if len(meta_desc) >= 40 else body_excerpt
 
-                # Extract Main Body Text
-                main_el = soup.find("main") or soup.find("article") or soup.find("body")
-                body_text = ""
-                if main_el:
-                    paras = [p.get_text(" ", strip=True) for p in main_el.find_all(["p", "li"]) if len(p.get_text(strip=True)) > 15]
-                    body_text = " ".join(paras)
+            page_path = urllib.parse.urlparse(final_u).path or "/"
+            category = categorize_path(page_path, title)
 
-                words = body_text.split()
-                word_count = len(words)
-                excerpt = meta_desc if meta_desc else (" ".join(words[:45]) + "..." if words else f"Information from {title}")
+            # Extract Contact Info from VISIBLE text only. Raw HTML contains
+            # scripts/styles with long numeric IDs that pollute phone detection.
+            visible_text = (body_text + " " + title) if body_text else (soup.get_text(" ", strip=True) or "")
+            phones = re.findall(r"(?:\+\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?)?\d{3,4}[\s-]?\d{3,4}", visible_text)
+            clean_phones = []
+            for p in phones:
+                digits = re.sub(r"\D", "", p)
+                if 8 <= len(digits) <= 13 and not p.strip().startswith("202") and not re.match(r"^\d{5}-\d{4}$", p.strip()):
+                    cp = p.strip()
+                    if cp not in clean_phones:
+                        clean_phones.append(cp)
+            clean_phones = clean_phones[:2]
+            emails = []
+            for e in re.findall(r"[\w\.-]+@[\w\.-]+\.\w{2,}", visible_text):
+                ce = e.strip().rstrip(".,;:")
+                if ce not in emails and not ce.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".js", ".css")):
+                    emails.append(ce)
+            emails = emails[:2]
 
-                page_path = urllib.parse.urlparse(target_u).path or "/"
-                category = categorize_path(page_path, title)
+            # Extract Headings as Q&As
+            qas = []
+            # Junk headings (counters, CMS chrome) are dropped BEFORE the 8-heading
+            # slice so real content sections keep their answerable-chunk slots.
+            headings = [h for h in soup.find_all(["h1", "h2", "h3"]) if not is_junk_heading(h.get_text(strip=True))]
+            # NOTE: keep in sync with the Studio's browser-side chunker (customizer.html).
+            # 20 heading-chunks: one-page business sites list every practice area /
+            # product / team member as headings (e.g. 7 law-firm practice areas sat
+            # at positions 9-15 and were cut off by the old cap of 8 -> the bot
+            # could not name a single area of service).
+            for idx, h in enumerate(headings[:20]):
+                h_text = h.get_text(strip=True)
+                if len(h_text) < 4 or len(h_text) > 130:
+                    continue
+                ans_text = extract_heading_answer(h, h_text, company_name, page_path)
 
-                # Extract Contact Info if present on page
-                phones = re.findall(r"(?:\+?\d{1,4}[ -]?)?(?:\(?\d{2,4}\)?[ -]?)?\d{3,4}[ -]?\d{3,4}", html)
-                clean_phones = [p.strip() for p in phones if len(re.sub(r"\D", "", p)) >= 8 and not p.startswith("202")][:2]
-                emails = [e.strip() for e in re.findall(r"[\w\.-]+@[\w\.-]+\.\w{2,}", html) if not e.endswith(".png") and not e.endswith(".jpg")][:2]
-
-                # Extract Headings as Q&As
-                qas = []
-                headings = soup.find_all(["h1", "h2", "h3"])
-                for idx, h in enumerate(headings[:5]):
-                    h_text = h.get_text(strip=True)
-                    if len(h_text) < 4 or len(h_text) > 130:
-                        continue
-                    next_node = h.find_next_sibling(["p", "div", "ul", "ol", "table"])
-                    ans_text = next_node.get_text(" ", strip=True) if next_node else ""
-                    if not ans_text or len(ans_text) < 15:
-                        parent = h.parent
-                        if parent:
-                            sibling_ps = parent.find_all(["p", "li"])
-                            if sibling_ps:
-                                ans_text = " ".join([p.get_text(" ", strip=True) for p in sibling_ps[:2]])
-
-                    if not ans_text or len(ans_text) < 15:
-                        ans_text = f"{h_text} is featured on {company_name}. For more information, explore {page_path} or connect with our team."
-
-                    clean_ans = ans_text[:400].strip()
-                    kw = [w.lower() for w in re.findall(r"[A-Za-z]{3,}", h_text)[:6]]
-                    qas.append({
-                        "id": f"qa_{len(discovered_pages)}_{idx}",
-                        "question": h_text if h_text.endswith("?") else f"What about {h_text}?",
-                        "answer": clean_ans,
-                        "keywords": kw,
-                    })
-
-                # Contact Q&A if contact details discovered
-                if clean_phones or emails:
-                    contact_ans_parts = [f"Here is how to contact {company_name}:"]
-                    if clean_phones:
-                        contact_ans_parts.append(f"• Phone: {', '.join(clean_phones)}")
-                    if emails:
-                        contact_ans_parts.append(f"• Email: {', '.join(emails)}")
-                    qas.append({
-                        "id": f"qa_{len(discovered_pages)}_contact",
-                        "question": f"How can I contact {company_name}?",
-                        "answer": "\n".join(contact_ans_parts),
-                        "keywords": ["contact", "phone", "email", "reach", company_name.lower()],
-                    })
-
-                if not qas:
-                    qas.append({
-                        "id": f"qa_{len(discovered_pages)}_main",
-                        "question": f"What is on the {title} page?",
-                        "answer": excerpt[:350],
-                        "keywords": [w.lower() for w in re.findall(r"[A-Za-z]{3,}", title)[:5]],
-                    })
-
-                page_id = f"crawled_{len(discovered_pages) + 1}_{re.sub(r'[^a-zA-Z0-9]', '_', page_path.strip('/')) or 'home'}"
-                discovered_pages.append({
-                    "id": page_id,
-                    "title": title[:85],
-                    "path": page_path,
-                    "url": target_u,
-                    "category": category,
-                    "wordCount": max(word_count, 140),
-                    "excerpt": excerpt[:240],
-                    "selected": True,
-                    "qas": qas,
+                clean_ans = ans_text[:400].strip()
+                kw = [w.lower() for w in re.findall(r"[A-Za-z]{3,}", h_text)[:6]]
+                qas.append({
+                    "id": f"qa_{page_index}_{idx}",
+                    "question": h_text if h_text.endswith("?") else f"What about {h_text}?",
+                    "answer": clean_ans,
+                    "keywords": kw,
                 })
 
-                # Collect internal links for extra depth if needed
-                for link in soup.find_all("a", href=True):
-                    hr = link["href"].strip()
-                    if hr and not hr.startswith("javascript:") and not hr.startswith("mailto:") and not hr.startswith("tel:"):
-                        full_child = urllib.parse.urljoin(target_u, hr)
-                        internal_links_discovered.append(full_child)
+            # Contact Q&A if contact details discovered
+            if clean_phones or emails:
+                contact_ans_parts = [f"Here is how to contact {company_name}:"]
+                if clean_phones:
+                    contact_ans_parts.append(f"• Phone: {', '.join(clean_phones)}")
+                if emails:
+                    contact_ans_parts.append(f"• Email: {', '.join(emails)}")
+                qas.append({
+                    "id": f"qa_{page_index}_contact",
+                    "question": f"How can I contact {company_name}?",
+                    "answer": "\n".join(contact_ans_parts),
+                    "keywords": ["contact", "phone", "email", "reach", company_name.lower()],
+                })
 
-            except Exception:
-                continue
+            # Page-summary chunks: guarantee overview queries ("what does X do?",
+            # "what services...") match REAL page content instead of generic fallbacks.
+            if page_path in ("/", ""):
+                top_headings = []
+                for h in headings:
+                    ht = h.get_text(strip=True)
+                    if 4 <= len(ht) <= 130 and ht not in top_headings:
+                        top_headings.append(ht)
+                    if len(top_headings) >= 16:
+                        break
+                overview_answer = excerpt
+                if top_headings:
+                    overview_answer += " What we offer: " + "; ".join(top_headings) + "."
+                qas.append({
+                    "id": f"qa_{page_index}_overview",
+                    # Own category: the widget gates generic 'overview' content for topical
+                    # queries, but this extractive services summary must stay searchable.
+                    "category": "services",
+                    "question": f"What services or solutions does {company_name} offer?",
+                    "answer": overview_answer[:1100],
+                    "keywords": ["services", "solutions", "offer", "provide", "about", company_name.lower(), clean_domain],
+                })
+            qas.append({
+                "id": f"qa_{page_index}_summary",
+                "question": f"What does the {title[:60]} page cover?",
+                "answer": excerpt[:400],
+                "keywords": [w.lower() for w in re.findall(r"[A-Za-z]{3,}", title)[:6]],
+            })
 
-    # Fallback to synthetic rich profile if 0 pages succeeded
+            if not qas:
+                qas.append({
+                    "id": f"qa_{page_index}_main",
+                    "question": f"What is on the {title} page?",
+                    "answer": excerpt[:350],
+                    "keywords": [w.lower() for w in re.findall(r"[A-Za-z]{3,}", title)[:5]],
+                })
+
+            page_id = f"crawled_{page_index + 1}_{re.sub(r'[^a-zA-Z0-9]', '_', page_path.strip('/')) or 'home'}"
+            page = {
+                "id": page_id,
+                "title": title[:85],
+                "path": page_path,
+                "url": final_u,
+                "category": category,
+                "wordCount": max(word_count, 140),
+                "excerpt": excerpt[:240],
+                "selected": True,
+                "qas": qas,
+            }
+
+            # Collect internal links for breadth-first follow-up crawling
+            child_links = []
+            for link in soup.find_all("a", href=True):
+                hr = link["href"].strip()
+                if hr and not hr.startswith("javascript:") and not hr.startswith("mailto:") and not hr.startswith("tel:") and not hr.startswith("#"):
+                    child_links.append(urllib.parse.urljoin(final_u, hr))
+
+            return (page, child_links)
+        except Exception:
+            return (None, [])
+
+    def _normalize_visit_key(u: str) -> str:
+        return u.split("#")[0].split("?")[0].rstrip("/") or base_origin
+
+    def fetch_batch(urls: list[str]) -> None:
+        """Fetch + parse a batch of URLs concurrently, appending to discovered_pages."""
+        if not urls:
+            return
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            futures = {executor.submit(fetch_single_url, u): u for u in urls}
+            for future in concurrent.futures.as_completed(futures):
+                _requested, html, final_u = future.result()
+                if not html:
+                    continue
+                visit_key = _normalize_visit_key(final_u)
+                if visit_key in visited_urls:
+                    continue
+                visited_urls.add(visit_key)
+                page, child_links = parse_page_html(html, final_u, len(discovered_pages))
+                if page and is_login_chrome_page(page):
+                    page = None  # login/admin screen slipped past URL filters — never index it
+                if page:
+                    discovered_pages.append(page)
+                for child in child_links:
+                    if len(internal_links_discovered) < 600:
+                        internal_links_discovered.append(child)
+
+    # Phase 1: fetch sitemap-ranked URLs (homepage first)
+    fetch_batch(to_visit[:max_pages])
+
+    # Phase 2: breadth-first follow of discovered internal links. This is what
+    # indexes "all the pages" on sites with no (or sparse) sitemap.xml — the
+    # homepage nav alone usually reveals /services, /pricing, /about, /contact.
+    while discovered_pages and len(discovered_pages) < max_pages and internal_links_discovered:
+        fresh = [
+            u for u in rank_and_filter_urls(internal_links_discovered, base_origin, domain, clean_domain)
+            if _normalize_visit_key(u) not in visited_urls
+        ]
+        internal_links_discovered.clear()
+        if not fresh:
+            break
+        before = len(discovered_pages)
+        fetch_batch(fresh[: max_pages - len(discovered_pages)])
+        if len(discovered_pages) == before:
+            break  # no progress — stop instead of hammering the site
+
+    # Honest failure: NEVER fabricate knowledge-base pages for a site we could
+    # not actually read. The Studio UI shows a clear "unreachable" notice and
+    # asks the owner to add FAQs manually or re-scan later.
     if not discovered_pages:
-        return generate_synthetic_company_profile(url, clean_domain, company_name)
+        # Diagnose WHY nothing was readable: bot-firewall block vs truly offline.
+        waf_vendor = detect_waf_block(root_probe.get("status"), root_probe.get("headers", {}), root_probe.get("snippet", ""))
+        block_status = root_probe.get("status")
+        if not waf_vendor:
+            for ev in block_evidence:
+                waf_vendor = detect_waf_block(ev.get("status"), ev.get("headers", {}), ev.get("snippet", ""))
+                if waf_vendor:
+                    block_status = ev.get("status")
+                    break
+        return {
+            "success": False,
+            "url": url,
+            "domain": clean_domain,
+            "companyName": company_name,
+            "botName": f"{company_name} Concierge",
+            "botTitle": "AI Inquiries & Knowledge Concierge",
+            "greeting": f"Hello and welcome to **{company_name}**! I am your AI concierge. How can I assist you today?",
+            "quickReplies": [
+                {"label": "💼 Our Services", "payload": f"What services or solutions does {company_name} offer?"},
+                {"label": "💳 Pricing & Plans", "payload": f"What are the pricing options for {company_name}?"},
+                {"label": "📞 Contact Team", "payload": f"How can I contact the {company_name} team?"},
+            ],
+            "checkoutConfig": {
+                "itemName": "",
+                "amount": "",
+                "currency": "KES",
+                "externalUrl": url,
+                "mpesaBusinessName": company_name,
+                "mpesaNumber": "",
+                "mpesaType": "buy_goods",
+            },
+            "pages": [],
+            "blocked": "waf" if waf_vendor else "unreachable",
+            "wafVendor": waf_vendor or "",
+            "blockStatus": block_status,
+            "browserFetchRecommended": bool(waf_vendor),
+            "error": (
+                f"Protected by a bot firewall ({waf_vendor}): the site refused the server crawler "
+                f"(HTTP {block_status}). Business firewalls often block datacenter servers while "
+                "allowing real visitors - use 'Fetch with my browser instead' below, or add FAQs manually."
+                if waf_vendor else
+                f"Could not fetch any page from {base_origin} (site offline, blocking crawlers, "
+                "invalid SSL, or unreachable from this network). Re-scan later or add FAQs manually."
+            ),
+        }
 
     # Sort pages: Home first, then services, pricing, support, etc.
     def page_order(p: dict) -> int:
@@ -850,6 +1141,11 @@ class TestScraper(unittest.TestCase):
             "https://example.com/contact",
             "https://otherdomain.com/page",
             "https://example.com/about-us#team",
+            "https://example.com/wp-login.php",
+            "https://example.com/sample-page/",
+            "https://example.com/2024/01/01/hello-world/",
+            "https://example.com/category/uncategorized/",
+            "https://example.com/feed/",
         ]
         ranked = rank_and_filter_urls(raw_urls, "https://example.com", "example.com", "example.com")
         # Ensure logo.png and otherdomain are excluded
@@ -859,6 +1155,54 @@ class TestScraper(unittest.TestCase):
         top_paths = [u.split("example.com")[-1] for u in ranked[:4]]
         self.assertTrue(any("services" in p for p in top_paths))
         self.assertTrue(any("pricing" in p for p in top_paths))
+        # CMS boilerplate must never be indexed (login/sample/hello-world/feeds)
+        self.assertFalse(any("wp-login" in u for u in ranked))
+        self.assertFalse(any("sample-page" in u for u in ranked))
+        self.assertFalse(any("hello-world" in u for u in ranked))
+        self.assertFalse(any("uncategorized" in u for u in ranked))
+        self.assertFalse(any(u.rstrip("/").endswith("/feed") for u in ranked))
+
+    def test_junk_heading_filter(self):
+        """Verify CMS-chrome/counter headings are flagged, real ones kept."""
+        for junk in ["2022", "100%", "0 K+", "Log In", "Powered by WordPress",
+                     "Sample Page", "Hello world!", "Search", "Skip to content",
+                     "Recent Posts", "  MENU  "]:
+            self.assertTrue(is_junk_heading(junk), junk)
+        for real in ["Banking, Securities & Debt Recovery", "Our Core Values",
+                     "24/7 Customer Support", "5 Star Cleaning Services",
+                     " Pricing Plans 2024 ", "Contact Our Team?"]:
+            self.assertFalse(is_junk_heading(real), real)
+
+    def test_login_chrome_page(self):
+        """Verify login-screen pages are detected by title."""
+        self.assertTrue(is_login_chrome_page({"title": "Log In \u2039 Acme \u2014 WordPress"}))
+        self.assertTrue(is_login_chrome_page({"title": "Login"}))
+        self.assertFalse(is_login_chrome_page({"title": "Client Login Portal - Services & Support Center"}))
+        self.assertFalse(is_login_chrome_page({"title": "Contact Us"}))
+
+    def test_extract_heading_answer_stages(self):
+        """Verify sibling -> parent -> card-ancestor -> stub answer stages."""
+        from bs4 import BeautifulSoup
+        # Stage 1: next sibling paragraph wins
+        soup = BeautifulSoup("<div><h3>Alpha</h3><p>Alpha description text here.</p></div>", "html.parser")
+        h = soup.find("h3")
+        self.assertIn("Alpha description", extract_heading_answer(h, "Alpha", "Acme", "/"))
+        # Stage 2: parent paragraphs
+        soup = BeautifulSoup("<div><h3>Beta</h3><p>Beta parent paragraph text here.</p></div>", "html.parser")
+        h = soup.find("h3")
+        self.assertIn("Beta parent", extract_heading_answer(h, "Beta", "Acme", "/"))
+        # Stage 3: Elementor-style card — description in uncle div of the header
+        card = ('<div class="practice-card"><div class="practice-card-header"><div>'
+                '<span>Eyebrow</span><h3>Banking Law</h3></div></div>'
+                '<div class="practice-card-body"><p>Serving top financial institutions '
+                'with perfection of securities.</p></div></div>')
+        soup = BeautifulSoup(card, "html.parser")
+        h = soup.find("h3")
+        self.assertIn("financial institutions", extract_heading_answer(h, "Banking Law", "Acme", "/"))
+        # Stage 4: lonely heading falls back to honest stub
+        soup = BeautifulSoup("<div><h3>Lonely</h3></div>", "html.parser")
+        h = soup.find("h3")
+        self.assertIn("is featured on Acme", extract_heading_answer(h, "Lonely", "Acme", "/"))
 
     def test_generate_synthetic_company_profile(self):
         """Verify rich fallback company profile generation with multi-page structure."""
@@ -875,6 +1219,29 @@ class TestScraper(unittest.TestCase):
         # Check Q&As
         total_qas = sum(len(p["qas"]) for p in prof["pages"])
         self.assertGreaterEqual(total_qas, 8)
+
+    def test_crawl_unreachable_returns_honest_failure(self):
+        """Verify unreachable sites return success=False + empty pages (never fabricated KB)."""
+        res = crawl_website("http://invalid.invalid/", max_pages=3)
+        self.assertFalse(res["success"])
+        self.assertEqual(res["pages"], [])
+        self.assertEqual(res["blocked"], "unreachable")
+        self.assertIn("error", res)
+        self.assertTrue(res["error"])
+
+    def test_detect_waf_block(self):
+        """Verify firewall-block detection from statuses, headers, and body markers."""
+        self.assertEqual(
+            detect_waf_block(403, {"x-amzn-waf-action": "captcha", "server": "awselb/2.0"}, "<h1>403</h1>"),
+            "AWS WAF",
+        )
+        self.assertEqual(
+            detect_waf_block(403, {"server": "cloudflare"}, "attention required | cloudflare"),
+            "Cloudflare",
+        )
+        self.assertEqual(detect_waf_block(403, {}, "plain forbidden"), "bot firewall")
+        self.assertIsNone(detect_waf_block(200, {}, "hello"))
+        self.assertIsNone(detect_waf_block(None, {}, "ConnectTimeout"))
 
 
 if __name__ == "__main__":

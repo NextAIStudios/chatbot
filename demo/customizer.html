@@ -6,14 +6,14 @@
   <title>Botly Pro Customizer Studio — Build &amp; Brand Your AI Chatbot</title>
   <meta name="description" content="Visually customize and brand your AI chatbot in minutes. Multi-purpose workflows, custom logo upload, website & document memory, and 1-click embed.">
   <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
-  <link rel="stylesheet" href="../dist/insurance-chatbot.css">
+  <link rel="stylesheet" href="../dist/insurance-chatbot.css?v=20260921">
   <link rel="stylesheet" href="demo.css">
   <!-- Firebase SDK (v10 compat via official CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="firebase-config.local.js" onerror="this.remove()"></script>
-  <script src="firebase-auth.js"></script>
+  <script src="firebase-config.js?v=20260921"></script>
+  <script src="firebase-config.local.js?v=20260921" onerror="this.remove()"></script>
+  <script src="firebase-auth.js?v=20260921"></script>
   <script>window.BOTLY_REQUIRE_AUTH_PAGE = false;</script>
   <style>
     /* ==================================================
@@ -1814,10 +1814,12 @@
                   <span>Auto-adjust bot identity, greeting &amp; quick replies around selected pages</span>
                 </label>
 
-                <button type="button" id="btn-train-selected-pages" onclick="trainBotWithSelectedPages()" class="btn-w-next" style="background: #0f172a; border: 1.5px solid #38bdf8; padding: 11px; font-size: 13px; font-weight: 800; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-                  <span>⚡ Train Bot with Selected Pages</span>
-                  <span id="btn-train-count-badge" style="background: #0284c7; color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 9999px;">0 Pages</span>
-                </button>
+                <div id="web-memory-auto-status" style="background: #f0fdf4; border: 1.5px solid #86efac; padding: 10px 12px; font-size: 12px; font-weight: 700; color: #14532d; border-radius: 10px; line-height: 1.7;">
+                  &#10003; Auto-training is ON &mdash; bot memory rebuilds instantly whenever you tick/untick pages above. No button needed.<br>
+                  <span style="font-weight: 800;">Selected: <span id="btn-train-count-badge">0 Pages</span></span>
+                  &nbsp;&middot;&nbsp;
+                  <span style="font-weight: 800;">Memory: <span id="web-memory-chunk-count">0 chunks</span></span>
+                </div>
               </div>
             </div>
 
@@ -2016,6 +2018,7 @@
             <tr style="background: #f1f5f9; border-bottom: 1px solid #e2e8f0; text-align: left; color: #475569; font-size: 11px; text-transform: uppercase;">
               <th style="padding: 10px 14px;">Customer Name</th>
               <th style="padding: 10px 14px;">Contact Phone</th>
+              <th style="padding: 10px 14px;">Email</th>
               <th style="padding: 10px 14px;">Need / Topic</th>
               <th style="padding: 10px 14px;">Goal</th>
               <th style="padding: 10px 14px;">Payment / M-Pesa Code</th>
@@ -2773,7 +2776,7 @@ window.addEventListener('botly:payment', async (event) => {
   </div>
 
   <!-- Chatbot Bundle -->
-  <script src="../dist/insurance-chatbot.js?v=2.2.4"></script>
+  <script>document.write('<script src="../dist/insurance-chatbot.js?v=' + Date.now() + '"><\/script>');</script>
 
   <!-- Studio Wizard Logic -->
   <script>
@@ -2793,16 +2796,21 @@ window.addEventListener('botly:payment', async (event) => {
       primaryColor: '#18221c',
       accentColor: '#9be553',
       backgroundColor: '#ffffff',
+      // NOTE: isPlaceholder FAQs are SAMPLE content. getEffectiveFaqs() automatically
+      // retires them from the bot once the owner adds real FAQs, documents, or website memory,
+      // so generic sample answers can never outrank the owner's trained data.
       faqs: [
         {
           question: "What services and solutions do you provide?",
           answer: "We provide comprehensive professional services and custom solutions tailored to your business needs. Contact our team or ask me any question to learn more!",
-          source: 'faq'
+          source: 'faq',
+          isPlaceholder: true
         },
         {
           question: "How can I contact your support team?",
           answer: "You can reach our team via email or direct phone during business hours. Leave your contact details right here in chat for a rapid callback!",
-          source: 'faq'
+          source: 'faq',
+          isPlaceholder: true
         }
       ],
       documentChunks: [], // Chunks from company data / documents
@@ -3321,6 +3329,7 @@ window.addEventListener('botly:payment', async (event) => {
         div.innerHTML =
           '<div class="faq-header">' +
             '<span class="faq-num-tag">Q&amp;A #' + (idx + 1) + '</span>' +
+            (faq.isPlaceholder ? '<span class="faq-num-tag" style="background:#fef3c7; color:#92400e; margin-left:6px;" title="Sample content — automatically ignored by the bot once you add real FAQs, documents, or website memory. Edit it to make it yours, or delete it.">Sample</span>' : '') +
             '<button type="button" class="faq-del-btn" onclick="removeFaq(' + idx + ')" title="Remove question">✕</button>' +
           '</div>' +
           '<input type="text" class="wiz-input" style="padding:7px 10px; font-size:12px;" placeholder="Question: e.g. How much does it cost?" value="' + escapeHtml(faq.question) + '" oninput="updateFaqQuestion(' + idx + ', this.value)">' +
@@ -3350,12 +3359,14 @@ window.addEventListener('botly:payment', async (event) => {
     function updateFaqQuestion(idx, val) {
       if (wizardState.faqs[idx]) {
         wizardState.faqs[idx].question = val;
+        delete wizardState.faqs[idx].isPlaceholder;
         applyBotLiveConfig();
       }
     }
     function updateFaqAnswer(idx, val) {
       if (wizardState.faqs[idx]) {
         wizardState.faqs[idx].answer = val;
+        delete wizardState.faqs[idx].isPlaceholder;
         applyBotLiveConfig();
       }
     }
@@ -4008,6 +4019,23 @@ window.addEventListener('botly:payment', async (event) => {
       };
     }
 
+    // Mirror of the scraper.py junk-heading blocklist: boilerplate headings
+    // (counters, years, CMS chrome) must never become Q&A chunks. Keep in sync.
+    var JUNK_HEADINGS_EXACT = {
+      'log in': 1, 'log out': 1, 'login': 1, 'powered by wordpress': 1, 'sample page': 1,
+      'hello world': 1, 'search': 1, 'menu': 1, 'navigation': 1, 'archives': 1, 'categories': 1,
+      'meta': 1, 'recent posts': 1, 'recent comments': 1, 'entries feed': 1, 'comments feed': 1,
+      'wordpress.org': 1, 'skip to content': 1, 'share this': 1, 'follow us': 1,
+      'related posts': 1, 'you may also like': 1
+    };
+    function isJunkHeading(text) {
+      var t = (text || '').trim().toLowerCase().replace(/[ .!\u2026]+$/, '');
+      if (!t || JUNK_HEADINGS_EXACT[t]) return true;
+      if (/^\d{4}$/.test(t)) return true;
+      if (/^[\d\s.,+%$\u20AC\u00A3]+\s*[kmb]?\+?%?$/.test(t)) return true;
+      return false;
+    }
+
     // Crawl & Index Engine
     function scanAndIndexWebsite() {
       var urlInput = document.getElementById('wiz-website-url');
@@ -4073,21 +4101,47 @@ window.addEventListener('botly:payment', async (event) => {
           // Live crawl failed or timed out and there is no curated profile for this domain.
           // Do NOT inject fabricated pages. Show a clear notice to the business owner.
           if (pagesPanel) pagesPanel.style.display = 'none';
+          var noticeStyle, noticeHtml;
+          if (backendMissing) {
+            // The Studio is served by a static file server — /api/crawl does not exist there.
+            noticeStyle = 'margin-top:14px; padding:14px 16px; background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; font-size:13px; color:#1e3a8a; line-height:1.7;';
+            noticeHtml =
+              '<strong>🖥️ Crawler backend not detected</strong> — this page is served by a static file server, so the website crawler (<strong>/api/crawl</strong>) is unavailable.<br>' +
+              'Start the Botly backend instead (it serves these same files <em>plus</em> the crawler API), then re-scan:<br>' +
+              '<code style="display:block; margin-top:8px; padding:8px 10px; background:#1e293b; color:#e2e8f0; border-radius:8px; font-size:12px;">pip install -r requirements.txt<br>python3 server.py 8080</code>' +
+              '<span style="display:block; margin-top:6px;">Then open <strong>http://localhost:8080/demo/customizer.html</strong> and press <strong>Re-scan &amp; Index Website</strong> again.</span>';
+          } else {
+            noticeStyle = 'margin-top:14px; padding:14px 16px; background:#fef3c7; border:1.5px solid #f59e0b; border-radius:10px; font-size:13px; color:#78350f; line-height:1.6;';
+            var detailLine = serverErrorMsg ? '<br><span style="display:block; margin-top:6px; font-size:12px; opacity:0.85;">Technical detail: ' + escapeHtml(serverErrorMsg) + '</span>' : '';
+            var browserBtnHtml =
+              '<button type="button" onclick="fetchWebsiteWithBrowser()" style="margin-top:10px; width:100%; padding:11px 14px; background:#0284c7; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:800; cursor:pointer;">🌐 Fetch with my browser instead</button>' +
+              '<div id="browser-crawl-progress" style="display:none; margin-top:8px; font-size:12px; color:#92400e; line-height:1.6;"></div>';
+            if (serverBlocked === 'waf') {
+              noticeHtml =
+                '<strong>🛡️ Site protected by a bot firewall' + (serverWafVendor ? ' (' + escapeHtml(serverWafVendor) + ')' : '') + '</strong> — <strong>' + escapeHtml(domain) + '</strong> refused the server crawler, so no pages were indexed.<br>' +
+                'Your own browser can usually read the site just fine (firewalls typically block datacenter servers, not real visitors). ' +
+                'Click below to crawl the site with <strong>your browser</strong> — the pages land in the same bot memory.' +
+                detailLine + browserBtnHtml;
+            } else {
+              noticeHtml =
+                '<strong>⚠️ Live crawl unavailable</strong> — the crawler could not reach <strong>' + escapeHtml(domain) + '</strong> right now.<br>' +
+                'Your bot has been named <strong>' + escapeHtml(profile.companyName || domain) + '</strong>. ' +
+                'To give it real knowledge about your business, please add your FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, ' +
+                'or re-scan once the site is publicly accessible.' +
+                detailLine + browserBtnHtml;
+            }
+          }
           var noDataNotice = document.getElementById('website-no-crawl-notice');
           if (!noDataNotice) {
             noDataNotice = document.createElement('div');
             noDataNotice.id = 'website-no-crawl-notice';
-            noDataNotice.style.cssText = 'margin-top:14px; padding:14px 16px; background:#fef3c7; border:1.5px solid #f59e0b; border-radius:10px; font-size:13px; color:#78350f; line-height:1.6;';
-            noDataNotice.innerHTML =
-              '<strong>⚠️ Live crawl unavailable</strong> — the crawler could not reach <strong>' + escapeHtml(domain) + '</strong> right now.<br>' +
-              'Your bot has been named <strong>' + escapeHtml(profile.companyName || domain) + '</strong>. ' +
-              'To give it real knowledge about your business, please add your FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, ' +
-              'or re-scan once the site is publicly accessible.';
             var panelParent = pagesPanel && pagesPanel.parentNode;
             if (panelParent) panelParent.insertBefore(noDataNotice, pagesPanel);
-          } else {
-            noDataNotice.style.display = 'block';
           }
+          // Always refresh content so repeated scans update the message.
+          noDataNotice.style.cssText = noticeStyle;
+          noDataNotice.innerHTML = noticeHtml;
+          noDataNotice.style.display = 'block';
         } else {
           var existingNotice = document.getElementById('website-no-crawl-notice');
           if (existingNotice) existingNotice.style.display = 'none';
@@ -4100,11 +4154,18 @@ window.addEventListener('botly:payment', async (event) => {
       }
 
 
+      // Flags used by applyCrawledProfile() to explain WHY the crawl produced no pages.
+      var backendMissing = false;
+      var serverErrorMsg = '';
+      var serverBlocked = '';
+      var serverWafVendor = '';
+
       // Live crawl via Python BeautifulSoup server endpoint
+      // (45s budget: a full multi-page crawl legitimately takes longer than 25s)
       var crawlTimeout = setTimeout(function() {
         console.warn('Live crawler timed out, applying curated/synthetic profile.');
         applyCrawledProfile(fallbackProfile);
-      }, 25000);
+      }, 45000);
 
       fetch('/api/crawl', {
         method: 'POST',
@@ -4112,6 +4173,12 @@ window.addEventListener('botly:payment', async (event) => {
         body: JSON.stringify({ url: url, max_pages: 20 })
       })
       .then(function(res) {
+        if (res.status === 404 || res.status === 501) {
+          // Plain static file servers (python -m http.server, file://, nginx without
+          // the API) answer POST /api/crawl with 404/501 — the crawler backend is missing.
+          backendMissing = true;
+          throw new Error('Crawler backend not running (HTTP ' + res.status + ' on /api/crawl)');
+        }
         if (!res.ok) throw new Error('Live crawl returned ' + res.status);
         return res.json();
       })
@@ -4120,14 +4187,365 @@ window.addEventListener('botly:payment', async (event) => {
         if (liveProfile && liveProfile.success && liveProfile.pages && liveProfile.pages.length > 0) {
           applyCrawledProfile(liveProfile);
         } else {
+          // Backend answered but the target site itself failed — surface its reason.
+          if (liveProfile && liveProfile.error) serverErrorMsg = String(liveProfile.error);
+          serverBlocked = (liveProfile && liveProfile.blocked) ? String(liveProfile.blocked) : '';
+          serverWafVendor = (liveProfile && liveProfile.wafVendor) ? String(liveProfile.wafVendor) : '';
           applyCrawledProfile(fallbackProfile);
         }
       })
       .catch(function(err) {
         clearTimeout(crawlTimeout);
-        console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
-        applyCrawledProfile(fallbackProfile);
+        var msg = (err && err.message) ? err.message : String(err);
+        var looksLikeBackendDown = backendMissing ||
+          msg.indexOf('Failed to fetch') !== -1 ||
+          msg.indexOf('NetworkError') !== -1 ||
+          msg.indexOf('Load failed') !== -1 ||
+          msg.indexOf('Network request failed') !== -1;
+        if (looksLikeBackendDown && !backendMissing) {
+          // Confirm via the health endpoint before blaming the backend.
+          fetch('/api/health', { method: 'GET' }).then(function(h) {
+            if (!h.ok) backendMissing = true;
+            console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
+            applyCrawledProfile(fallbackProfile);
+          }).catch(function() {
+            backendMissing = true;
+            console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
+            applyCrawledProfile(fallbackProfile);
+          });
+        } else {
+          console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
+          applyCrawledProfile(fallbackProfile);
+        }
       });
+    }
+
+    // Browser-side crawl fallback for firewall-protected sites.
+    // Runs fetch() in the visitor's OWN browser (their trusted IP + real browser TLS),
+    // which bot firewalls usually allow even when they block the server crawler.
+    // Parsed pages are converted to the same profile shape as /api/crawl and trained
+    // into the same bot memory. Requires the target to allow cross-site reads (CORS).
+    function fetchWebsiteWithBrowser() {
+      var url = (wizardState.websiteUrl || '').trim();
+      if (!url) {
+        var urlInput = document.getElementById('wiz-website-url');
+        if (urlInput) url = (urlInput.value || '').trim();
+      }
+      if (!url) { alert('Please enter a website URL first.'); return; }
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      wizardState.websiteUrl = url;
+
+      var progressEl = document.getElementById('browser-crawl-progress');
+      function setProgress(html) {
+        if (progressEl) { progressEl.style.display = 'block'; progressEl.innerHTML = html; }
+      }
+
+      var runBtn = null;
+      try {
+        var btns = document.querySelectorAll('#website-no-crawl-notice button');
+        if (btns && btns.length) {
+          runBtn = btns[btns.length - 1];
+          runBtn.disabled = true;
+          runBtn.style.opacity = '0.6';
+          runBtn.style.cursor = 'wait';
+        }
+      } catch (e) {}
+      function releaseBtn() {
+        if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = '1'; runBtn.style.cursor = 'pointer'; }
+      }
+
+      var parsed;
+      try { parsed = new URL(url); }
+      catch (e) { setProgress('❌ That URL looks invalid.'); releaseBtn(); return; }
+      var origin = parsed.origin;
+      var domain = parsed.hostname.toLowerCase();
+      var cleanDomain = domain.replace(/^www\./, '');
+      var baseName = cleanDomain.split('.')[0] || cleanDomain;
+      var companyName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+      var maxPages = 12;
+      var visited = {};
+      var pages = [];
+      var queue = [url];
+
+      function sameSite(u) {
+        try {
+          var h = new URL(u, origin).hostname.toLowerCase();
+          return h === domain || h === cleanDomain || h === 'www.' + cleanDomain || h.charAt(h.length - cleanDomain.length - 1) === '.' && h.slice(-cleanDomain.length) === cleanDomain;
+        } catch (e) { return false; }
+      }
+      function normKey(u) {
+        try {
+          var uu = new URL(u, origin);
+          return (uu.origin + uu.pathname).replace(/\/$/, '') || uu.origin;
+        } catch (e) { return u; }
+      }
+      var ignoredExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.pdf', '.zip', '.css', '.js', '.xml', '.json', '.woff', '.woff2', '.ttf', '.mp4', '.mp3'];
+      function isIgnorable(u) {
+        var low = u.toLowerCase().split('?')[0];
+        for (var i = 0; i < ignoredExts.length; i++) {
+          if (low.slice(-ignoredExts[i].length) === ignoredExts[i]) return true;
+        }
+        return false;
+      }
+      function scorePath(pathname) {
+        var p = (pathname || '/').toLowerCase();
+        if (p === '/' || p === '') return 200;
+        var s = 50;
+        if (/about|company|who-we-are/.test(p)) s += 80;
+        if (/service|solution|offering|feature|what-we-do/.test(p)) s += 85;
+        if (/pric|plan|cost|rate|package|quote/.test(p)) s += 85;
+        if (/contact|support|help|faq|location/.test(p)) s += 80;
+        if (/product|shop|store|catalog/.test(p)) s += 75;
+        if (/blog|news|article/.test(p)) s -= 15;
+        return s;
+      }
+      function categorize(pathname, title) {
+        var c = ((pathname || '') + ' ' + (title || '')).toLowerCase();
+        if (/\b(pric|pricing|plan|cost|fee|package|quote|rate)/.test(c)) return 'pricing';
+        if (/\b(service|solution|feature|course|program|consult)/.test(c)) return 'services';
+        if (/\b(product|shop|store|catalog)/.test(c)) return 'products';
+        if (/\b(support|help|contact|faq|guide|location)/.test(c)) return 'support';
+        if (/\b(polic|terms|privacy|refund|legal)/.test(c)) return 'policies';
+        return 'overview';
+      }
+
+      function parseDoc(html, pageUrl, pageIndex) {
+        var doc;
+        try { doc = new DOMParser().parseFromString(html, 'text/html'); }
+        catch (e) { return null; }
+        var junk = doc.querySelectorAll('script, style, noscript, svg, iframe');
+        for (var j = 0; j < junk.length; j++) junk[j].remove();
+        var title = '';
+        var titleEl = doc.querySelector('title');
+        if (titleEl && titleEl.textContent) title = titleEl.textContent.trim();
+        if (!title) {
+          var h1 = doc.querySelector('h1');
+          if (h1 && h1.textContent) title = h1.textContent.trim();
+        }
+        if (!title) title = companyName + ' - Page';
+        var metaDesc = '';
+        var md = doc.querySelector('meta[name="description"], meta[property="og:description"]');
+        if (md && md.getAttribute('content')) metaDesc = md.getAttribute('content').trim();
+        var main = doc.querySelector('main') || doc.querySelector('article') || doc.querySelector('body');
+        var paras = [];
+        if (main) {
+          var pel = main.querySelectorAll('p, li');
+          for (var q = 0; q < pel.length; q++) {
+            var t = ((pel[q].textContent || '').replace(/\s+/g, ' ')).trim();
+            if (t.length > 15) paras.push(t);
+          }
+        }
+        var bodyText = paras.join(' ');
+        var words = bodyText ? bodyText.split(/\s+/) : [];
+        var excerpt = metaDesc || (words.length ? words.slice(0, 45).join(' ') + '...' : ('Information from ' + title));
+        var pathname = '/';
+        try { pathname = new URL(pageUrl).pathname || '/'; } catch (e) {}
+        var category = categorize(pathname, title);
+        var qas = [];
+        var headings = doc.querySelectorAll('h1, h2, h3');
+        // NOTE: keep in sync with scraper.py (20 heading-chunks + same junk-heading
+        // blocklist, applied BEFORE slicing so real sections keep their slots).
+        var goodHeadings = [];
+        for (var hi = 0; hi < headings.length && goodHeadings.length < 20; hi++) {
+          var hhText = ((headings[hi].textContent || '').replace(/\s+/g, ' ')).trim();
+          if (hhText.length >= 4 && hhText.length <= 130 && !isJunkHeading(hhText)) goodHeadings.push(headings[hi]);
+        }
+        for (var i = 0; i < goodHeadings.length; i++) {
+          var h = goodHeadings[i];
+          var hText = ((h.textContent || '').replace(/\s+/g, ' ')).trim();
+          if (hText.length < 4 || hText.length > 130) continue;
+          var ans = '';
+          var sib = h.nextElementSibling;
+          if (sib && /^(P|DIV|UL|OL|TABLE)$/.test(sib.tagName)) {
+            ans = ((sib.textContent || '').replace(/\s+/g, ' ')).trim();
+          }
+          if (!ans || ans.length < 15) {
+            var parent = h.parentElement;
+            if (parent) {
+              var ps = parent.querySelectorAll('p, li');
+              var bits = [];
+              for (var k = 0; k < ps.length && k < 2; k++) {
+                bits.push(((ps[k].textContent || '').replace(/\s+/g, ' ')).trim());
+              }
+              ans = bits.join(' ');
+            }
+          }
+          if (!ans || ans.length < 15) {
+            // Card/tile content: the description may sit in a sibling div of the
+            // header block (Elementor practice cards). Take the smallest ancestor
+            // contributing 40+ chars beyond the heading text itself.
+            var ancNode = h.parentElement;
+            for (var d = 0; d < 3 && ancNode; d++) {
+              ancNode = ancNode.parentElement;
+              if (!ancNode || /^(BODY|HTML|MAIN|ARTICLE)$/.test(ancNode.tagName)) break;
+              var cand = ((ancNode.textContent || '').replace(/\s+/g, ' ')).trim();
+              var rest = cand.replace(/\s+/g, '').replace(hText.replace(/\s+/g, ''), '');
+              if (rest.length >= 40) { ans = cand; break; }
+            }
+          }
+          if (!ans || ans.length < 15) ans = hText + ' is featured on ' + companyName + '. Explore ' + pathname + ' or connect with our team.';
+          var kw = (hText.toLowerCase().match(/[a-z]{3,}/g) || []).slice(0, 6);
+          qas.push({
+            id: 'bqa_' + pageIndex + '_' + i,
+            question: /\?$/.test(hText) ? hText : ('What about ' + hText + '?'),
+            answer: ans.slice(0, 400),
+            keywords: kw
+          });
+        }
+        var pageText = '';
+        try { pageText = doc.documentElement ? (doc.documentElement.textContent || '') : ''; } catch (e) {}
+        var phones = (pageText.match(/(\+?\d[\d\s().-]{7,}\d)/g) || []).filter(function (p) {
+          var dg = p.replace(/\D/g, '');
+          return dg.length >= 8 && dg.length <= 13;
+        }).slice(0, 2);
+        var emails = (pageText.match(/[\w.-]+@[\w.-]+\.\w{2,}/g) || []).filter(function (ad) {
+          return !/\.png$|\.jpg$/i.test(ad);
+        }).slice(0, 2);
+        if (phones.length || emails.length) {
+          var parts = ['Here is how to contact ' + companyName + ':'];
+          if (phones.length) parts.push('• Phone: ' + phones.join(', '));
+          if (emails.length) parts.push('• Email: ' + emails.join(', '));
+          qas.push({
+            id: 'bqa_' + pageIndex + '_contact',
+            question: 'How can I contact ' + companyName + '?',
+            answer: parts.join('\n'),
+            keywords: ['contact', 'phone', 'email', 'reach', companyName.toLowerCase()]
+          });
+        }
+        if (pathname === '/' || pathname === '') {
+          var topHeads = [];
+          for (var hi = 0; hi < headings.length && topHeads.length < 16; hi++) {
+            var ht = ((headings[hi].textContent || '').replace(/\s+/g, ' ')).trim();
+            if (ht.length >= 4 && ht.length <= 130 && topHeads.indexOf(ht) === -1 && !isJunkHeading(ht)) topHeads.push(ht);
+          }
+          var ovAns = excerpt;
+          if (topHeads.length) ovAns += ' What we offer: ' + topHeads.join('; ') + '.';
+          qas.push({
+            id: 'bqa_' + pageIndex + '_overview',
+            category: 'services',
+            question: 'What services or solutions does ' + companyName + ' offer?',
+            answer: ovAns.slice(0, 1100),
+            keywords: ['services', 'solutions', 'offer', 'provide', 'about', companyName.toLowerCase()]
+          });
+        }
+        qas.push({
+          id: 'bqa_' + pageIndex + '_summary',
+          question: 'What does the ' + title.slice(0, 60) + ' page cover?',
+          answer: excerpt.slice(0, 400),
+          keywords: (title.toLowerCase().match(/[a-z]{3,}/g) || []).slice(0, 6)
+        });
+        if (!qas.length) {
+          qas.push({
+            id: 'bqa_' + pageIndex + '_main', 
+            question: 'What is on the ' + title + ' page?',
+            answer: excerpt.slice(0, 350),
+            keywords: (title.toLowerCase().match(/[a-z]{3,}/g) || []).slice(0, 5)
+          });
+        }
+        var links = [];
+        var anchors = doc.querySelectorAll('a[href]');
+        for (var a = 0; a < anchors.length; a++) {
+          var hr = (anchors[a].getAttribute('href') || '').trim();
+          if (!hr || hr.charAt(0) === '#' || /^(javascript|mailto|tel):/i.test(hr)) continue;
+          try {
+            var abs = new URL(hr, pageUrl).href;
+            if (sameSite(abs)) links.push(abs);
+          } catch (e) {}
+        }
+        return {
+          id: 'browser_' + (pageIndex + 1),
+          title: title.slice(0, 85),
+          path: pathname,
+          url: pageUrl,
+          category: category,
+          wordCount: Math.max(words.length, 140),
+          excerpt: excerpt.slice(0, 240),
+          selected: true,
+          qas: qas,
+          _links: links
+        };
+      }
+
+      function fetchOne(u) {
+        // credentials:omit — required so CORS-open (Access-Control-Allow-Origin: *) sites work.
+        return fetch(u, { method: 'GET', credentials: 'omit' }).then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.text();
+        });
+      }
+
+      function pathOf(u) {
+        try { return new URL(u).pathname || '/'; } catch (e) { return '/'; }
+      }
+
+      function pumpNext() {
+        if (pages.length >= maxPages || !queue.length) { finish(); return; }
+        queue.sort(function (a, b) { return scorePath(pathOf(b)) - scorePath(pathOf(a)); });
+        var next = queue.shift();
+        var key = normKey(next);
+        if (visited[key]) { pumpNext(); return; }
+        visited[key] = true;
+        setProgress('🌐 Reading page ' + (pages.length + 1) + ' of up to ' + maxPages + ' with your browser...<br><span style="opacity:0.75; font-size:11px;">' + escapeHtml(next) + '</span>');
+        fetchOne(next).then(function (html) {
+          var page = parseDoc(html, next, pages.length);
+          if (page) {
+            var links = page._links || [];
+            delete page._links;
+            pages.push(page);
+            for (var i = 0; i < links.length; i++) {
+              var lk = normKey(links[i]);
+              if (!visited[lk] && !isIgnorable(links[i]) && queue.indexOf(links[i]) === -1 && queue.length < 60) {
+                queue.push(links[i]);
+              }
+            }
+          }
+          pumpNext();
+        }).catch(function () {
+          // One blocked page shouldn't kill the whole crawl — keep going.
+          pumpNext();
+        });
+      }
+
+      function finish() {
+        releaseBtn();
+        if (!pages.length) {
+          setProgress('❌ Your browser could not read the site either (it likely blocks cross-site reads). Please add FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, or ask the site host to allowlist the crawler.');
+          return;
+        }
+        if (progressEl) progressEl.style.display = 'none';
+        var profile = {
+          companyName: companyName,
+          botName: companyName + ' Concierge',
+          botTitle: 'AI Inquiries & Knowledge Concierge',
+          greeting: 'Hello and welcome to **' + companyName + '**! I am your AI concierge. How can I assist you today with our services or inquiries?',
+          quickReplies: [
+            { label: '💼 Our Services', payload: 'What services or solutions does ' + companyName + ' offer?' },
+            { label: '💳 Pricing & Plans', payload: 'What are the pricing options for ' + companyName + '?' },
+            { label: '📞 Contact Team', payload: 'How can I contact the ' + companyName + ' team?' }
+          ],
+          checkoutConfig: { itemName: '', amount: '', currency: 'KES', externalUrl: url, mpesaBusinessName: companyName, mpesaNumber: '', mpesaType: 'buy_goods' },
+          pages: pages
+        };
+        // Same success path as a server crawl: show pages, then train memory.
+        var statusBox = document.getElementById('website-sync-status');
+        if (statusBox) statusBox.style.display = 'none';
+        var syncBtn = document.getElementById('btn-sync-website');
+        if (syncBtn) {
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Re-scan &amp; Index Website</span>';
+        }
+        wizardState.activeWebProfile = profile;
+        wizardState.indexedWebsitePages = JSON.parse(JSON.stringify(profile.pages));
+        var notice = document.getElementById('website-no-crawl-notice');
+        if (notice) notice.style.display = 'none';
+        var pagesPanel = document.getElementById('website-pages-panel');
+        if (pagesPanel) pagesPanel.style.display = 'flex';
+        renderDiscoveredWebPages();
+        trainBotWithSelectedPages(true);
+      }
+
+      setProgress('🌐 Fetching homepage with your browser...');
+      pumpNext();
     }
 
     // Backward compatibility wrapper
@@ -4158,6 +4576,8 @@ window.addEventListener('botly:payment', async (event) => {
       });
       renderDiscoveredWebPages();
       updateTrainButtonBadge();
+      // Auto-training (manual Train button removed): memory rebuilds on every selection change.
+      if (typeof trainBotWithSelectedPages === 'function') trainBotWithSelectedPages(false, true);
     }
 
     function selectRecommendedWebPages() {
@@ -4167,6 +4587,8 @@ window.addEventListener('botly:payment', async (event) => {
       });
       renderDiscoveredWebPages();
       updateTrainButtonBadge();
+      // Auto-training (manual Train button removed): memory rebuilds on every selection change.
+      if (typeof trainBotWithSelectedPages === 'function') trainBotWithSelectedPages(false, true);
     }
 
     function toggleWebPage(pageId) {
@@ -4177,6 +4599,8 @@ window.addEventListener('botly:payment', async (event) => {
       }
       renderDiscoveredWebPages();
       updateTrainButtonBadge();
+      // Auto-training (manual Train button removed): memory rebuilds on every selection change.
+      if (typeof trainBotWithSelectedPages === 'function') trainBotWithSelectedPages(false, true);
     }
 
     function toggleQaPreview(pageId) {
@@ -4188,6 +4612,7 @@ window.addEventListener('botly:payment', async (event) => {
 
     function updateTrainButtonBadge() {
       var pages = wizardState.indexedWebsitePages || [];
+      updateMemoryChunkCount();
       var selected = pages.filter(function(p) { return p.selected; });
       var badge = document.getElementById('btn-train-count-badge');
       if (badge) {
@@ -4285,7 +4710,7 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     // Bot Auto-Tuning around Selected Pages
-    function trainBotWithSelectedPages(isInitialScan) {
+    function trainBotWithSelectedPages(isInitialScan, silent) {
       var pages = wizardState.indexedWebsitePages || [];
       var selectedPages = pages.filter(function(p) { return p.selected; });
 
@@ -4313,7 +4738,20 @@ window.addEventListener('botly:payment', async (event) => {
           applyBotLiveConfig();
           return;
         }
-        alert('Please select at least 1 page to train your bot with.');
+        // Manual Train removed: reaching here with zero selected (e.g. unticking the last
+        // page) clears website memory. Warn loudly — never fail silently.
+        wizardState.websiteChunks = [];
+        renderWebsiteChunksPreview();
+        updateMemoryStats();
+        applyBotLiveConfig();
+        if (window.BotlyChatbotManager && typeof BotlyChatbotManager.saveCurrentBot === 'function') {
+          BotlyChatbotManager.saveCurrentBot();
+        }
+        var tunedBanner0 = document.getElementById('website-bot-tuned-banner');
+        if (tunedBanner0) tunedBanner0.style.display = 'none';
+        if (!silent && typeof showStudioToast === 'function') {
+          showStudioToast('No pages selected - website memory cleared. Tick pages above to rebuild it.');
+        }
         return;
       }
 
@@ -4329,13 +4767,22 @@ window.addEventListener('botly:payment', async (event) => {
               answer: qa.answer,
               source: 'website',
               sourceUrl: (wizardState.websiteUrl || '') + page.path,
-              category: page.category || 'website',
+              category: qa.category || page.category || 'website',
               keywords: qa.keywords || [],
               isCustomTrained: true
             });
           });
         }
       });
+
+      if (newChunks.length === 0 && !isInitialScan) {
+        // Pages selected but ZERO usable Q&As (e.g. only login/boilerplate pages) —
+        // keep previous memory and warn loudly instead of silently wiping knowledge.
+        if (typeof showStudioToast === 'function') {
+          showStudioToast(selectedPages.length + ' page(s) selected but they contain 0 usable Q&As - previous memory kept. Untick boilerplate pages or re-scan.');
+        }
+        return;
+      }
 
       wizardState.websiteChunks = newChunks;
 
@@ -4452,14 +4899,20 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (!isInitialScan && typeof showStudioToast === 'function') {
+      if (!isInitialScan && !silent && typeof showStudioToast === 'function') {
         showStudioToast('⚡ Bot memory trained with ' + selectedPages.length + ' pages (' + newChunks.length + ' Q&As)!');
       }
+    }
+
+    function updateMemoryChunkCount() {
+      var el = document.getElementById('web-memory-chunk-count');
+      if (el) el.textContent = (wizardState.websiteChunks ? wizardState.websiteChunks.length : 0) + ' chunks';
     }
 
     function renderWebsiteChunksPreview() {
       var box = document.getElementById('website-chunks-preview');
       if (!box) return;
+      updateMemoryChunkCount();
       box.innerHTML = '';
 
       if (!wizardState.websiteChunks || wizardState.websiteChunks.length === 0) {
@@ -4554,10 +5007,11 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     function updateMemoryStats() {
-      var total = wizardState.faqs.length + wizardState.documentChunks.length + wizardState.websiteChunks.length;
+      var effFaqs = getEffectiveFaqs().length;
+      var total = effFaqs + wizardState.documentChunks.length + wizardState.websiteChunks.length;
       var badge = document.getElementById('mem-total-items-badge');
       if (badge) {
-        badge.textContent = total + ' Items (' + wizardState.faqs.length + ' Q&A, ' + wizardState.documentChunks.length + ' Docs, ' + wizardState.websiteChunks.length + ' Web)';
+        badge.textContent = total + ' Items (' + effFaqs + ' Q&A, ' + wizardState.documentChunks.length + ' Docs, ' + wizardState.websiteChunks.length + ' Web)';
       }
     }
 
@@ -4565,8 +5019,10 @@ window.addEventListener('botly:payment', async (event) => {
     // STEP 5: DEPLOY CODE BUILDER
     // ==================================================
     function buildDeployCode() {
+      // NOTE: retired sample placeholders are excluded so shipped bots never answer from sample text.
+      var faqsForBot = getEffectiveFaqs();
       var allKnowledge = []
-        .concat(wizardState.faqs)
+        .concat(faqsForBot)
         .concat(wizardState.documentChunks)
         .concat(wizardState.websiteChunks);
 
@@ -4627,6 +5083,7 @@ window.addEventListener('botly:payment', async (event) => {
 '<script>\n' +
 '  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
+'    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
 '      name: ' + JSON.stringify(wizardState.companyName) + ',\n' +
@@ -4736,6 +5193,20 @@ window.addEventListener('botly:payment', async (event) => {
     // ==================================================
     // APPLY TO LIVE PREVIEW (MOUNT INLINE)
     // ==================================================
+    // Sample placeholder FAQs retire automatically once real knowledge exists,
+    // so generic sample answers can never outrank the owner's trained data.
+    function getEffectiveFaqs() {
+      var faqs = wizardState.faqs || [];
+      var nonEmpty = faqs.filter(function (f) {
+        return f && ((f.question || '').trim() || (f.answer || '').trim());
+      });
+      var real = nonEmpty.filter(function (f) { return !f.isPlaceholder; });
+      var hasRealKnowledge = real.length > 0 ||
+        (wizardState.documentChunks && wizardState.documentChunks.length > 0) ||
+        (wizardState.websiteChunks && wizardState.websiteChunks.length > 0);
+      return hasRealKnowledge ? real : nonEmpty;
+    }
+
     function applyBotLiveConfig() {
       var compEl = document.getElementById('wiz-company-name');
       var botNameEl = document.getElementById('wiz-bot-name');
@@ -4753,9 +5224,10 @@ window.addEventListener('botly:payment', async (event) => {
 
       if (!window.BotlyChatbot) return;
 
-      // Combine all memory items
+      // Combine all memory items (sample placeholders auto-retire once real knowledge exists)
+      var faqsForBot = getEffectiveFaqs();
       var allKnowledge = []
-        .concat(wizardState.faqs)
+        .concat(faqsForBot)
         .concat(wizardState.documentChunks)
         .concat(wizardState.websiteChunks);
 
@@ -4806,6 +5278,8 @@ window.addEventListener('botly:payment', async (event) => {
       try {
         BotlyChatbot.init({
           mode: 'saas',
+          // Free-text mode: no suggestion chips — the user types, the bot answers.
+          disableQuickReplies: true,
           goals: wizardState.purposes,
           goal: wizardState.purposes[0] || 'lead_generation',
           company: {
@@ -4819,7 +5293,7 @@ window.addEventListener('botly:payment', async (event) => {
             title: wizardState.botTitle,
             avatar: wizardState.logoUrl || 'botly-icon.svg',
             greeting: wizardState.greeting,
-            initialQuickReplies: quickReplies,
+            initialQuickReplies: [], // free-text mode (see disableQuickReplies)
             placeholder: 'Ask me anything...'
           },
           theme: {
@@ -4852,7 +5326,7 @@ window.addEventListener('botly:payment', async (event) => {
             }
           },
           customKnowledge: allKnowledge,
-          customFaqs: wizardState.faqs,
+          customFaqs: faqsForBot,
           api: wizardState.apiConfig
         }, '#preview-chatbot-mount');
 
@@ -4889,6 +5363,10 @@ window.addEventListener('botly:payment', async (event) => {
     var BotlyChatbotManager = (function() {
       var STORAGE_KEY = 'botly_saved_chatbots_v1';
       var ACTIVE_KEY = 'botly_active_chatbot_id_v1';
+      // Knowledge schema version: bump whenever the trained-chunk format changes
+      // (e.g. scraper answer framing). Bots saved under an older version get
+      // their auto-generated website memory cleared on load (user FAQs kept).
+      var KB_SCHEMA_VERSION = 2;
       var COLLAPSED_KEY = 'botly_chatbots_sidebar_collapsed';
 
       function createDefaultBotObject(id, company, name) {
@@ -4914,12 +5392,14 @@ window.addEventListener('botly:payment', async (event) => {
             {
               question: "What services and solutions do you provide?",
               answer: "We provide comprehensive professional services and custom solutions tailored to your business needs. Contact our team or ask me any question to learn more!",
-              source: 'faq'
+              source: 'faq',
+              isPlaceholder: true
             },
             {
               question: "How can I contact your support team?",
               answer: "You can reach our team via email or direct phone during business hours. Leave your contact details right here in chat for a rapid callback!",
-              source: 'faq'
+              source: 'faq',
+              isPlaceholder: true
             }
           ],
           checkoutConfig: {
@@ -4954,7 +5434,22 @@ window.addEventListener('botly:payment', async (event) => {
           var raw = localStorage.getItem(STORAGE_KEY);
           if (raw) {
             var parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              var migrated = false;
+              parsed.forEach(function(b) {
+                if (b.kbVersion !== KB_SCHEMA_VERSION) {
+                  b.websiteChunks = [];
+                  b.indexedWebsitePages = [];
+                  b.kbVersion = KB_SCHEMA_VERSION;
+                  migrated = true;
+                }
+              });
+              if (migrated) {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch(e) {}
+                if (typeof console !== 'undefined') console.info('Botly Studio: website memory refreshed for new knowledge format — please re-train from your site.');
+              }
+              return parsed;
+            }
           }
         } catch(e) {}
         // Seed with initial default bot from wizardState
@@ -5043,6 +5538,7 @@ window.addEventListener('botly:payment', async (event) => {
         bot.documentChunks = wizardState.documentChunks ? JSON.parse(JSON.stringify(wizardState.documentChunks)) : [];
         bot.websiteChunks = wizardState.websiteChunks ? JSON.parse(JSON.stringify(wizardState.websiteChunks)) : [];
         bot.indexedWebsitePages = wizardState.indexedWebsitePages ? JSON.parse(JSON.stringify(wizardState.indexedWebsitePages)) : [];
+        bot.kbVersion = KB_SCHEMA_VERSION;
         bot.websiteUrl = wizardState.websiteUrl || 'https://mycompany.com';
         bot.activeWebProfile = wizardState.activeWebProfile ? JSON.parse(JSON.stringify(wizardState.activeWebProfile)) : null;
         bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
@@ -5514,6 +6010,7 @@ window.addEventListener('botly:payment', async (event) => {
           if (!search) return true;
           return (l.name || '').toLowerCase().indexOf(search) !== -1 ||
                  (l.phone || '').toLowerCase().indexOf(search) !== -1 ||
+                 (l.email || '').toLowerCase().indexOf(search) !== -1 ||
                  (l.need || '').toLowerCase().indexOf(search) !== -1 ||
                  (l.mpesaCode || '').toLowerCase().indexOf(search) !== -1 ||
                  (l.paymentMethod || '').toLowerCase().indexOf(search) !== -1;
@@ -5542,6 +6039,7 @@ window.addEventListener('botly:payment', async (event) => {
           tr.innerHTML =
             '<td style="padding:10px 14px; font-weight:700; color:#0f172a;">' + escapeHtml(l.name || 'Anonymous') + '</td>' +
             '<td style="padding:10px 14px; color:#2563eb; font-weight:600;">' + escapeHtml(l.phone || 'N/A') + '</td>' +
+            '<td style="padding:10px 14px; color:#2563eb; font-weight:600;">' + escapeHtml(l.email || '—') + '</td>' +
             '<td style="padding:10px 14px; color:#475569; max-width:200px;">' + escapeHtml(l.need || 'General inquiry') + '</td>' +
             '<td style="padding:10px 14px;"><span style="background:#f1f5f9; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:700; color:#475569;">' + escapeHtml(l.goal || 'lead_gen') + '</span></td>' +
             '<td style="padding:10px 14px;">' + paymentBadge + '</td>' +
@@ -6241,6 +6739,16 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
           }, 200);
         }
       } catch(e) {}
+    });
+  </script>
+</body>
+</html>
+e) {}
+    });
+  </script>
+</body>
+</html>
+atch(e) {}
     });
   </script>
 </body>
