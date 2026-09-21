@@ -5086,7 +5086,7 @@ window.addEventListener('botly:payment', async (event) => {
 '<script>\n' +
 '  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
-'    botId: ' + JSON.stringify(getActiveBotId()) + ', // keeps this bot\'s leads & contacts separate\n' +
+'    botId: ' + JSON.stringify(((window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId) ? BotlyChatbotManager.getActiveBotId() : 'bot_default')) + ', // keeps this bot\'s leads & contacts separate\n' +
 '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
@@ -5245,21 +5245,28 @@ window.addEventListener('botly:payment', async (event) => {
           return true;
         }).slice(0, 3);
       } else if (allKnowledge.length > 0) {
-        var firstQ = allKnowledge[0].question;
-        var qLabel = firstQ.length > 25 ? firstQ.substring(0, 22) + '...' : firstQ;
-        quickReplies.push({ label: qLabel, payload: firstQ });
+        // Malformed chunks (e.g. document uploads without a question field) must
+        // never crash the preview — only items with a real question qualify.
+        var qrItems = allKnowledge.filter(function(k) { return k && k.question; });
+        if (qrItems.length > 0) {
+          var firstQ = qrItems[0].question;
+          var qLabel = firstQ.length > 25 ? firstQ.substring(0, 22) + '...' : firstQ;
+          quickReplies.push({ label: qLabel, payload: firstQ });
 
-        if (allKnowledge.length > 1) {
-          var secondQ = allKnowledge[1].question;
-          var qLabel2 = secondQ.length > 25 ? secondQ.substring(0, 22) + '...' : secondQ;
-          quickReplies.push({ label: qLabel2, payload: secondQ });
+          if (qrItems.length > 1) {
+            var secondQ = qrItems[1].question;
+            var qLabel2 = secondQ.length > 25 ? secondQ.substring(0, 22) + '...' : secondQ;
+            quickReplies.push({ label: qLabel2, payload: secondQ });
+          }
         }
       }
 
       function hasQuickReply(term) {
         var t = term.toLowerCase();
         return quickReplies.some(function(q) {
-          return q.label.toLowerCase().indexOf(t) !== -1 || q.payload.toLowerCase().indexOf(t) !== -1;
+          var lbl = (q && q.label) || '';
+          var pay = (q && q.payload) || '';
+          return lbl.toLowerCase().indexOf(t) !== -1 || pay.toLowerCase().indexOf(t) !== -1;
         });
       }
 
@@ -5282,7 +5289,7 @@ window.addEventListener('botly:payment', async (event) => {
       try {
         BotlyChatbot.init({
           mode: 'saas',
-          botId: getActiveBotId(), // isolates this bot's leads & remembered contacts from other bots
+          botId: (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId ? BotlyChatbotManager.getActiveBotId() : 'bot_default'), // isolates this bot's leads & remembered contacts from other bots
           // Free-text mode: no suggestion chips — the user types, the bot answers.
           disableQuickReplies: true,
           goals: wizardState.purposes,
@@ -5997,7 +6004,7 @@ window.addEventListener('botly:payment', async (event) => {
     // widget's botlyLeadKey() namespacing (botId sanitized the same way).
     function studioLeadsKey() {
       var id = 'default';
-      try { id = getActiveBotId() || 'default'; } catch (e) {}
+      try { id = ((window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId) ? BotlyChatbotManager.getActiveBotId() : 'default') || 'default'; } catch (e) {}
       var s = String(id).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'default';
       return 'botly_captured_leads__' + s.slice(0, 40);
     }
