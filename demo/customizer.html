@@ -1017,6 +1017,10 @@
 </head>
 <body class="studio-body studio-mode-customize">
 
+  <!-- Stale-version banner (hidden unless server code is newer than this loaded tab) -->
+  <div id="studio-version-banner" style="display: none; background: #fef3c7; border-bottom: 1.5px solid #f59e0b; color: #78350f; font-size: 12.5px; font-weight: 700; text-align: center; padding: 8px 12px;">
+    A newer Studio version is available &mdash; <a href="#" onclick="location.reload(); return false;" style="color: #92400e; text-decoration: underline;">reload now</a> to get the latest fixes.
+  </div>
   <!-- Top Studio Navbar -->
   <header class="customizer-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
     <nav class="customizer-nav" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 24px; height: 60px;">
@@ -1694,6 +1698,15 @@
             <button type="button" class="mem-tab-btn" id="mtab-api" onclick="switchMemTab('api')">Live API</button>
           </div>
 
+          <!-- Knowledge Source Toggles: use one, two, or all sources -->
+          <div id="memory-sources-row" style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; font-size: 12px; color: #475569; font-weight: 700;">
+            <span title="Tick the sources this bot should answer from. Unticked sources are kept but ignored.">Sources:</span>
+            <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;"><input type="checkbox" id="src-toggle-faq" checked onchange="setSourceToggle('faq', this.checked)" style="accent-color: #0284c7;"> Q&amp;A</label>
+            <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;"><input type="checkbox" id="src-toggle-docs" checked onchange="setSourceToggle('docs', this.checked)" style="accent-color: #0284c7;"> Company Data</label>
+            <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;"><input type="checkbox" id="src-toggle-web" checked onchange="setSourceToggle('web', this.checked)" style="accent-color: #0284c7;"> Website</label>
+            <label title="When on, the bot asks your API first (hybrid) and falls back to knowledge." style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;"><input type="checkbox" id="src-toggle-api" onchange="setApiEnabled(this.checked)" style="accent-color: #0284c7;"> Live API</label>
+          </div>
+
           <!-- SUB-PANEL A: Q&A Builder -->
           <div class="mem-subpanel active" id="subpanel-qa">
             <div>
@@ -1837,7 +1850,7 @@
                 <span>API Endpoint URL</span>
                 <span class="form-hint">Webhook or REST endpoint</span>
               </label>
-              <input type="url" id="wiz-api-endpoint" class="wiz-input" placeholder="https://api.yourcompany.com/v1/chat" value="https://api.mycompany.com/v1/bot-query">
+              <input type="url" id="wiz-api-endpoint" class="wiz-input" placeholder="https://api.yourcompany.com/v1/chat — or mock://demo to simulate" value="">
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1872,6 +1885,7 @@
                 Simulator ↗
               </button>
             </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.5;">Tip: enter <strong>mock://demo</strong> as the endpoint to simulate a backend. Testing successfully switches Live API on (see Sources above).</div>
             <div id="api-connection-status" style="display: none; padding: 8px 12px; border-radius: 8px; font-size: 11.5px;"></div>
 
             <button type="button" onclick="openWebhooksModal()" style="width: 100%; margin-top: 10px; padding: 9px 12px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 10px; font-size: 12px; font-weight: 700; color: #18221c; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s;">
@@ -2788,6 +2802,7 @@ window.addEventListener('botly:payment', async (event) => {
     // ==================================================
     var wizardState = {
       step: 1,
+      sourceToggles: { faq: true, docs: true, web: true },
       purposes: ['lead_generation', 'customer_support'], // Multi-select goals!
       companyName: 'My Company',
       botName: 'Botly Pro',
@@ -4965,7 +4980,7 @@ window.addEventListener('botly:payment', async (event) => {
         method: document.getElementById('wiz-api-method')?.value || 'POST',
         mode: document.getElementById('wiz-api-routing')?.value || 'hybrid',
         authBearer: document.getElementById('wiz-api-auth')?.value || '',
-        mockServer: endpoint.indexOf('mycompany.com') !== -1 // use mock simulator for sample
+        mockServer: (endpoint === 'mock://demo' || endpoint === 'mock://insurance-ai')
       };
 
       if (btn) btn.textContent = 'Testing connection...';
@@ -4985,6 +5000,8 @@ window.addEventListener('botly:payment', async (event) => {
             status.style.color = '#065f46';
             status.style.border = '1px solid #a7f3d0';
             status.innerHTML = '<strong style="color: #065f46;">Connected successfully</strong> (' + res.latencyMs + 'ms latency) — ' + escapeHtml(res.sampleReply || 'System healthy');
+            var _apiBox = document.getElementById('src-toggle-api');
+            if (_apiBox) _apiBox.checked = true;
           } else {
             status.style.background = '#fef2f2';
             status.style.color = '#991b1b';
@@ -5010,11 +5027,20 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     function updateMemoryStats() {
+      var _t = wizardState.sourceToggles || { faq: true, docs: true, web: true };
       var effFaqs = getEffectiveFaqs().length;
-      var total = effFaqs + wizardState.documentChunks.length + wizardState.websiteChunks.length;
+      var _docs = _t.docs === false ? 0 : wizardState.documentChunks.length;
+      var _web = _t.web === false ? 0 : wizardState.websiteChunks.length;
+      var total = effFaqs + _docs + _web;
+      var _off = [];
+      if (_t.faq === false) _off.push('Q&A off');
+      if (_t.docs === false) _off.push('Docs off');
+      if (_t.web === false) _off.push('Web off');
+      var _suffix = _off.length ? ' \u00b7 ' + _off.join(', ') : '';
+      if (wizardState.apiConfig && wizardState.apiConfig.enabled && wizardState.apiConfig.endpoint) _suffix += ' \u00b7 API live';
       var badge = document.getElementById('mem-total-items-badge');
       if (badge) {
-        badge.textContent = total + ' Items (' + effFaqs + ' Q&A, ' + wizardState.documentChunks.length + ' Docs, ' + wizardState.websiteChunks.length + ' Web)';
+        badge.textContent = total + ' Items (' + effFaqs + ' Q&A, ' + _docs + ' Docs, ' + _web + ' Web)' + _suffix;
       }
     }
 
@@ -5024,10 +5050,7 @@ window.addEventListener('botly:payment', async (event) => {
     function buildDeployCode() {
       // NOTE: retired sample placeholders are excluded so shipped bots never answer from sample text.
       var faqsForBot = getEffectiveFaqs();
-      var allKnowledge = []
-        .concat(faqsForBot)
-        .concat(wizardState.documentChunks)
-        .concat(wizardState.websiteChunks);
+      var allKnowledge = getActiveKnowledge(faqsForBot).all;
 
       var knowledgePart = '';
       if (allKnowledge.length > 0) {
@@ -5199,7 +5222,65 @@ window.addEventListener('botly:payment', async (event) => {
     // ==================================================
     // Sample placeholder FAQs retire automatically once real knowledge exists,
     // so generic sample answers can never outrank the owner's trained data.
+    // ---- Knowledge source toggles (Q&A / Docs / Web) + Live API enable ----
+    function getActiveKnowledge(faqsForBot) {
+      var t = wizardState.sourceToggles || { faq: true, docs: true, web: true };
+      var docs = t.docs === false ? [] : (wizardState.documentChunks || []);
+      var web = t.web === false ? [] : (wizardState.websiteChunks || []);
+      return { all: [].concat(faqsForBot || []).concat(docs).concat(web) };
+    }
+
+    function setSourceToggle(src, on) {
+      if (!wizardState.sourceToggles) wizardState.sourceToggles = { faq: true, docs: true, web: true };
+      wizardState.sourceToggles[src] = !!on;
+      updateMemoryStats();
+      applyBotLiveConfig();
+    }
+
+    function setApiEnabled(on) {
+      if (!wizardState.apiConfig) wizardState.apiConfig = { enabled: false, endpoint: '', method: 'POST', mode: 'hybrid', authBearer: '' };
+      if (on && !((wizardState.apiConfig.endpoint || '').trim())) {
+        var epInput = document.getElementById('wiz-api-endpoint');
+        var typed = epInput ? epInput.value.trim() : '';
+        if (!typed) {
+          alert('Enter your API Endpoint URL first (or mock://demo to simulate a backend), then enable Live API.');
+          var box = document.getElementById('src-toggle-api');
+          if (box) box.checked = false;
+          return;
+        }
+        wizardState.apiConfig.endpoint = typed;
+        wizardState.apiConfig.mockServer = (typed === 'mock://demo' || typed === 'mock://insurance-ai');
+      }
+      wizardState.apiConfig.enabled = !!on;
+      updateMemoryStats();
+      applyBotLiveConfig();
+    }
+
+    // ---- Stale-tab detector: banner when server code is newer than this loaded tab ----
+    var STUDIO_BOOT_VERSION = null;
+    function startStudioVersionPoll() {
+      function fetchVer(cb) {
+        try {
+          fetch('/api/version', { cache: 'no-store' }).then(function(r) { return r.json(); }).then(function(j) {
+            cb(j && j.version ? String(j.version) : null);
+          }).catch(function() { cb(null); });
+        } catch (e) { cb(null); }
+      }
+      fetchVer(function(v) {
+        if (STUDIO_BOOT_VERSION === null && v) STUDIO_BOOT_VERSION = v;
+      });
+      setInterval(function() {
+        fetchVer(function(v) {
+          if (v && STUDIO_BOOT_VERSION && v !== STUDIO_BOOT_VERSION) {
+            var b = document.getElementById('studio-version-banner');
+            if (b) b.style.display = 'block';
+          }
+        });
+      }, 120000);
+    }
+
     function getEffectiveFaqs() {
+      if (wizardState.sourceToggles && wizardState.sourceToggles.faq === false) return [];
       var faqs = wizardState.faqs || [];
       var nonEmpty = faqs.filter(function (f) {
         return f && ((f.question || '').trim() || (f.answer || '').trim());
@@ -5230,10 +5311,7 @@ window.addEventListener('botly:payment', async (event) => {
 
       // Combine all memory items (sample placeholders auto-retire once real knowledge exists)
       var faqsForBot = getEffectiveFaqs();
-      var allKnowledge = []
-        .concat(faqsForBot)
-        .concat(wizardState.documentChunks)
-        .concat(wizardState.websiteChunks);
+      var allKnowledge = getActiveKnowledge(faqsForBot).all;
 
       // Adaptive quick replies based on active website profile, goals and company memory
       var quickReplies = [];
@@ -5400,6 +5478,7 @@ window.addEventListener('botly:payment', async (event) => {
           websiteUrl: 'https://mycompany.com',
           indexedWebsitePages: [],
           activeWebProfile: null,
+          sourceToggles: { faq: true, docs: true, web: true },
           faqs: [
             {
               question: "What services and solutions do you provide?",
@@ -5555,6 +5634,7 @@ window.addEventListener('botly:payment', async (event) => {
         bot.activeWebProfile = wizardState.activeWebProfile ? JSON.parse(JSON.stringify(wizardState.activeWebProfile)) : null;
         bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
         bot.apiConfig = wizardState.apiConfig ? JSON.parse(JSON.stringify(wizardState.apiConfig)) : {};
+        bot.sourceToggles = wizardState.sourceToggles ? JSON.parse(JSON.stringify(wizardState.sourceToggles)) : { faq: true, docs: true, web: true };
         bot.updatedAt = Date.now();
 
         saveAllBots(bots);
@@ -5672,6 +5752,26 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.faqs = bot.faqs ? JSON.parse(JSON.stringify(bot.faqs)) : [];
         wizardState.checkoutConfig = bot.checkoutConfig ? JSON.parse(JSON.stringify(bot.checkoutConfig)) : {};
         wizardState.apiConfig = bot.apiConfig ? JSON.parse(JSON.stringify(bot.apiConfig)) : {};
+        wizardState.sourceToggles = bot.sourceToggles ? JSON.parse(JSON.stringify(bot.sourceToggles)) : { faq: true, docs: true, web: true };
+        (function restoreSourceControls() {
+          var _st = wizardState.sourceToggles || {};
+          var _cbF = document.getElementById('src-toggle-faq');
+          if (_cbF) _cbF.checked = _st.faq !== false;
+          var _cbD = document.getElementById('src-toggle-docs');
+          if (_cbD) _cbD.checked = _st.docs !== false;
+          var _cbW = document.getElementById('src-toggle-web');
+          if (_cbW) _cbW.checked = _st.web !== false;
+          var _cbA = document.getElementById('src-toggle-api');
+          if (_cbA) _cbA.checked = !!(wizardState.apiConfig && wizardState.apiConfig.enabled);
+          var _ep = document.getElementById('wiz-api-endpoint');
+          if (_ep) _ep.value = (wizardState.apiConfig && wizardState.apiConfig.endpoint) || '';
+          var _mt = document.getElementById('wiz-api-method');
+          if (_mt && wizardState.apiConfig && wizardState.apiConfig.method) _mt.value = wizardState.apiConfig.method;
+          var _rt = document.getElementById('wiz-api-routing');
+          if (_rt && wizardState.apiConfig && wizardState.apiConfig.mode) _rt.value = wizardState.apiConfig.mode;
+          var _ab = document.getElementById('wiz-api-auth');
+          if (_ab) _ab.value = (wizardState.apiConfig && wizardState.apiConfig.authBearer) || '';
+        })();
 
         // Update form inputs
         var cEl = document.getElementById('wiz-company-name');
@@ -6753,6 +6853,7 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       applyBotLiveConfig();
       migrateLegacyStudioLeads();
       updateLeadsBadge();
+      startStudioVersionPoll();
 
       ['wiz-company-name', 'wiz-bot-name', 'wiz-bot-title', 'wiz-bot-greeting', 'wiz-support-email', 'wiz-support-phone'].forEach(function(id) {
         var el = document.getElementById(id);

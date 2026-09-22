@@ -44,6 +44,21 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
 
+        # 0. Studio version (stale-tab detector polls this)
+        if path == "/api/version":
+            version = "dev"
+            try:
+                out = subprocess.run(
+                    ["git", "rev-parse", "--short", "HEAD"],
+                    capture_output=True, text=True, timeout=5, cwd=os.getcwd(),
+                )
+                if out.returncode == 0 and out.stdout.strip():
+                    version = out.stdout.strip()
+            except Exception:
+                pass
+            self._send_json({"version": version})
+            return
+
         # 1. Health check
         if path == "/api/health":
             self._send_json({
