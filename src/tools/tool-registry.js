@@ -535,7 +535,9 @@ export function searchProducts(params = {}, config = {}) {
 
   // 2. Query matching products from CATALOG_DATABASE
   const lower = query.toLowerCase();
-  const tokens = lower.split(/[^a-z0-9]+/i).filter(t => t.length >= 2);
+  // 2-letter stubs ("it", "is") substring-match everything ("with", "this") — catalog
+  // matching needs real tokens; department hints still catch short queries.
+  const tokens = lower.split(/[^a-z0-9]+/i).filter(t => t.length >= 3);
   const matchedProducts = [];
 
   for (const group of Object.values(CATALOG_DATABASE)) {

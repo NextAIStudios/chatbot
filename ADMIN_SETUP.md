@@ -67,6 +67,14 @@ Building and previewing are free. Copying the embed code requires an
 1. **Set your Till number.** In `demo/customizer.html`, find `BOTLY_BILLING`
    and set your real M-Pesa Till number, till name and KES amount:
    `tillNumber`, `tillName`, `kes`. Redeploy after changing it.
+   **Using IntaSend?** Create a Payment Link in your IntaSend dashboard
+   (fixed amount = the KES price), paste the link into
+   `intasendPaymentUrl`, and payers get a **Pay securely** button
+   (M-Pesa + cards) with the manual Till kept as fallback. After paying,
+   they paste the M-Pesa code or IntaSend reference — you verify it in
+   the IntaSend dashboard before approving. (Full API automation —
+   STK push + auto-activation — needs the secret key on a backend, so it
+   stays a manual-verify step while the Studio is statically hosted.)
 2. **Re-publish the rules.** `firestore.rules` now also covers the
    `botly_payments` collection and protects the `active` flag (owners
    cannot self-activate). Paste the file into Firestore → Rules → Publish

@@ -27,6 +27,24 @@ Upgrades:
         echoing the full question back).
     P7  Neutral default lead-capture follow-up (no insurance-specific "quote
         rates / coverage" text leaking into SaaS bots).
+  V3 (conversation continuity — bot stays on topic until the user changes it):
+    P61 Bare ack words ("ok"/"okay") leave the affirmative set.
+    P62 Bare-ack continuer (never accepts offers / captures leads) +
+        stale-offer expiry (>~2 turns old).
+    P63-P66 Every pending offer carries its birth turn (follow-ups + pricing).
+    P67 Bare "yes" with no pending offer stays on the live product topic.
+    P68 Product replies clear stale offers + record live topic/product query.
+    P69 Product results report their topic to conversation memory.
+    P70 Topic-less Tier-4 fallback asks a clarifying question, never ambushes.
+    P71 Short follow-ups ("how much is it?") resolve against the live topic;
+        new content words classify fresh (topic change).
+    P72 Catalog fallback ends with a clarifying continuer.
+    P73 Greeting restarts the topic.
+    P74 Widget stamps turn-less offers at sync time.
+    P77 Filler words cover interrogatives/auxiliaries/pronouns (kills
+        spurious KB matches like "how much" hitting a How-question).
+    P78 Demo-catalog substring matching ignores <3-letter stubs ("it" no
+        longer matches "with" inside product blurbs).
 
 Usage: python3 tools/upgrade-dist-conversational.py [--check]
   --check: exit 0 if all patches applied, 1 if not (no writes).
@@ -673,6 +691,256 @@ PATCHES = [
         """  function BotlyChatbotController(userConfig) {
     this.config = Object.assign({}, DEFAULT_CONFIG, userConfig || {});
     botlySetStorageNs((userConfig && (userConfig.botId || (userConfig.company && userConfig.company.name))) || 'default');""",
+        1,
+    ),
+    # --- V3 (conversation continuity: acks continue the topic, offers expire,
+    # --- short follow-ups resolve against the live topic) ---
+    (
+        "P61 ack-words leave affirmative set",
+        """yup|sure|ok|okay|definitely""",
+        """yup|sure|definitely""",
+        1,
+    ),
+    (
+        "P62 bare-ack continuer + stale-offer expiry",
+        """    if (isAffirmative && memory.lastFollowUp && lower.length < 40) {""",
+        """    // V3: pending offers expire — a "yes" more than ~2 turns later answers something else.
+    if (memory.lastFollowUp && memory.lastFollowUp.turn && memory.lastFollowUp.turn < (memory.turns || 0) - 2) {
+      memory.lastFollowUp = null;
+    }
+
+    // V3: bare acknowledgments ("okay", "got it", "sawa") continue the topic —
+    // they NEVER accept a pending offer and NEVER trigger lead capture.
+    var isBareAck = /^(ok|okay|k|kk|alright|got\\s*it|noted|cool|fine|understood|roger|sawa|poa|asante|shukrani|thx)\\b[\\s!.,]*(thanks|thank\\s*you|thx)?[\\s!.,]*$/i.test(lower);
+    if (isBareAck && lower.length < 60) {
+      var _ackTopic = (memory && (memory.lastTopic || (memory.lastFollowUp && memory.lastFollowUp.topic))) || '';
+      _ackTopic = _ackTopic.replace(/^(what\\s+about|what\\s+is|what\\s+are|who\\s+is|how\\s+do\\s+i|how\\s+can\\s+i|tell\\s+me\\s+about)\\s+/i, '').replace(/\\?+\\s*$/, '').trim();
+      if (_ackTopic.length > 60) _ackTopic = _ackTopic.substring(0, 57) + '...';
+      var _ackComp = (config && config.company && config.company.name) ? config.company.name : '';
+      var _ackTeam = (_ackComp && _ackComp !== 'Botly' && _ackComp !== 'Botly Pro') ? 'the ' + _ackComp + ' team' : 'the team';
+      var _ackReplies = isSaasMode ? [
+        { label: 'Our Services', payload: 'What services do you offer?' },
+        { label: 'Pricing & Plans', payload: 'What are your pricing and plans?' },
+        { label: 'Talk to someone', payload: 'I want to speak with someone from ' + _ackTeam }
+      ] : [
+        { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+        { label: '💳 Proceed to Payment', payload: 'intent_pay' },
+        { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+      ];
+      if (_ackTopic && isSaasMode) {
+        _ackReplies.unshift({ label: 'More on ' + (_ackTopic.length > 22 ? _ackTopic.substring(0, 20) + '…' : _ackTopic), payload: 'Tell me more about ' + _ackTopic });
+      }
+      return {
+        intent: 'acknowledge',
+        reply: _ackTopic
+          ? 'Got it! 👍 Anything else about **' + _ackTopic + '** — or is there something new I can help with?'
+          : 'Got it! 👍 What else can I help you with?',
+        suggestedQuickReplies: _ackReplies
+      };
+    }
+
+    if (isAffirmative && memory.lastFollowUp && lower.length < 40) {""",
+        1,
+    ),
+    (
+        "P63 follow-up offers carry birth turn",
+        """      mem.lastFollowUp = {
+        type: chosen.type,
+        topic: topicLabel,
+        text: chosen.text,
+        stage: stage
+      };""",
+        """      mem.lastFollowUp = {
+        type: chosen.type,
+        topic: topicLabel,
+        text: chosen.text,
+        stage: stage,
+        turn: (mem.turns || 0)
+      };""",
+        1,
+    ),
+    (
+        "P64 returned offer carries birth turn",
+        """      return chosen;""",
+        """      chosen.turn = (mem.lastFollowUp && mem.lastFollowUp.turn) || (mem.turns || 0);
+      return chosen;""",
+        1,
+    ),
+    (
+        "P65 pricing offer (Botly) carries birth turn",
+        """          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: 'Botly Pro $10 Plan Deployment',
+            text: priceFollowUp,
+            stage: memory.goalStage || 0
+          };""",
+        """          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: 'Botly Pro $10 Plan Deployment',
+            text: priceFollowUp,
+            stage: memory.goalStage || 0,
+            turn: (memory.turns || 0)
+          };""",
+        1,
+    ),
+    (
+        "P66 pricing offer (client) carries birth turn",
+        """          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: compName + ' Pricing & Custom Packages',
+            text: compFollowUp,
+            stage: memory.goalStage || 0
+          };""",
+        """          memory.lastFollowUp = {
+            type: 'lead_generation',
+            topic: compName + ' Pricing & Custom Packages',
+            text: compFollowUp,
+            stage: memory.goalStage || 0,
+            turn: (memory.turns || 0)
+          };""",
+        1,
+    ),
+    (
+        "P67 bare-yes without offer stays on product topic",
+        """    if (isEcommerce) {
+      var searchKey = extracted.searchTerms || extracted.cleanQuery;""",
+        """    if (isEcommerce) {
+      // V3: bare "yes" with no pending offer stays on the live product topic.
+      if (isAffirmative && lower.length < 40 && !(memory && memory.lastFollowUp) && memory && memory.lastProductQuery) {
+        return {
+          intent: 'acknowledge',
+          reply: 'Great — sticking with **' + memory.lastProductQuery + '**. Want prices, delivery details, or shall I look up something else?',
+          suggestedQuickReplies: [
+            { label: '🚚 Delivery info', payload: 'How does delivery work and what are the timelines?' },
+            { label: 'Talk to team', payload: 'I want to speak with someone from the team' }
+          ],
+          topic: memory.lastProductQuery
+        };
+      }
+      var searchKey = extracted.searchTerms || extracted.cleanQuery;""",
+        1,
+    ),
+    (
+        "P68 product replies clear stale offers, record live topic",
+        """      var searchResult = searchProducts({ query: searchKey }, config);""",
+        """      // V3: product replies carry no typed offer — clear stale ones, record live topic.
+      if (memory) {
+        memory.lastFollowUp = null;
+        memory.lastTopic = searchKey;
+        memory.lastProductQuery = searchKey;
+      }
+      var searchResult = searchProducts({ query: searchKey }, config);""",
+        1,
+    ),
+    (
+        "P69 product results report their topic",
+        """        intent: searchResult.isOutOfScope ? 'out_of_scope' : 'product_search',
+        confidence: 0.95,""",
+        """        intent: searchResult.isOutOfScope ? 'out_of_scope' : 'product_search',
+        confidence: 0.95,
+        topic: searchKey,""",
+        1,
+    ),
+    (
+        "P70 topic-less fallback asks, never ambushes",
+        """    // Tier 4: Unknown / Human Help Needed
+    var leadCaptureEnabled = config && config.leadCapture ? config.leadCapture.enabled !== false : true;
+    if (leadCaptureEnabled) {""",
+        """    // Tier 4: Unknown / Human Help Needed
+    var leadCaptureEnabled = config && config.leadCapture ? config.leadCapture.enabled !== false : true;
+    // V3: no real topic (bare yes/ack/greeting residue) → clarifying question, never a lead ambush.
+    var _tier4NoTopic = !needTopic || needTopic.length < 3 || /^(yes|yeah|yep|sure|ok|okay|hi|hello|hey|thanks|thank\\s*you|please|good|great)\\b/i.test(needTopic.trim());
+    if (_tier4NoTopic) {
+      var _t4Topic = (memory && memory.lastTopic) || '';
+      var _t4Name = (compName && compName !== 'our') ? compName : '';
+      return {
+        intent: 'clarify',
+        reply: _t4Topic
+          ? 'Happy to help! 🙏 Are we still on **' + _t4Topic + '** — or could you tell me a bit more about what you need?'
+          : 'Happy to help! 🙏 Could you tell me a bit more about what you\\'re looking for so I point you the right way?',
+        suggestedQuickReplies: isSaasMode ? [
+          { label: 'Our Services', payload: 'What services do you offer?' },
+          { label: 'Talk to someone', payload: 'I want to speak with someone from ' + (_t4Name ? 'the ' + _t4Name + ' team' : 'the team') }
+        ] : [
+          { label: '🚗 Calculate a Quote', payload: 'intent_quote' },
+          { label: '📞 Speak with Advisor', payload: 'intent_agent_handover' }
+        ]
+      };
+    }
+    if (leadCaptureEnabled) {""",
+        1,
+    ),
+    (
+        "P71 short follow-ups resolve against live topic",
+        """    // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
+    var allFaqsRaw = isSaasMode""",
+        """    // V3: short follow-ups ("how much is it?", "and delivery?") resolve against the live
+    // topic. Anything carrying a NEW content word is a topic change and classifies fresh.
+    if (memory && memory.lastProductQuery && lower.length < 60) {
+      var _refWords = { how:1, what:1, when:1, where:1, which:1, that:1, this:1, those:1, them:1, they:1, with:1, about:1, does:1, have:1, much:1, many:1, cost:1, costs:1, price:1, prices:1, pricing:1, delivery:1, deliver:1, shipping:1, ship:1, payment:1, pay:1, order:1, buy:1, get:1, more:1, also:1, and:1, the:1, for:1, are:1, you:1, your:1, there:1, their:1, any:1, some:1, one:1, ones:1, else:1, other:1 };
+      var _msgWords = lower.replace(/[^a-z0-9\\s]/g, ' ').split(/\\s+/);
+      var _newWords = [];
+      for (var _wi = 0; _wi < _msgWords.length; _wi++) {
+        var _w = _msgWords[_wi];
+        if (_w.length > 2 && !_refWords[_w] && memory.lastProductQuery.toLowerCase().indexOf(_w) === -1) _newWords.push(_w);
+      }
+      var _looksReferential = _msgWords.length <= 6 || /^(how\\s+much|what\\s+about|how\\s+about|and\\b|also\\b|tell\\s+me\\s+more|more\\b|delivery\\b|shipping\\b|price\\b|cost\\b|it\\b|that\\b|them\\b|those\\b|this\\b)/i.test(lower);
+      if (_looksReferential && _newWords.length === 0) {
+        raw = (raw + ' ' + memory.lastProductQuery).trim();
+        lower = raw.toLowerCase();
+        queryTokens = tokenize(raw);
+      }
+    }
+
+    // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
+    var allFaqsRaw = isSaasMode""",
+        1,
+    ),
+    (
+        "P72 catalog fallback keeps conversation going",
+        """    var message = fallbackIntros[Math.floor(Math.random() * fallbackIntros.length)];
+    if (dept) {
+      message += ' Check out the **' + dept.department + '** section — ' + dept.details;
+    }""",
+        """    var message = fallbackIntros[Math.floor(Math.random() * fallbackIntros.length)];
+    if (dept) {
+      message += ' Check out the **' + dept.department + '** section — ' + dept.details;
+    }
+    message += '\\n\\n💬 Tell me a brand, size, or budget and I\\'ll narrow it down — or tap a department below to keep browsing.';""",
+        1,
+    ),
+    (
+        "P73 greeting restarts the topic",
+        """      var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly Pro';""",
+        """      var greetName = (config.bot && config.bot.name) ? config.bot.name : 'Botly Pro';
+      if (memory) { memory.lastFollowUp = null; memory.lastProductQuery = null; } // V3: greeting restarts the topic""",
+        1,
+    ),
+    (
+        "P74 widget stamps turn-less offers",
+        """    if (res.lastFollowUp) {
+      mem.lastFollowUp = res.lastFollowUp;""",
+        """    if (res.lastFollowUp) {
+      if (!res.lastFollowUp.turn) res.lastFollowUp.turn = mem.turns; // V3: every offer carries its birth turn
+      mem.lastFollowUp = res.lastFollowUp;""",
+        1,
+    ),
+    (
+        "P77 filler words cover interrogatives/auxiliaries/pronouns",
+        """      'shall':1, 'may':1, 'might':1, 'what':1, 'which':1, 'who':1, 'whom':1, 'this':1, 'that':1,""",
+        """      'shall':1, 'may':1, 'might':1, 'what':1, 'which':1, 'who':1, 'whom':1, 'this':1, 'that':1,
+      // V3: question-words can never be topical — "how" must not match every How-question.
+      'how':1, 'when':1, 'where':1, 'why':1, 'much':1, 'many':1, 'it':1, 'its':1,
+      'they':1, 'them':1, 'their':1, 'he':1, 'she':1, 'him':1, 'her':1,
+      'very':1, 'really':1, 'quite':1,""",
+        1,
+    ),
+    (
+        "P78 demo-catalog matching ignores stub tokens",
+        """    var tokens = lower.split(/[^a-z0-9]+/i).filter(function(t) { return t.length >= 2; });""",
+        """    // V3: 2-letter stubs ("it", "is") substring-match everything ("with", "this") —
+    // catalog matching needs real tokens; departments still catch short queries.
+    var tokens = lower.split(/[^a-z0-9]+/i).filter(function(t) { return t.length >= 3; });""",
         1,
     ),
 ]

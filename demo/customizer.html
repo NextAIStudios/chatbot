@@ -5150,7 +5150,8 @@ window.addEventListener('botly:payment', async (event) => {
       tillNumber: '123456',   // TODO(owner): your M-Pesa Buy Goods Till number
       tillName: 'Botly Pro',  // TODO(owner): till/account name shown to payers
       usd: 10,
-      kes: 1290               // TODO(owner): current KES equivalent of $10
+      kes: 1290,              // TODO(owner): current KES equivalent of $10
+      intasendPaymentUrl: ''  // TODO(owner): paste your IntaSend Payment Link (dashboard -> Payment Links, fixed KES amount). When set, payers get a Pay button; manual Till stays as fallback.
     };
 
     function botlyBillingDocId(botId) {
@@ -5270,8 +5271,11 @@ window.addEventListener('botly:payment', async (event) => {
       if (!body) return;
       var botName = '';
       try { botName = wizardState.botName || ''; } catch (e) {}
+      var payUrl = (BOTLY_BILLING.intasendPaymentUrl || '').trim();
+      var payBtn = payUrl ? '<a href="' + escapeHtml(payUrl) + '" target="_blank" rel="noopener" style="display:block;text-align:center;background:#0ea5e9;color:#fff;border-radius:10px;padding:12px;font-size:14px;font-weight:800;text-decoration:none;margin-bottom:6px;">Pay KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + ' securely &#8599;</a><div style="text-align:center;color:#94a3b8;font-size:11.5px;margin:6px 0;">M-Pesa & cards via IntaSend &middot; or pay manually below</div>' : '';
       body.innerHTML =
         '<p style="font-size:13px;color:#475569;line-height:1.6;margin:0 0 12px 0;">Publishing <strong>' + escapeHtml(botName || 'this bot') + '</strong> costs a one-time <strong>$' + BOTLY_BILLING.usd + '</strong> (KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '). Building and previewing stay free forever.</p>' +
+        payBtn +
         '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;font-size:13px;line-height:1.7;color:#0f172a;margin-bottom:12px;">' +
           '<strong>1.</strong> On ' + escapeHtml(BOTLY_BILLING.method) + ', <strong>Send Money / Buy Goods</strong> to:<br>' +
           '<div style="font-size:20px;font-weight:800;letter-spacing:0.5px;margin:4px 0;">Till ' + escapeHtml(BOTLY_BILLING.tillNumber) + '</div>' +
@@ -5279,8 +5283,8 @@ window.addEventListener('botly:payment', async (event) => {
           '<strong>2.</strong> Paste your ' + escapeHtml(BOTLY_BILLING.method) + ' confirmation code below and submit.' +
         '</div>' +
         '<div id="paywall-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:9px 11px;font-size:12.5px;margin-bottom:10px;"></div>' +
-        '<label style="font-size:12px;font-weight:800;color:#334155;">M-Pesa confirmation code</label>' +
-        '<input id="paywall-code" type="text" placeholder="e.g. UIC8E69GLQ" style="width:100%;margin:5px 0 10px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
+        '<label style="font-size:12px;font-weight:800;color:#334155;">' + (payUrl ? 'Payment reference (M-Pesa code or IntaSend ref)' : 'M-Pesa confirmation code') + '</label>' +
+        '<input id="paywall-code" type="text" placeholder="' + (payUrl ? 'e.g. UIC8E69GLQ or INV-...' : 'e.g. UIC8E69GLQ') + '" style="width:100%;margin:5px 0 10px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
         '<label style="font-size:12px;font-weight:800;color:#334155;">Your M-Pesa phone (for verification)</label>' +
         '<input id="paywall-phone" type="tel" placeholder="e.g. 0712 345 678" style="width:100%;margin:5px 0 12px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
         '<button type="button" onclick="submitPaymentClaim()" style="width:100%;background:#18221c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">I\u2019ve paid — Submit for verification</button>' +
@@ -5336,6 +5340,7 @@ window.addEventListener('botly:payment', async (event) => {
         phone: String(phone).slice(0, 40),
         amountUSD: BOTLY_BILLING.usd,
         amountKES: BOTLY_BILLING.kes,
+        provider: ((BOTLY_BILLING.intasendPaymentUrl || '').trim() ? 'intasend_link' : 'mpesa_till'),
         status: 'pending',
         createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
       }).then(function() { renderPaywallPending(); }).catch(function(err) {
