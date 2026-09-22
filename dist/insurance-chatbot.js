@@ -1512,13 +1512,18 @@
 
       if (followType === 'customer_support' || followType === 'human_handover') {
         memory.lastFollowUp = null;
-        var supportPhone = (config && config.company && config.company.supportPhone) || '+1 (800) 555-0199';
-        var supportEmail = (config && config.company && config.company.supportEmail) || 'care@mycompany.com';
+        // V3: only advertise contact details the owner configured (never a fallback number).
+        var _supPhone = (config && config.company && config.company.supportPhone) || '';
+        var _supEmail = (config && config.company && config.company.supportEmail) || '';
+        var _supBits = [];
+        if (_supPhone) _supBits.push('at **' + _supPhone + '**');
+        if (_supEmail) _supBits.push('email **' + _supEmail + '**');
+        var _supLine = _supBits.length ? ' You can also reach us directly ' + _supBits.join(' or ') + '.' : '';
         return {
           intent: 'human_handover',
           action: 'LEAD_CAPTURE',
           inquiredNeed: 'Support Specialist Callback (' + topicDesc + ')',
-          leadIntro: "I'd be glad to connect you with our support team! You can also reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nWhat's your **full name**, so an agent can call you right back?"
+          leadIntro: "I'd be glad to connect you with our support team!" + _supLine + "\n\nWhat's your **full name**, so an agent can call you right back?"
         };
       }
     }
@@ -1603,18 +1608,23 @@
 
     // 3. Human Representative Escalation
     if (/human|agent|representative|speak\s*(to|with)\s*(someone|person|a\s*human|an?\s*agent|human|agent)?|advisor|person|talk\s*to\s*(someone|person)|call\s*me/i.test(lower)) {
-      var supportPhone = (config.company && config.company.supportPhone) || '+1 (800) 555-0199';
-      var supportEmail = (config.company && config.company.supportEmail) || (isBotlySelf ? 'care@botly.ai' : (config.company && config.company.websiteUrl ? 'contact@' + config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : 'our support team'));
+      // V3: only advertise contact details the owner configured — never a fallback number.
+      var supportPhone = (config.company && config.company.supportPhone) || '';
+      var supportEmail = (config.company && config.company.supportEmail) || (isBotlySelf ? 'david@nextaistudios.com' : (config.company && config.company.websiteUrl ? 'contact@' + config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : ''));
+      var _contactBits = [];
+      if (supportPhone) _contactBits.push('at **' + supportPhone + '**');
+      if (supportEmail) _contactBits.push('by email at **' + supportEmail + '**');
+      var _contactLine = _contactBits.length ? ' You can reach us directly ' + _contactBits.join(' or ') + '.' : '';
       var handoverReply = isSaasMode
-        ? "I'd be glad to connect you with our team! You can reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your contact details below and someone will reach out shortly."
-        : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nLeave your phone or email below and we'll call you right back!";
+        ? "I'd be glad to connect you with our team!" + _contactLine + "\n\nLeave your contact details below and someone will reach out shortly."
+        : "I'd be glad to connect you with a licensed advisor!" + _contactLine + "\n\nLeave your phone or email below and we'll call you right back!";
       return {
         intent: 'human_handover',
         action: 'LEAD_CAPTURE',
         inquiredNeed: 'Support callback request',
         leadIntro: isSaasMode
-          ? "I'd be glad to connect you with our team! You can reach us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nTo have a specialist reach out, what's your **full name**?"
-          : "I'd be glad to connect you with a licensed advisor! Call us directly at **" + supportPhone + "** or email **" + supportEmail + "**.\n\nTo have an advisor call you right back, what's your **full name**?",
+          ? "I'd be glad to connect you with our team!" + _contactLine + "\n\nTo have a specialist reach out, what's your **full name**?"
+          : "I'd be glad to connect you with a licensed advisor!" + _contactLine + "\n\nTo have an advisor call you right back, what's your **full name**?",
         reply: handoverReply
       };
     }

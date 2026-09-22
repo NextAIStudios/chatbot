@@ -284,22 +284,11 @@
 
           <div class="contact-info-item">
             <div class="contact-info-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            </div>
-            <div>
-              <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Direct Line</div>
-              <a href="tel:+18005550199" style="font-size: 15px; font-weight: 800; color: #18221c; text-decoration: none;">+1 (800) 555-0199</a>
-              <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Mon–Fri 8am–8pm (EAT &amp; EST)</div>
-            </div>
-          </div>
-
-          <div class="contact-info-item">
-            <div class="contact-info-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Priority Inquiries</div>
-              <a href="mailto:care@botly.ai" style="font-size: 15px; font-weight: 800; color: #18221c; text-decoration: none;">care@botly.ai</a>
+              <a href="mailto:david@nextaistudios.com" style="font-size: 15px; font-weight: 800; color: #18221c; text-decoration: none;">david@nextaistudios.com</a>
               <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Enterprise &amp; Sales: sales@botly.ai</div>
             </div>
           </div>
@@ -329,7 +318,7 @@
 
           <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
             <button type="button" class="prompt-chip" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.2);" onclick="openChatWithPrompt('How much does Botly Pro cost? Is it really $10?')">How much does Botly Pro cost?</button>
-            <button type="button" class="prompt-chip" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.2);" onclick="openChatWithPrompt('Can you support M-Pesa Buy Goods & Paybill checkout?')">M-Pesa Checkout FAQ</button>
+            <button type="button" class="prompt-chip" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.2);" onclick="openChatWithPrompt('How do I activate my bot?')">Activate My Bot</button>
             <button type="button" class="prompt-chip" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.2);" onclick="openChatWithPrompt('I want to deploy a chatbot for my company')">Deploy My Chatbot</button>
           </div>
 
@@ -501,10 +490,16 @@
       goal: 'lead_generation',
       company: {
         name: 'Botly Pro',
-        supportPhone: '+1 (800) 555-0199',
-        supportEmail: 'care@botly.ai',
+        supportEmail: 'david@nextaistudios.com',
         websiteUrl: 'https://botly.ai'
       },
+      customFaqs: [
+        {
+          question: 'How do I activate my bot?',
+          keywords: ['activate', 'activation', 'publish', 'go live', 'pay', 'payment', 'intasend', 'unlock', 'embed code'],
+          answer: "Activating is a one-time $10 per bot. In the Studio, click Copy Embed Code, pay securely through our IntaSend link (M-Pesa or card), then paste your payment reference — we verify and unlock publishing, usually within minutes. Building and previewing are always free. Want me to connect you with our team to get started?"
+        }
+      ],
       bot: {
         name: 'Botly Pro',
         title: 'AI Assistant',
@@ -559,7 +554,39 @@
       var goal = document.getElementById('contact-goal').value;
       var message = document.getElementById('contact-message').value.trim();
 
-      // Store in Botly lead repository for admin and CSV export
+      var goalLabel = goal;
+      try {
+        var goalEl = document.getElementById('contact-goal');
+        if (goalEl && goalEl.options && goalEl.selectedIndex >= 0) goalLabel = goalEl.options[goalEl.selectedIndex].text;
+      } catch (e) {}
+
+      // Send to the admin inbox (Firestore botly_leads -> /admin Inquiries).
+      // Shape mirrors the widget cloud-sync payload and firestore.rules validLead.
+      try {
+        if (typeof firebase !== 'undefined' && window.BOTLY_FIREBASE_CONFIG &&
+            window.BOTLY_FIREBASE_CONFIG.apiKey && window.BOTLY_FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY') {
+          if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(window.BOTLY_FIREBASE_CONFIG);
+          firebase.firestore().collection('botly_leads').add({
+            leadId: 'contact_' + Date.now(),
+            botId: 'contact_page',
+            botName: 'Contact Page',
+            company: String(company).slice(0, 120),
+            name: String(name).slice(0, 120),
+            phone: String(phone).slice(0, 40),
+            email: String(email).slice(0, 120),
+            need: ('Contact inquiry [' + goalLabel + ']: ' + message).slice(0, 1200),
+            goal: String(goal).slice(0, 80),
+            status: 'New',
+            transcript: [{ role: 'user', text: String(message).slice(0, 600) }],
+            pageUrl: (window.location && window.location.href ? String(window.location.href) : '').slice(0, 300),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(function(err) { console.warn('Contact cloud save notice:', err); });
+        }
+      } catch (err) {
+        console.warn('Contact cloud save notice:', err);
+      }
+
+      // Local backup (legacy key) so nothing is lost when offline.
       try {
         var existingLeads = JSON.parse(localStorage.getItem('botly_leads') || '[]');
         existingLeads.unshift({

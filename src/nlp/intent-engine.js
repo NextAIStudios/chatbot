@@ -387,14 +387,19 @@ export class IntentEngine {
 
     // 2. Human Agent / Escalation
     if (/human|agent|representative|advisor|speak\s*to\s*(someone|person)|customer\s*service\s*rep/i.test(lower)) {
-      const phone = this.config.company?.supportPhone || '+1 (800) 555-0199';
-      const email = this.config.company?.supportEmail || (isBotlySelf ? 'care@botly.ai' : (this.config.company?.websiteUrl ? `contact@${this.config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '')}` : 'our support team'));
+      // Only advertise contact details the owner configured — never a fallback number.
+      const phone = this.config.company?.supportPhone || '';
+      const email = this.config.company?.supportEmail || (isBotlySelf ? 'david@nextaistudios.com' : (this.config.company?.websiteUrl ? `contact@${this.config.company.websiteUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '')}` : ''));
+      const contactBits = [];
+      if (phone) contactBits.push(`at **${phone}**`);
+      if (email) contactBits.push(`by email at **${email}**`);
+      const contactLine = contactBits.length ? ` You can reach us directly ${contactBits.join(' or ')}.` : '';
       return {
         intent: 'human_handover',
         confidence: 0.95,
         reply: isSaas
-          ? `I'd be glad to connect you with our team! You can reach us at **${phone}** or email **${email}**.\n\nAlternatively, enter your email or phone below and someone from our team will reach out shortly.`
-          : `I'd be glad to connect you with a licensed underwriter! You can reach our direct priority line at **${phone}** or email **${email}**.\n\nAlternatively, enter your email or phone below and I'll schedule a callback within 15 minutes.`
+          ? `I'd be glad to connect you with our team!${contactLine}\n\nAlternatively, enter your email or phone below and someone from our team will reach out shortly.`
+          : `I'd be glad to connect you with a licensed underwriter!${contactLine}\n\nAlternatively, enter your email or phone below and I'll schedule a callback within 15 minutes.`
       };
     }
 
