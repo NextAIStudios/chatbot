@@ -59,6 +59,25 @@ Also confirm the live domain is authorized: Authentication → Settings →
    its chat transcript. Mark it Resolved, then delete it.
 3. Open `/studio` signed in, save a bot — it appears under **Chatbots**.
 
+## Bot activation & M-Pesa payments ($10 per bot)
+
+Building and previewing are free. Copying the embed code requires an
+**activated** bot:
+
+1. **Set your Till number.** In `demo/customizer.html`, find `BOTLY_BILLING`
+   and set your real M-Pesa Till number, till name and KES amount:
+   `tillNumber`, `tillName`, `kes`. Redeploy after changing it.
+2. **Re-publish the rules.** `firestore.rules` now also covers the
+   `botly_payments` collection and protects the `active` flag (owners
+   cannot self-activate). Paste the file into Firestore → Rules → Publish
+   again after every rules change.
+3. **Flow.** The user clicks Copy Embed Code → pays via the M-Pesa
+   instructions → pastes their confirmation code → you see the claim in
+   `/admin` → **Payments** → **Verify** (checks the code against your
+   M-Pesa statement first!). Approving flips the bot to Active and the
+   user's Copy button unlocks. You can also toggle Active manually in the
+   **Chatbots** tab (e.g. to grandfather existing bots).
+
 ## Notes
 
 - **Local dev:** reads/writes need a real key in `demo/firebase-config.local.js`

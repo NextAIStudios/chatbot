@@ -91,6 +91,7 @@
     <div id="admin-app" style="display:none;">
       <div class="tabs">
         <button class="tab active" id="tab-btn-leads" onclick="switchAdminTab('leads')">💬 Inquiries <span class="count" id="leads-count">0</span></button>
+        <button class="tab" id="tab-btn-payments" onclick="switchAdminTab('payments')">💳 Payments <span class="count" id="payments-count">0</span></button>
         <button class="tab" id="tab-btn-bots" onclick="switchAdminTab('bots')">🤖 Chatbots <span class="count" id="bots-count">0</span></button>
         <button class="tab" id="tab-btn-setup" onclick="switchAdminTab('setup')">⚙️ Setup</button>
       </div>
@@ -102,6 +103,15 @@
           <span class="hint" id="leads-hint">Auto-refreshes every 30s</span>
         </div>
         <div class="card" style="padding: 8px 10px;"><div id="leads-list"><div class="empty">Loading…</div></div></div>
+      </div>
+
+      <div id="tab-payments" style="display:none;">
+        <div class="toolbar">
+          <input type="search" id="payments-search" placeholder="Search owner, bot, M-Pesa code…" oninput="renderPayments()">
+          <button class="btn btn-ghost" onclick="loadPayments(true)">↻ Refresh</button>
+          <span class="hint" id="payments-hint">Verify M-Pesa codes, then approve to activate the bot</span>
+        </div>
+        <div class="card" style="padding: 8px 10px;"><div id="payments-list"><div class="empty">Loading…</div></div></div>
       </div>
 
       <div id="tab-bots" style="display:none;">
@@ -129,6 +139,7 @@
     var adminUser = null;
     var leadsCache = [];
     var botsCache = [];
+    var paymentsCache = [];
     var activeTab = 'leads';
 
     function escapeHtml(s) {
@@ -177,11 +188,12 @@
 
     function switchAdminTab(name) {
       activeTab = name;
-      ['leads', 'bots', 'setup'].forEach(function(t) {
+      ['leads', 'payments', 'bots', 'setup'].forEach(function(t) {
         document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
         document.getElementById('tab-btn-' + t).classList.toggle('active', t === name);
       });
       if (name === 'leads') loadLeads(false);
+      if (name === 'payments') loadPayments(false);
       if (name === 'bots') loadBots(false);
       if (name === 'setup') renderSetup(null);
     }
@@ -267,6 +279,92 @@
       }).catch(function(err) { alert('Delete failed: ' + (err && err.message ? err.message : err)); });
     }
 
+    function botlySanitizeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60); }
+
+    function loadPayments(manual) {
+      if (!adminDb) return;
+      if (manual) document.getElementById('payments-list').innerHTML = '<div class="empty">Loading…</div>';
+      adminDb.collection('botly_payments').orderBy('createdAt', 'desc').limit(150).get()
+        .then(function(snap) {
+          paymentsCache = [];
+          snap.forEach(function(doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            paymentsCache.push(d);
+          });
+          var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
+          document.getElementById('payments-count').textContent = pending;
+          document.getElementById('payments-hint').textContent = 'Updated ' + new Date().toLocaleTimeString() + ' · auto-refresh 30s';
+          renderPayments();
+        })
+        .catch(function(err) {
+          var msg = (err && err.code === 'permission-denied')
+            ? 'Permission denied — re-publish firestore.rules (payments section) with your admin email.'
+            : 'Could not load payments: ' + (err && err.message ? err.message : err);
+          document.getElementById('payments-list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>';
+        });
+    }
+
+    function renderPayments() {
+      var q = (document.getElementById('payments-search').value || '').toLowerCase();
+      var rows = paymentsCache.filter(function(x) {
+        if (!q) return true;
+        return ((x.ownerEmail || '') + ' ' + (x.botName || '') + ' ' + (x.companyName || '') + ' ' + (x.mpesaCode || '') + ' ' + (x.phone || '')).toLowerCase().indexOf(q) !== -1;
+      }).sort(function(a, b) {
+        var ap = (a.status || 'pending') === 'pending' ? 0 : 1;
+        var bp = (b.status || 'pending') === 'pending' ? 0 : 1;
+        return ap - bp;
+      });
+      if (!rows.length) {
+        document.getElementById('payments-list').innerHTML = '<div class="empty">' + (paymentsCache.length ? 'No payments match your search.' : 'No payment claims yet. They appear here when Studio users submit M-Pesa codes.') + '</div>';
+        return;
+      }
+      var html = '<table class="grid"><thead><tr><th>Bot / owner</th><th>M-Pesa code</th><th>Amount</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>';
+      rows.forEach(function(x) {
+        var st = x.status || 'pending';
+        var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>');
+        var actions = (st === 'pending')
+          ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✓ Verify</button> ' +
+            '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="rejectPayment(\'' + x._id + '\')">✕</button>'
+          : '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
+        html += '<tr>' +
+          '<td><strong>' + escapeHtml(x.botName || '—') + '</strong><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.ownerEmail || '') + ' · ' + escapeHtml(x.companyName || '') + '</span></td>' +
+          '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span></td>' +
+          '<td style="white-space:nowrap;">$' + escapeHtml(x.amountUSD != null ? x.amountUSD : '?') + '<br><span style="color:var(--muted);font-size:11.5px;">KES ' + escapeHtml(x.amountKES != null ? x.amountKES : '?') + '</span></td>' +
+          '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(x.createdAt)) + '</td>' +
+          '<td>' + pill + '</td>' +
+          '<td style="white-space:nowrap;">' + actions + '</td>' +
+        '</tr>';
+      });
+      document.getElementById('payments-list').innerHTML = html + '</tbody></table>';
+    }
+
+    function verifyPayment(id, ownerUid, botId) {
+      if (!adminDb || !confirm('Approve this payment and ACTIVATE the bot?')) return;
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var batch = adminDb.batch();
+      batch.update(adminDb.collection('botly_payments').doc(id), { status: 'approved', decidedAt: ts });
+      batch.set(adminDb.collection('botly_bots').doc(botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId)),
+        { active: true, activatedAt: ts, ownerUid: ownerUid, botId: botId }, { merge: true });
+      batch.commit().then(function() {
+        paymentsCache.forEach(function(x) { if (x._id === id) { x.status = 'approved'; x.decidedAt = new Date(); } });
+        var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
+        document.getElementById('payments-count').textContent = pending;
+        renderPayments();
+        loadBots(false);
+      }).catch(function(err) { alert('Verify failed: ' + (err && err.message ? err.message : err)); });
+    }
+    function rejectPayment(id) {
+      if (!adminDb || !confirm('Reject this payment claim?')) return;
+      adminDb.collection('botly_payments').doc(id).update({ status: 'rejected', decidedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .then(function() {
+          paymentsCache.forEach(function(x) { if (x._id === id) { x.status = 'rejected'; x.decidedAt = new Date(); } });
+          var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
+          document.getElementById('payments-count').textContent = pending;
+          renderPayments();
+        }).catch(function(err) { alert('Reject failed: ' + (err && err.message ? err.message : err)); });
+    }
+
     function loadBots(manual) {
       if (!adminDb) return;
       if (manual) document.getElementById('bots-list').innerHTML = '<div class="empty">Loading…</div>';
@@ -300,7 +398,7 @@
         document.getElementById('bots-list').innerHTML = '<div class="empty">' + (botsCache.length ? 'No chatbots match your search.' : 'No chatbots synced yet. Signed-in Studio users sync automatically on save.') + '</div>';
         return;
       }
-      var html = '<table class="grid"><thead><tr><th>Owner</th><th>Chatbot</th><th>Company</th><th>Functions</th><th>Knowledge</th><th>API</th><th>Updated</th></tr></thead><tbody>';
+      var html = '<table class="grid"><thead><tr><th>Owner</th><th>Chatbot</th><th>Company</th><th>Functions</th><th>Knowledge</th><th>API</th><th>Status</th><th>Updated</th></tr></thead><tbody>';
       rows.forEach(function(b) {
         var purposes = (b.purposes || []).map(function(p) { return '<span class="pill blue">' + escapeHtml(p) + '</span>'; }).join('') || '—';
         html += '<tr>' +
@@ -310,10 +408,22 @@
           '<td>' + purposes + '</td>' +
           '<td style="white-space:nowrap;">Q:' + (b.faqCount || 0) + ' D:' + (b.docCount || 0) + ' W:' + (b.webCount || 0) + '</td>' +
           '<td>' + (b.apiEnabled ? '<span class="pill green">live</span>' : '<span class="pill grey">off</span>') + '</td>' +
+          '<td style="white-space:nowrap;">' + (b.active ? '<span class="pill green">active</span>' : '<span class="pill grey">locked</span>') +
+            '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" onclick="toggleBotActive(\'' + b._id + '\',' + (b.active ? 'false' : 'true') + ')">' + (b.active ? 'Deactivate' : 'Activate') + '</button></td>' +
           '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(b.updatedAt)) + '</td>' +
         '</tr>';
       });
       document.getElementById('bots-list').innerHTML = html + '</tbody></table>';
+    }
+
+    function toggleBotActive(docId, to) {
+      if (!adminDb || !confirm((to ? 'Activate' : 'Deactivate') + ' this bot?')) return;
+      adminDb.collection('botly_bots').doc(docId).set(
+        { active: to, activatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+        .then(function() {
+          botsCache.forEach(function(b) { if (b._id === docId) b.active = to; });
+          renderBots();
+        }).catch(function(err) { alert('Update failed: ' + (err && err.message ? err.message : err)); });
     }
 
     function renderSetup(probe) {
@@ -330,7 +440,7 @@
         step(probe === true, '<strong>Firestore reachable &amp; rules deployed</strong>' + (probe === true ? ' — reads succeeded.' : (probe === false ? ' — permission denied. Deploy <code class="inline">firestore.rules</code> with your admin email.' : ' — checking…')));
       document.getElementById('setup-list').innerHTML = html;
       if (probe === null && adminDb) {
-        adminDb.collection('botly_bots').limit(1).get()
+        Promise.all([adminDb.collection('botly_bots').limit(1).get(), adminDb.collection('botly_payments').limit(1).get()])
           .then(function() { if (activeTab === 'setup') renderSetup(true); })
           .catch(function() { if (activeTab === 'setup') renderSetup(false); });
       }
@@ -368,11 +478,13 @@
         document.getElementById('admin-who').textContent = user.email || '';
         try { adminDb = firebase.firestore(); } catch (e) { adminDb = null; }
         loadLeads(false);
+        loadPayments(false);
         loadBots(false);
       });
       setInterval(function() {
         if (!adminUser || !adminDb) return;
         if (activeTab === 'leads') loadLeads(false);
+        if (activeTab === 'payments') loadPayments(false);
         if (activeTab === 'bots') loadBots(false);
       }, 30000);
     })();

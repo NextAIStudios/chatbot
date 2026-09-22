@@ -1358,16 +1358,6 @@
               <span class="p-desc">Answers FAQs instantly &amp; offers friendly human team handover.</span>
             </div>
 
-            <!-- Card 3: Live Product & Catalog Discovery -->
-            <div class="purpose-card" id="purpose-payment_checkout" onclick="togglePurpose('payment_checkout')">
-              <div class="purpose-card-top">
-                <span class="p-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
-                <span class="purpose-check-badge">✓</span>
-              </div>
-              <span class="p-title">Product &amp; Catalog Discovery</span>
-              <span class="p-desc">Live BeautifulSoup scraping extracts in-stock products, prices &amp; direct store links.</span>
-            </div>
-
             <!-- Card 4: Book Calls -->
             <div class="purpose-card" id="purpose-consultation_booking" onclick="togglePurpose('consultation_booking')">
               <div class="purpose-card-top">
@@ -1382,68 +1372,10 @@
           <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 14px; border: 1px solid #e2e8f0;">
             <div style="font-size: 11.5px; font-weight: 800; color: #18221c; margin-bottom: 3px;">Combined Strategy:</div>
             <div id="purpose-preview-text" style="font-size: 12px; color: #475569; line-height: 1.45;">
-              Your bot will answer visitor questions 24/7, search your live product catalog dynamically, capture prospect contact details, and route qualified inquiries directly to your team.
+              Your bot will answer visitor questions 24/7, capture prospect contact details, and route qualified inquiries directly to your team.
             </div>
           </div>
 
-          <!-- Live Product Catalog & Web Scraping Setup (Active when Product & Catalog Discovery is selected) -->
-          <div id="checkout-settings-section" style="margin-top: 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; display: flex; align-items: center; justify-content: center; color: #16a34a;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                </div>
-                <div>
-                  <h4 style="margin: 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">Live Product Catalog &amp; Web Scraping Setup</h4>
-                  <p style="margin: 2px 0 0 0; font-size: 11.5px; color: #64748b;">
-                    Extracts real-time in-stock products, prices, discounts, ratings &amp; direct store links.
-                  </p>
-                </div>
-              </div>
-              <span style="font-size: 10px; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #10b981; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">🟢 Python Scraper Active</span>
-            </div>
-
-            <!-- Target Merchant Store URL & Scraping Mode -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-              <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="margin-bottom: 4px;"><span>Target Store Search URL / Merchant Domain</span></label>
-                <input type="url" id="wiz-catalog-store-url" class="wiz-input" placeholder="https://www.jumia.co.ke or https://mystore.com" value="https://www.jumia.co.ke" oninput="handleCatalogConfigChange()">
-                <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
-                  Supports Jumia Kenya, Shopify, WooCommerce, or custom ecommerce catalog search URLs.
-                </small>
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
-                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">⚡ Engine Microservice</div>
-                  <div style="font-size: 11.5px; color: #059669; font-weight: 700;">Python 3 + BeautifulSoup4</div>
-                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Running on /api/scrape-products</div>
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
-                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">🔗 Link Experience</div>
-                  <div style="font-size: 11.5px; color: #0284c7; font-weight: 700;">Direct Store Links [↗]</div>
-                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Opens official product page</div>
-                </div>
-              </div>
-
-              <!-- Interactive Test Scraper Widget -->
-              <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px;">
-                <label class="form-label" style="margin-bottom: 6px;"><span>⚡ Test Live Scraper in Real-Time</span></label>
-                <div style="display: flex; gap: 8px;">
-                  <input type="text" id="wiz-test-scrape-q" class="wiz-input" placeholder="Type a product (e.g. milk, blender, watch, shoes)" value="milk" style="flex: 1;" onkeydown="if(event.key==='Enter') testLiveCatalogScraper()">
-                  <button type="button" id="btn-test-scrape-go" onclick="testLiveCatalogScraper()" class="btn-w-next" style="padding: 0 14px; font-size: 12px; background: #0284c7; border-radius: 8px; white-space: nowrap;">
-                    Scrape Now ⚡
-                  </button>
-                </div>
-                <div id="test-scrape-results-box" style="margin-top: 10px; display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 11.5px; color: #334155; max-height: 140px; overflow-y: auto;">
-                </div>
-              </div>
-            </div>
-
-            <div style="font-size: 11.5px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
-              <strong>🛍️ Authentic Store Discovery:</strong> When customers ask for products (e.g. <em>"i want to buy milk"</em> or <em>"do you have blenders"</em>), the chatbot queries your live merchant catalog with BeautifulSoup, extracts authentic in-stock prices and customer ratings, and provides 1-click links directly to the official product page.
-            </div>
-          </div>
         </div>
 
         <!-- ==========================================
@@ -1895,6 +1827,72 @@
               <span style="background: #18221c; color: #9be553; font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 800;">HUB</span>
             </button>
           </div>
+          <!-- Live Catalog enable (moved out of Step 1: Goal) -->
+          <div style="margin-top: 16px; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 12px 14px;">
+            <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 13px; font-weight: 800; color: #0f172a;">
+              <input type="checkbox" id="catalog-enable-chk" onchange="togglePurpose('payment_checkout')" style="width: 16px; height: 16px; accent-color: #16a34a;">
+              🛍️ Enable Live Product Catalog for this bot
+            </label>
+            <div style="font-size: 11.5px; color: #475569; margin-top: 4px; line-height: 1.5;">BeautifulSoup scraping extracts in-stock products, prices &amp; direct store links when customers ask for products.</div>
+          </div>
+          <!-- Live Product Catalog & Web Scraping Setup (Teach Bot step; enabled via checkbox or catalog template) -->
+          <div id="checkout-settings-section" style="margin-top: 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; display: flex; align-items: center; justify-content: center; color: #16a34a;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <div>
+                  <h4 style="margin: 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">Live Product Catalog &amp; Web Scraping Setup</h4>
+                  <p style="margin: 2px 0 0 0; font-size: 11.5px; color: #64748b;">
+                    Extracts real-time in-stock products, prices, discounts, ratings &amp; direct store links.
+                  </p>
+                </div>
+              </div>
+              <span style="font-size: 10px; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #10b981; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">🟢 Python Scraper Active</span>
+            </div>
+
+            <!-- Target Merchant Store URL & Scraping Mode -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="margin-bottom: 4px;"><span>Target Store Search URL / Merchant Domain</span></label>
+                <input type="url" id="wiz-catalog-store-url" class="wiz-input" placeholder="https://www.jumia.co.ke or https://mystore.com" value="https://www.jumia.co.ke" oninput="handleCatalogConfigChange()">
+                <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
+                  Supports Jumia Kenya, Shopify, WooCommerce, or custom ecommerce catalog search URLs.
+                </small>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">⚡ Engine Microservice</div>
+                  <div style="font-size: 11.5px; color: #059669; font-weight: 700;">Python 3 + BeautifulSoup4</div>
+                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Running on /api/scrape-products</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 3px;">🔗 Link Experience</div>
+                  <div style="font-size: 11.5px; color: #0284c7; font-weight: 700;">Direct Store Links [↗]</div>
+                  <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Opens official product page</div>
+                </div>
+              </div>
+
+              <!-- Interactive Test Scraper Widget -->
+              <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px;">
+                <label class="form-label" style="margin-bottom: 6px;"><span>⚡ Test Live Scraper in Real-Time</span></label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="wiz-test-scrape-q" class="wiz-input" placeholder="Type a product (e.g. milk, blender, watch, shoes)" value="milk" style="flex: 1;" onkeydown="if(event.key==='Enter') testLiveCatalogScraper()">
+                  <button type="button" id="btn-test-scrape-go" onclick="testLiveCatalogScraper()" class="btn-w-next" style="padding: 0 14px; font-size: 12px; background: #0284c7; border-radius: 8px; white-space: nowrap;">
+                    Scrape Now ⚡
+                  </button>
+                </div>
+                <div id="test-scrape-results-box" style="margin-top: 10px; display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 11.5px; color: #334155; max-height: 140px; overflow-y: auto;">
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size: 11.5px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; line-height: 1.45;">
+              <strong>🛍️ Authentic Store Discovery:</strong> When customers ask for products (e.g. <em>"i want to buy milk"</em> or <em>"do you have blenders"</em>), the chatbot queries your live merchant catalog with BeautifulSoup, extracts authentic in-stock prices and customer ratings, and provides 1-click links directly to the official product page.
+            </div>
+          </div>
         </div>
 
         <!-- ==========================================
@@ -1904,6 +1902,11 @@
           <div class="panel-header">
             <h2 class="panel-title">5. Ready to Ship!</h2>
             <p class="panel-subtitle">Copy this 2-line snippet and paste it right before &lt;/body&gt; in your website.</p>
+          </div>
+
+          <!-- Activation banner (paywall status; rendered by renderActivationBanner) -->
+          <div id="ship-activation-banner" style="border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.55; margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569;">
+            Checking activation…
           </div>
 
           <!-- Big Prominent Copy Button -->
@@ -2864,7 +2867,7 @@ window.addEventListener('botly:payment', async (event) => {
     var goalLabels = {
       lead_generation: 'Leads & Sales',
       customer_support: '24/7 Support',
-      payment_checkout: 'Product Discovery',
+      payment_checkout: 'Catalog & Checkout',
       consultation_booking: 'Book Calls & Demos'
     };
 
@@ -2954,7 +2957,7 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (n === 5) buildDeployCode();
+      if (n === 5) { buildDeployCode(); renderActivationBanner(null); }
 
       var activePill = document.getElementById('wstep-' + n);
       if (activePill && activePill.scrollIntoView) {
@@ -2990,7 +2993,7 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     function selectAllGoals() {
-      wizardState.purposes = ['lead_generation', 'customer_support', 'payment_checkout', 'consultation_booking'];
+      wizardState.purposes = ['lead_generation', 'customer_support', 'consultation_booking'];
       updatePurposeUI();
       applyBotLiveConfig();
     }
@@ -3002,7 +3005,7 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     function updatePurposeUI() {
-      var allKeys = ['lead_generation', 'customer_support', 'payment_checkout', 'consultation_booking'];
+      var allKeys = ['lead_generation', 'customer_support', 'consultation_booking'];
       allKeys.forEach(function(k) {
         var card = document.getElementById('purpose-' + k);
         if (card) {
@@ -3023,7 +3026,6 @@ window.addEventListener('botly:payment', async (event) => {
         descEl.innerHTML = '<strong>' + wizardState.purposes.length + ' Active Functions (' + activeNames + '):</strong><br>' +
           'Your bot handles inquiries across all selected roles — answering questions 24/7' +
           (wizardState.purposes.indexOf('lead_generation') !== -1 ? ', capturing customer leads' : '') +
-          (wizardState.purposes.indexOf('payment_checkout') !== -1 ? ', searching live store products & catalog deals' : '') +
           (wizardState.purposes.indexOf('consultation_booking') !== -1 ? ', and booking consultation meetings' : '') + '.';
       }
 
@@ -3031,6 +3033,8 @@ window.addEventListener('botly:payment', async (event) => {
       if (chkSec) {
         chkSec.style.display = (wizardState.purposes.indexOf('payment_checkout') !== -1) ? 'block' : 'none';
       }
+      var catChk = document.getElementById('catalog-enable-chk');
+      if (catChk) catChk.checked = (wizardState.purposes.indexOf('payment_checkout') !== -1);
     }
 
     function handleCatalogConfigChange() {
@@ -5136,6 +5140,209 @@ window.addEventListener('botly:payment', async (event) => {
       if (el) el.textContent = code;
     }
 
+    // ============================================================
+    // BOTLY BILLING: one-time activation per bot (M-Pesa, manual verify).
+    // Building + previewing is free; Copy Embed Code requires an
+    // activated bot. Owner: SET YOUR REAL TILL NUMBER + KES AMOUNT.
+    // ============================================================
+    var BOTLY_BILLING = {
+      method: 'M-Pesa',
+      tillNumber: '123456',   // TODO(owner): your M-Pesa Buy Goods Till number
+      tillName: 'Botly Pro',  // TODO(owner): till/account name shown to payers
+      usd: 10,
+      kes: 1290               // TODO(owner): current KES equivalent of $10
+    };
+
+    function botlyBillingDocId(botId) {
+      var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+      if (!user || !user.uid || !botId) return null;
+      return String(user.uid).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) + '__' + String(botId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
+    }
+    function botlyCloudDb() {
+      try {
+        if (typeof window === 'undefined' || !window.firebase || !window.firebase.firestore) return null;
+        var cfg = window.BOTLY_FIREBASE_CONFIG;
+        if (!cfg || !cfg.apiKey || cfg.apiKey === 'YOUR_API_KEY') return null;
+        try {
+          if (!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(cfg);
+        } catch (initErr) { try { window.firebase.app(); } catch (e2) { return null; } }
+        return window.firebase.firestore();
+      } catch (e) { return null; }
+    }
+    function botlyActiveCacheKey(botId) { return 'botly_bot_active__' + botId; }
+    function botlyActiveBotId() {
+      try {
+        if (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId) return BotlyChatbotManager.getActiveBotId();
+      } catch (e) {}
+      return 'bot_default';
+    }
+
+    // Resolves { active: bool, source: 'cloud'|'cache'|'none' }. Never throws.
+    function botlyCheckActivation(botId, cb) {
+      var done = function(active, source) { try { cb({ active: !!active, source: source }); } catch (e) {} };
+      var cached = null;
+      try { cached = localStorage.getItem(botlyActiveCacheKey(botId)); } catch (e) {}
+      var db = botlyCloudDb();
+      var docId = botlyBillingDocId(botId);
+      if (!db || !docId) { done(cached === '1', cached === '1' ? 'cache' : 'none'); return; }
+      db.collection('botly_bots').doc(docId).get().then(function(snap) {
+        var active = !!(snap && snap.exists && snap.data() && snap.data().active === true);
+        try {
+          if (active) localStorage.setItem(botlyActiveCacheKey(botId), '1');
+          else localStorage.removeItem(botlyActiveCacheKey(botId));
+        } catch (e) {}
+        done(active, 'cloud');
+      }).catch(function() { done(cached === '1', cached === '1' ? 'cache' : 'none'); });
+    }
+
+    function renderActivationBanner(state) {
+      var banner = document.getElementById('ship-activation-banner');
+      if (!banner) return;
+      if (!state) {
+        banner.style.background = '#f8fafc'; banner.style.border = '1.5px solid #e2e8f0'; banner.style.color = '#475569';
+        banner.textContent = 'Checking activation…';
+        botlyCheckActivation(botlyActiveBotId(), function(res) { renderActivationBanner(res); });
+        return;
+      }
+      if (state.active) {
+        banner.style.background = '#f0fdf4'; banner.style.border = '1.5px solid #bbf7d0'; banner.style.color = '#14532d';
+        banner.innerHTML = '✅ <strong>Activated</strong> — this bot is paid and live-ready.' +
+          (state.source === 'cache' ? ' <span style="font-size:11.5px;">(offline cache)</span>' : '') +
+          ' <button type="button" onclick="renderActivationBanner(null)" style="margin-left:8px;font-size:11.5px;font-weight:800;background:#fff;border:1.5px solid #bbf7d0;border-radius:8px;padding:3px 10px;cursor:pointer;">↻</button>';
+      } else {
+        banner.style.background = '#fffbeb'; banner.style.border = '1.5px solid #fcd34d'; banner.style.color = '#78350f';
+        banner.innerHTML = '🔒 <strong>Not activated.</strong> One-time <strong>$' + BOTLY_BILLING.usd + '</strong> via ' + escapeHtml(BOTLY_BILLING.method) + ' to publish this bot. ' +
+          '<button type="button" onclick="openPaywallModal()" style="margin-left:8px;font-size:12px;font-weight:800;background:#18221c;color:#fff;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;">Activate now</button> ' +
+          '<button type="button" onclick="renderActivationBanner(null)" title="Re-check after approval" style="font-size:12px;font-weight:800;background:#fff;border:1.5px solid #fcd34d;border-radius:8px;padding:4px 12px;cursor:pointer;">↻ Check status</button>';
+      }
+    }
+
+    var botlyPendingCopyAfterActivation = false;
+
+    function openPaywallModal(opts) {
+      opts = opts || {};
+      if (opts.pendingCopy) botlyPendingCopyAfterActivation = true;
+      if (window.BotlyAuth && !BotlyAuth.isAuthenticated()) {
+        BotlyAuth.requireAuth(function() { openPaywallModal(opts); }, 'Sign in to activate your bot.');
+        return;
+      }
+      var old = document.getElementById('paywall-modal');
+      if (old) old.remove();
+      var overlay = document.createElement('div');
+      overlay.id = 'paywall-modal';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+      overlay.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+            '<h3 style="margin:0;font-size:17px;font-weight:800;color:#0f172a;">🔒 Activate your bot</h3>' +
+            '<button type="button" onclick="closePaywallModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer;">✕</button>' +
+          '</div>' +
+          '<div id="paywall-body"><div style="color:#64748b;font-size:13px;padding:14px 0;">Checking activation…</div></div>' +
+        '</div>';
+      overlay.addEventListener('click', function(e) { if (e.target === overlay) closePaywallModal(); });
+      document.body.appendChild(overlay);
+      botlyCheckActivation(botlyActiveBotId(), function(res) {
+        if (res.active) renderPaywallDone();
+        else renderPaywallForm();
+      });
+    }
+    function closePaywallModal() {
+      var old = document.getElementById('paywall-modal');
+      if (old) old.remove();
+    }
+    function renderPaywallDone() {
+      var body = document.getElementById('paywall-body');
+      if (!body) return;
+      body.innerHTML =
+        '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;font-size:13.5px;color:#14532d;line-height:1.6;">' +
+          '✅ <strong>This bot is activated!</strong><br>You can now copy the embed code and go live.' +
+        '</div>' +
+        '<button type="button" onclick="closePaywallModal(); doCopyEmbed();" style="width:100%;margin-top:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">Copy Embed Code</button>';
+      renderActivationBanner({ active: true, source: 'cloud' });
+      if (botlyPendingCopyAfterActivation) {
+        botlyPendingCopyAfterActivation = false;
+        closePaywallModal();
+        doCopyEmbed();
+      }
+    }
+    function renderPaywallForm() {
+      var body = document.getElementById('paywall-body');
+      if (!body) return;
+      var botName = '';
+      try { botName = wizardState.botName || ''; } catch (e) {}
+      body.innerHTML =
+        '<p style="font-size:13px;color:#475569;line-height:1.6;margin:0 0 12px 0;">Publishing <strong>' + escapeHtml(botName || 'this bot') + '</strong> costs a one-time <strong>$' + BOTLY_BILLING.usd + '</strong> (KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '). Building and previewing stay free forever.</p>' +
+        '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;font-size:13px;line-height:1.7;color:#0f172a;margin-bottom:12px;">' +
+          '<strong>1.</strong> On ' + escapeHtml(BOTLY_BILLING.method) + ', <strong>Send Money / Buy Goods</strong> to:<br>' +
+          '<div style="font-size:20px;font-weight:800;letter-spacing:0.5px;margin:4px 0;">Till ' + escapeHtml(BOTLY_BILLING.tillNumber) + '</div>' +
+          '<div style="color:#64748b;font-size:12.5px;">' + escapeHtml(BOTLY_BILLING.tillName) + ' · KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '</div>' +
+          '<strong>2.</strong> Paste your ' + escapeHtml(BOTLY_BILLING.method) + ' confirmation code below and submit.' +
+        '</div>' +
+        '<div id="paywall-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:9px 11px;font-size:12.5px;margin-bottom:10px;"></div>' +
+        '<label style="font-size:12px;font-weight:800;color:#334155;">M-Pesa confirmation code</label>' +
+        '<input id="paywall-code" type="text" placeholder="e.g. UIC8E69GLQ" style="width:100%;margin:5px 0 10px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
+        '<label style="font-size:12px;font-weight:800;color:#334155;">Your M-Pesa phone (for verification)</label>' +
+        '<input id="paywall-phone" type="tel" placeholder="e.g. 0712 345 678" style="width:100%;margin:5px 0 12px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
+        '<button type="button" onclick="submitPaymentClaim()" style="width:100%;background:#18221c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">I\u2019ve paid — Submit for verification</button>' +
+        '<button type="button" id="paywall-recheck" style="width:100%;margin-top:8px;background:#fff;color:#18221c;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;">↻ I\u2019ve been approved — check again</button>';
+      var recheck = document.getElementById('paywall-recheck');
+      if (recheck) recheck.onclick = function() {
+        botlyCheckActivation(botlyActiveBotId(), function(r) {
+          if (r.active) { renderPaywallDone(); }
+          else {
+            var e = document.getElementById('paywall-error');
+            if (e) { e.textContent = 'Still pending — we verify payments shortly after you submit the code above.'; e.style.display = 'block'; }
+          }
+        });
+      };
+    }
+    function renderPaywallPending() {
+      var body = document.getElementById('paywall-body');
+      if (!body) return;
+      body.innerHTML =
+        '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:14px;font-size:13.5px;color:#78350f;line-height:1.6;">' +
+          '⏳ <strong>Claim received!</strong><br>We verify M-Pesa payments shortly. This window and your Copy button unlock automatically once approved — just hit check again.' +
+        '</div>' +
+        '<button type="button" id="paywall-check2" style="width:100%;margin-top:12px;background:#18221c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">↻ Check approval status</button>';
+      var btn = document.getElementById('paywall-check2');
+      if (btn) btn.onclick = function() {
+        botlyCheckActivation(botlyActiveBotId(), function(r) {
+          if (r.active) renderPaywallDone(); else renderPaywallPending();
+        });
+      };
+    }
+    function submitPaymentClaim() {
+      var errBox = document.getElementById('paywall-error');
+      var showErr = function(m) { if (errBox) { errBox.textContent = m; errBox.style.display = 'block'; } };
+      var codeEl = document.getElementById('paywall-code');
+      var phoneEl = document.getElementById('paywall-phone');
+      var code = codeEl ? codeEl.value.trim().toUpperCase() : '';
+      var phone = phoneEl ? phoneEl.value.trim() : '';
+      if (code.length < 6) { showErr('Enter the M-Pesa confirmation code from your payment SMS.'); return; }
+      var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+      if (!user || !user.uid) { showErr('Please sign in first.'); return; }
+      var db = botlyCloudDb();
+      if (!db) { showErr('Could not reach the server. Check your connection and try again.'); return; }
+      var botId = botlyActiveBotId();
+      var company = '', botName = '';
+      try { company = wizardState.companyName || ''; botName = wizardState.botName || ''; } catch (e) {}
+      db.collection('botly_payments').add({
+        ownerUid: user.uid,
+        ownerEmail: user.email || null,
+        botId: botId,
+        companyName: String(company).slice(0, 120),
+        botName: String(botName).slice(0, 120),
+        mpesaCode: code.slice(0, 40),
+        phone: String(phone).slice(0, 40),
+        amountUSD: BOTLY_BILLING.usd,
+        amountKES: BOTLY_BILLING.kes,
+        status: 'pending',
+        createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function() { renderPaywallPending(); }).catch(function(err) {
+        showErr('Submit failed: ' + (err && err.message ? err.message : 'please try again.'));
+      });
+    }
+
     function copyFinalEmbed() {
       if (window.BotlyAuth && !BotlyAuth.isAuthenticated()) {
         BotlyAuth.requireAuth(function() {
@@ -5146,7 +5353,15 @@ window.addEventListener('botly:payment', async (event) => {
       executeCopyFinalEmbed();
     }
 
+    // Publish gate: copying requires an activated (paid) bot.
     function executeCopyFinalEmbed() {
+      botlyCheckActivation(botlyActiveBotId(), function(res) {
+        if (res.active) { doCopyEmbed(); }
+        else { openPaywallModal({ pendingCopy: true }); }
+      });
+    }
+
+    function doCopyEmbed() {
       buildDeployCode();
       var el = document.getElementById('deploy-code-preview');
       if (!el) return;
@@ -5924,6 +6139,7 @@ window.addEventListener('botly:payment', async (event) => {
         setActiveBotId(target.id);
         loadBotDataIntoStudio(target);
         renderList();
+        try { renderActivationBanner(null); } catch (e) {}
 
         // If on mobile, close mobile overlay
         if (window.innerWidth <= 900) {

@@ -35,12 +35,30 @@ service cloud.firestore {
 
     // Studio bot registry (summaries only, no knowledge content).
     // Signed-in owners write their own rows; admins read everything.
+    // Only admins can flip `active` (request.resource is post-write state,
+    // so owner merge-writes that don't touch `active` still pass).
     match /botly_bots/{docId} {
-      allow create, update: if request.auth != null
-        && request.resource.data.ownerUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.get('active', false) == false;
+      allow update: if isAdmin() || (request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.get('active', false) == resource.data.get('active', false));
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow delete: if isAdmin();
+    }
+
+    // M-Pesa activation claims. Owners file + read their own claims;
+    // only admins triage (approving also flips the bot's `active` flag).
+    match /botly_payments/{claimId} {
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
   }
 }
