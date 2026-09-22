@@ -18,10 +18,10 @@ Writes are fire-and-forget and never break the chatbot if Cloud is unavailable.
 ## Step 2 — Deploy the security rules
 
 1. Open Firestore → **Rules** tab.
-2. Replace the whole file with the contents of `firestore.rules` in this repo.
-3. **Before publishing:** replace `admin@botlypro.online` with your real admin
-   email address (add more with commas if needed).
-4. Click **Publish**.
+2. Replace the whole file with the contents of `firestore.rules` in this repo
+   (already allowlists `muindidiego@gmail.com` — add more admin emails with
+   commas inside the brackets if needed).
+3. Click **Publish**.
 
 What the rules do:
 
@@ -34,11 +34,11 @@ What the rules do:
 In `admin.html`, set your admin email(s):
 
 ```js
-var ADMIN_EMAILS = window.BOTLY_ADMIN_EMAILS || ['you@yourcompany.com'];
+var ADMIN_EMAILS = window.BOTLY_ADMIN_EMAILS || ['muindidiego@gmail.com'];
 ```
 
-(Tip: to avoid committing the address, define `window.BOTLY_ADMIN_EMAILS` in
-`demo/firebase-config.local.js`, which is gitignored — it loads before us.)
+Add further admins by extending both this list and the email list in
+`firestore.rules`, then redeploying both.
 
 ## Step 4 — Make sure sign-in works
 

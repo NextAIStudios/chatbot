@@ -1,16 +1,16 @@
 rules_version = '2';
 
 // Botly Cloud Inbox + Bot Registry — see ADMIN_SETUP.md.
-// 1. Replace admin@botlypro.online with your real admin email(s) below
-//    (and mirror them in admin.html -> ADMIN_EMAILS).
-// 2. Firebase console -> Firestore Database -> Rules -> paste this -> Publish.
+// Admin: muindidiego@gmail.com (add more emails inside the
+// brackets below + mirror them in admin.html -> ADMIN_EMAILS).
+// Deploy: Firebase console -> Firestore Database -> Rules -> paste -> Publish.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email in ['admin@botlypro.online'];
+        && request.auth.token.email in ['muindidiego@gmail.com'];
     }
 
     // Landing/contact chatbot inquiries. Visitors are NOT signed in, so
