@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Botly Pro Docs — Sandbox Developer Integration Guide</title>
   <meta name="description" content="Complete developer documentation for Botly Pro — the plug-and-play AI chatbot platform. Embed in 2 lines of code.">
-  <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
-  <link rel="stylesheet" href="../dist/insurance-chatbot.css?v=20260921">
+  <link rel="icon" type="image/svg+xml" href="/demo/botly-icon.svg">
+  <link rel="stylesheet" href="/dist/insurance-chatbot.css?v=20260922">
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -328,7 +328,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="toggle-text">Menu</span>
     </button>
-    <a href="../index.html" class="docs-logo"><img src="botly-logo.svg" alt="Botly Pro"></a>
+    <a href="/" class="docs-logo"><img src="/demo/botly-logo.svg" alt="Botly Pro"></a>
     <span class="docs-badge">Sandbox Docs</span>
   </div>
   <div class="docs-search">
@@ -337,10 +337,10 @@
     <span style="margin-left:auto;font-size:11px;background:#e2e8f0;padding:1px 6px;border-radius:4px;font-weight:600;">Ctrl+K</span>
   </div>
   <div class="docs-topbar-right">
-    <a href="../index.html" class="topbar-link">Home</a>
-    <a href="customizer.html" class="topbar-link">Sandbox Studio</a>
-    <a href="../studio" class="topbar-link">Webhook APIs</a>
-    <a href="customizer.html" class="topbar-cta">Open Studio</a>
+    <a href="/" class="topbar-link">Home</a>
+    <a href="/studio" class="topbar-link">Sandbox Studio</a>
+    <a href="/studio?view=webhooks" class="topbar-link">Webhook APIs</a>
+    <a href="/studio" class="topbar-cta">Open Studio</a>
   </div>
 </header>
 
@@ -352,7 +352,7 @@
     <!-- Mobile Drawer Header -->
     <div class="sidebar-mobile-header">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <img src="botly-icon.svg" width="22" height="22" alt="Botly">
+        <img src="/demo/botly-icon.svg" width="22" height="22" alt="Botly">
         <span style="font-weight: 800; font-size: 14px; color: var(--brand);">Docs Menu</span>
       </div>
       <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close menu">✕</button>
@@ -360,15 +360,15 @@
 
     <!-- Mobile Quick Nav Navigation -->
     <div class="sidebar-mobile-nav">
-      <a href="customizer.html" class="sidebar-mobile-nav-btn primary">
+      <a href="/studio" class="sidebar-mobile-nav-btn primary">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
         Studio
       </a>
-      <a href="../studio" class="sidebar-mobile-nav-btn">
+      <a href="/studio?view=webhooks" class="sidebar-mobile-nav-btn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         Webhooks
       </a>
-      <a href="../index.html" class="sidebar-mobile-nav-btn">Home</a>
+      <a href="/" class="sidebar-mobile-nav-btn">Home</a>
     </div>
 
     <!-- Real-time mobile topic filter -->
@@ -438,7 +438,7 @@
 
       <div class="callout callout-tip">
         <div class="callout-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-        <div class="callout-text"><strong>Live Interactive Studio:</strong> Test, brand, and configure your chatbot visually inside the <a href="customizer.html">Botly Pro Customizer Studio</a>, then copy your production embed code in 1 click.</div>
+        <div class="callout-text"><strong>Live Interactive Studio:</strong> Test, brand, and configure your chatbot visually inside the <a href="/studio">Botly Pro Customizer Studio</a>, then copy your production embed code in 1 click.</div>
       </div>
     </div>
 
@@ -627,7 +627,7 @@
 
     <div class="callout callout-info">
       <div class="callout-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-      <div class="callout-text">In the <a href="customizer.html">Botly Pro Customizer Studio</a> (<strong>Step 4: Teach Your Bot &gt; Website Link</strong>), paste your website link to scan the sitemap, check/uncheck pages to train, and auto-tune the bot's greeting and quick replies in 1 click.</div>
+      <div class="callout-text">In the <a href="/studio">Botly Pro Customizer Studio</a> (<strong>Step 4: Teach Your Bot &gt; Website Link</strong>), paste your website link to scan the sitemap, check/uncheck pages to train, and auto-tune the bot's greeting and quick replies in 1 click.</div>
     </div>
 
     <h3 class="docs-h3" id="memory-api">3. Live Backend API</h3>
@@ -706,7 +706,7 @@ export default function RootLayout({ children }) {
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
       <h2 class="docs-h2" id="webhooks" style="margin-bottom: 0;">Webhook &amp; Live Backend API</h2>
-      <a href="../studio" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #18221c; color: #9be553; text-decoration: none; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+      <a href="/studio?view=webhooks" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #18221c; color: #9be553; text-decoration: none; border-radius: 9999px; font-size: 12px; font-weight: 700;">
         <span>Open Sandbox Simulator</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </a>

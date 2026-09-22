@@ -33,6 +33,19 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _serve_file(self, rel_path: str, content_type: str):
+        try:
+            with open(rel_path, "rb") as f:
+                body = f.read()
+        except OSError:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_OPTIONS(self):
         """Handle CORS preflight requests."""
         self.send_response(204)
@@ -59,13 +72,18 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
             self._send_json({"version": version})
             return
 
-        # Friendly URL: /studio opens the Webhook & Live Backend API Console.
-        # Implemented as a redirect because the Studio's asset paths are
-        # relative to /demo/ and would break if served from /studio directly.
-        if path == "/studio" or path == "/studio/":
-            self.send_response(302)
-            self.send_header("Location", "/demo/customizer.html?view=webhooks")
-            self.end_headers()
+        # Clean page URLs (local-dev parity with the nginx.conf rewrites).
+        # All page assets/links are root-relative, so any route can serve them.
+        clean_pages = {
+            "/studio": "demo/customizer.html",
+            "/docs": "demo/docs.html",
+            "/example": "demo/embed-example.html",
+            "/contact": "contact.html",
+            "/admin": "admin.html",
+        }
+        lookup = path if path == "/" else path.rstrip("/")
+        if lookup in clean_pages:
+            self._serve_file(clean_pages[lookup], "text/html; charset=utf-8")
             return
 
         # 1. Health check

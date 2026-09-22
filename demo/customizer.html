@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Botly Pro Customizer Studio — Build &amp; Brand Your AI Chatbot</title>
   <meta name="description" content="Visually customize and brand your AI chatbot in minutes. Multi-purpose workflows, custom logo upload, website & document memory, and 1-click embed.">
-  <link rel="icon" type="image/svg+xml" href="botly-icon.svg">
-  <link rel="stylesheet" href="../dist/insurance-chatbot.css?v=20260921">
-  <link rel="stylesheet" href="demo.css">
+  <link rel="icon" type="image/svg+xml" href="/demo/botly-icon.svg">
+  <link rel="stylesheet" href="/dist/insurance-chatbot.css?v=20260922">
+  <link rel="stylesheet" href="/demo/demo.css">
   <!-- Firebase SDK (v10 compat via official CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="firebase-config.js?v=20260921"></script>
-  <script src="firebase-config.local.js?v=20260921" onerror="this.remove()"></script>
-  <script src="firebase-auth.js?v=20260921"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="/demo/firebase-config.js?v=20260922"></script>
+  <script src="/demo/firebase-config.local.js?v=20260922" onerror="this.remove()"></script>
+  <script src="/demo/firebase-auth.js?v=20260922"></script>
   <script>window.BOTLY_REQUIRE_AUTH_PAGE = false;</script>
   <style>
     /* ==================================================
@@ -1025,8 +1026,8 @@
   <header class="customizer-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
     <nav class="customizer-nav" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 24px; height: 60px;">
       <!-- Brand -->
-      <a href="../index.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0;">
-        <img id="nav-brand-logo" src="botly-icon.svg" alt="Botly Pro" width="30" height="30" style="border-radius: 8px; object-fit: contain;" />
+      <a href="/" style="display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0;">
+        <img id="nav-brand-logo" src="/demo/botly-icon.svg" alt="Botly Pro" width="30" height="30" style="border-radius: 8px; object-fit: contain;" />
         <div>
           <div class="customizer-brand-title" style="font-size: 16px; font-weight: 800; color: #18221c; letter-spacing: -0.3px; white-space: nowrap;">
             <span class="brand-long">Botly Pro</span>
@@ -1054,7 +1055,7 @@
           Webhooks
         </button>
 
-        <a href="docs.html" target="_blank" id="btn-top-docs" class="customizer-docs-link" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
+        <a href="/docs" target="_blank" id="btn-top-docs" class="customizer-docs-link" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #18221c; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s;" title="Open Developer Docs in Sandbox">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Docs
         </a>
@@ -1106,7 +1107,7 @@
     <div class="studio-mobile-drawer-content" onclick="event.stopPropagation()">
       <div class="drawer-header">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <img src="botly-icon.svg" width="26" height="26" alt="Botly">
+          <img src="/demo/botly-icon.svg" width="26" height="26" alt="Botly">
           <span style="font-weight: 800; font-size: 15.5px; color: #18221c; letter-spacing: -0.2px;">Studio Menu</span>
         </div>
         <button type="button" class="drawer-close-btn" onclick="toggleStudioMobileMenu()" aria-label="Close menu">✕</button>
@@ -1161,7 +1162,7 @@
           </div>
         </button>
 
-        <a href="docs.html" target="_blank" class="drawer-menu-item" onclick="closeStudioMobileMenu();">
+        <a href="/docs" target="_blank" class="drawer-menu-item" onclick="closeStudioMobileMenu();">
           <div class="drawer-menu-icon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           </div>
@@ -1462,7 +1463,7 @@
             </label>
             <div class="logo-upload-zone">
               <div class="logo-preview-box" id="logo-preview-box">
-                <img id="logo-preview-img" src="botly-icon.svg" alt="Logo preview">
+                <img id="logo-preview-img" src="/demo/botly-icon.svg" alt="Logo preview">
               </div>
               <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
                 <div style="display: flex; gap: 8px;">
@@ -1936,11 +1937,11 @@
           </div>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="docs.html" target="_blank" style="flex: 1; min-width: 130px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <a href="/docs" target="_blank" style="flex: 1; min-width: 130px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               View Docs
             </a>
-            <a href="embed-example.html" style="flex: 1; min-width: 140px; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+            <a href="/example" style="flex: 1; min-width: 140px; text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
               Shopify / WP Guide →
             </a>
             <button type="button" onclick="downloadConfigJson()" style="flex: 1; min-width: 110px; background: #ffffff; border: 1.5px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer;">
@@ -2011,7 +2012,7 @@
       <div style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 36px; height: 36px; border-radius: 10px; background: #18221c; display: flex; align-items: center; justify-content: center;">
-            <img src="botly-icon.svg" width="22" height="22" alt="Botly">
+            <img src="/demo/botly-icon.svg" width="22" height="22" alt="Botly">
           </div>
           <div>
             <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: #0f172a;">Captured Leads &amp; Customer Inquiries</h3>
@@ -2080,7 +2081,7 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <a href="docs.html" target="_blank" style="display: flex; align-items: center; gap: 5px; background: #18221c; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 9999px; transition: all 0.15s;" title="Open standalone documentation page">
+          <a href="/docs" target="_blank" style="display: flex; align-items: center; gap: 5px; background: #18221c; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 9999px; transition: all 0.15s;" title="Open standalone documentation page">
             <span>Open Full Page</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
@@ -2383,9 +2384,9 @@ window.addEventListener('botly:payment', (e) => {
 
       <!-- Footer -->
       <div style="padding: 12px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; color: #64748b;">Botly Pro Docs is hosted directly in your sandbox suite at <a href="docs.html" target="_blank" style="color: #15803d; font-weight: 600;">demo/docs.html</a></span>
+        <span style="font-size: 12px; color: #64748b;">Botly Pro Docs is hosted directly in your sandbox suite at <a href="/docs" target="_blank" style="color: #15803d; font-weight: 600;">demo/docs.html</a></span>
         <div style="display: flex; gap: 8px;">
-          <a href="docs.html" target="_blank" style="padding: 6px 14px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #18221c; text-decoration: none;">View Standalone Page ↗</a>
+          <a href="/docs" target="_blank" style="padding: 6px 14px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #18221c; text-decoration: none;">View Standalone Page ↗</a>
           <button onclick="closeDocsModal()" class="btn-primary-hero" style="font-size: 12px; padding: 6px 16px;">Done</button>
         </div>
       </div>
@@ -2716,7 +2717,7 @@ window.addEventListener('botly:payment', async (event) => {
       <div class="botly-auth-header">
         <div class="botly-auth-brand">
           <div class="botly-auth-icon-wrap">
-            <img src="botly-icon.svg" width="24" height="24" alt="Botly Pro">
+            <img src="/demo/botly-icon.svg" width="24" height="24" alt="Botly Pro">
           </div>
           <div>
             <h3 class="botly-auth-title" id="auth-modal-title">Sign in to Botly Pro</h3>
@@ -2784,7 +2785,7 @@ window.addEventListener('botly:payment', async (event) => {
         </div>
 
         <div style="text-align: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
-          <a href="../index.html" style="color: #64748b; font-size: 12.5px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s;" onmouseover="this.style.color='#18221c'" onmouseout="this.style.color='#64748b'">
+          <a href="/" style="color: #64748b; font-size: 12.5px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s;" onmouseover="this.style.color='#18221c'" onmouseout="this.style.color='#64748b'">
             ← Return to Botly Pro Home Page
           </a>
         </div>
@@ -2793,7 +2794,7 @@ window.addEventListener('botly:payment', async (event) => {
   </div>
 
   <!-- Chatbot Bundle -->
-  <script>document.write('<script src="../dist/insurance-chatbot.js?v=' + Date.now() + '"><\/script>');</script>
+  <script>document.write('<script src="/dist/insurance-chatbot.js?v=' + Date.now() + '"><\/script>');</script>
 
   <!-- Studio Wizard Logic -->
   <script>
@@ -3215,7 +3216,7 @@ window.addEventListener('botly:payment', async (event) => {
       var removeBtn = document.getElementById('btn-remove-logo');
       var urlInput = document.getElementById('wiz-logo-url');
 
-      if (img) img.src = 'botly-icon.svg';
+      if (img) img.src = '/demo/botly-icon.svg';
       if (removeBtn) removeBtn.style.display = 'none';
       if (urlInput) urlInput.value = '';
 
@@ -5370,6 +5371,7 @@ window.addEventListener('botly:payment', async (event) => {
           botId: (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId ? BotlyChatbotManager.getActiveBotId() : 'bot_default'), // isolates this bot's leads & remembered contacts from other bots
           // Free-text mode: no suggestion chips — the user types, the bot answers.
           disableQuickReplies: true,
+          cloudSync: false, // Studio previews never sync test leads to the Cloud inbox
           goals: wizardState.purposes,
           goal: wizardState.purposes[0] || 'lead_generation',
           company: {
@@ -5381,7 +5383,7 @@ window.addEventListener('botly:payment', async (event) => {
           bot: {
             name: wizardState.botName,
             title: wizardState.botTitle,
-            avatar: wizardState.logoUrl || 'botly-icon.svg',
+            avatar: wizardState.logoUrl || '/demo/botly-icon.svg',
             greeting: wizardState.greeting,
             initialQuickReplies: [], // free-text mode (see disableQuickReplies)
             placeholder: 'Ask me anything...'
@@ -5564,6 +5566,48 @@ window.addEventListener('botly:payment', async (event) => {
         } catch(e) {}
       }
 
+      // BOTLY-CLOUD: mirror bot summaries to Firestore so the Admin page can
+      // list every created chatbot. Summaries only (no knowledge content).
+      // Signed-out work stays local-only. Never throws. Debounced to ~4/min.
+      var botlyLastCloudSyncAt = 0;
+      function botlySyncBotsToCloud(bots) {
+        try {
+          var now = Date.now();
+          if (now - botlyLastCloudSyncAt < 15000) return;
+          botlyLastCloudSyncAt = now;
+          if (typeof window === 'undefined' || !window.firebase || !window.firebase.firestore) return;
+          var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+          if (!user || !user.uid) return;
+          var fbConfig = window.BOTLY_FIREBASE_CONFIG;
+          if (!fbConfig || !fbConfig.apiKey || fbConfig.apiKey === 'YOUR_API_KEY') return;
+          try {
+            if (!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(fbConfig);
+          } catch (initErr) { try { window.firebase.app(); } catch (e2) { return; } }
+          var db = window.firebase.firestore();
+          (bots || []).forEach(function(b) {
+            if (!b || !b.id) return;
+            var docId = String(user.uid).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) + '__' +
+                        String(b.id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
+            db.collection('botly_bots').doc(docId).set({
+              ownerUid: user.uid,
+              ownerEmail: user.email || null,
+              botId: b.id,
+              companyName: b.companyName || '',
+              botName: b.botName || '',
+              botTitle: b.botTitle || '',
+              purposes: b.purposes || [],
+              faqCount: (b.faqs || []).length,
+              docCount: (b.documentChunks || []).length,
+              webCount: (b.websiteChunks || []).length,
+              apiEnabled: !!(b.apiConfig && b.apiConfig.enabled),
+              websiteUrl: b.websiteUrl || null,
+              clientUpdatedAt: b.updatedAt || null,
+              updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(function() {});
+          });
+        } catch (e) {}
+      }
+
       function getActiveBotId() {
         var id = localStorage.getItem(ACTIVE_KEY);
         var bots = getAllBots();
@@ -5639,6 +5683,7 @@ window.addEventListener('botly:payment', async (event) => {
 
         saveAllBots(bots);
         renderList();
+        botlySyncBotsToCloud(bots);
       }
 
       function renderList() {

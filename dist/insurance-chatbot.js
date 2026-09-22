@@ -2546,6 +2546,54 @@
     } catch(e) {}
     return botlyMemLeadsGet();
   }
+  // BOTLY-CLOUD: fire-and-forget lead sync to the Botly Cloud inbox (Firestore).
+  // Only runs when the host page loaded Firebase + Firestore (landing/contact
+  // pages). Customer embeds without Firebase silently skip. Studio previews
+  // set cloudSync:false and never sync test data. Never throws.
+  function botlyCloudSyncLead(lead, ctx) {
+    try {
+      ctx = ctx || {};
+      var cfg = ctx.config || {};
+      if (cfg.cloudSync === false) return;
+      if (typeof window === 'undefined' || !window.firebase || !window.firebase.firestore) return;
+      var fbConfig = window.BOTLY_FIREBASE_CONFIG;
+      if (!fbConfig || !fbConfig.apiKey || fbConfig.apiKey === 'YOUR_API_KEY') return;
+      try {
+        if (!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(fbConfig);
+      } catch (initErr) { try { window.firebase.app(); } catch (e2) { return; } }
+      var history = [];
+      try {
+        var h = (ctx.memory && ctx.memory.history) || [];
+        history = h.slice(-8).map(function(m) {
+          return { role: m.role || 'user', text: String(m.text == null ? '' : m.text).slice(0, 600) };
+        });
+      } catch (histErr) {}
+      var payload = {
+        leadId: lead.id || null,
+        botId: cfg.botId || null,
+        botName: (cfg.bot && cfg.bot.name) || cfg.botName || null,
+        company: lead.company || (cfg.company && cfg.company.name) || null,
+        name: String(lead.name || '').slice(0, 120),
+        phone: String(lead.phone || '').slice(0, 40),
+        email: String(lead.email || '').slice(0, 120),
+        need: String(lead.need || '').slice(0, 1200),
+        goal: lead.goal || null,
+        status: lead.status || 'New',
+        transcript: history,
+        pageUrl: (window.location && window.location.href ? String(window.location.href) : '').slice(0, 300),
+        createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (lead.paymentMethod) {
+        payload.payment = {
+          method: String(lead.paymentMethod).slice(0, 80),
+          amount: lead.amount ? String(lead.amount).slice(0, 40) : null,
+          code: lead.mpesaCode ? String(lead.mpesaCode).slice(0, 40) : null
+        };
+      }
+      window.firebase.firestore().collection('botly_leads').add(payload).catch(function() {});
+    } catch (e) {}
+  }
+
   function saveStoredLead(lead) {
     try {
       var current = getStoredLeads();
@@ -3164,6 +3212,7 @@
       };
 
       saveStoredLead(leadRecord);
+      botlyCloudSyncLead(leadRecord, { config: this.config, memory: this.conversationMemory });
 
       if (this.config.webhooks?.onLeadCaptured && typeof this.config.webhooks.onLeadCaptured === 'function') {
         try { this.config.webhooks.onLeadCaptured(leadRecord); } catch(e) {}
@@ -3324,6 +3373,7 @@
       };
 
       saveStoredLead(leadRecord);
+      botlyCloudSyncLead(leadRecord, { config: this.config, memory: this.conversationMemory });
 
       if (this.config.webhooks?.onLeadCaptured && typeof this.config.webhooks.onLeadCaptured === 'function') {
         try { this.config.webhooks.onLeadCaptured(leadRecord); } catch(e) {}
@@ -4044,6 +4094,7 @@
     };
 
     saveStoredLead(leadRecord);
+    botlyCloudSyncLead(leadRecord, { config: this.config, memory: this.conversationMemory });
 
     if (typeof window !== 'undefined' && window.dispatchEvent) {
       try {

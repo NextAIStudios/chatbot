@@ -9,14 +9,15 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="alternate icon" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
-  <link rel="stylesheet" href="dist/insurance-chatbot.css?v=20260921">
+  <link rel="stylesheet" href="/dist/insurance-chatbot.css?v=20260922">
   <link rel="stylesheet" href="demo/demo.css">
   <!-- Firebase SDK (v10 compat via official CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="demo/firebase-config.js?v=20260921"></script>
-  <script src="demo/firebase-config.local.js?v=20260921" onerror="this.remove()"></script>
-  <script src="demo/firebase-auth.js?v=20260921"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="/demo/firebase-config.js?v=20260922"></script>
+  <script src="/demo/firebase-config.local.js?v=20260922" onerror="this.remove()"></script>
+  <script src="/demo/firebase-auth.js?v=20260922"></script>
   <style>
     .contact-grid {
       display: grid;
@@ -126,17 +127,17 @@
   <header class="botly-header-wrap">
     <nav class="botly-navbar">
       <!-- Logo -->
-      <a href="index.html" class="botly-logo-wrap">
+      <a href="/" class="botly-logo-wrap">
         <img src="demo/botly-logo.svg" alt="Botly Pro" height="36" style="display: block;" />
       </a>
 
       <!-- Center Menu -->
       <div class="botly-nav-menu">
-        <a href="index.html#capabilities" class="botly-nav-item">Building with AI</a>
-        <a href="index.html#use-cases" class="botly-nav-item">Use cases</a>
-        <a href="index.html#products" class="botly-nav-item">Products</a>
-        <a href="index.html#pricing" class="botly-nav-item" style="color: #15803d; font-weight: 700;">Pricing</a>
-        <a href="index.html#about" class="botly-nav-item">About us</a>
+        <a href="/#capabilities" class="botly-nav-item">Building with AI</a>
+        <a href="/#use-cases" class="botly-nav-item">Use cases</a>
+        <a href="/#products" class="botly-nav-item">Products</a>
+        <a href="/#pricing" class="botly-nav-item" style="color: #15803d; font-weight: 700;">Pricing</a>
+        <a href="/#about" class="botly-nav-item">About us</a>
       </div>
 
       <!-- Action Pill Buttons -->
@@ -153,11 +154,11 @@
           <button type="button" onclick="BotlyAuth.signOut()" class="nav-sign-out-btn">Sign Out</button>
         </div>
 
-        <a href="demo/customizer.html" onclick="handleSandboxAccess(event)" class="pill-btn-dark">
+        <a href="/studio" onclick="handleSandboxAccess(event)" class="pill-btn-dark">
           <span>Sandbox access</span>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a href="contact.html" class="pill-btn-lime" style="box-shadow: 0 0 0 3px rgba(155,229,83,0.35);">Contact us</a>
+        <a href="/contact" class="pill-btn-lime" style="box-shadow: 0 0 0 3px rgba(155,229,83,0.35);">Contact us</a>
       </div>
 
       <!-- Hamburger (mobile only) -->
@@ -168,11 +169,11 @@
 
     <!-- Mobile Nav Drawer -->
     <div class="botly-mobile-nav" id="botly-mobile-nav">
-      <a href="index.html#capabilities" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Building with AI</a>
-      <a href="index.html#use-cases" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Use cases</a>
-      <a href="index.html#products" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Products</a>
-      <a href="index.html#pricing" class="botly-mobile-nav-link" onclick="closeMobileMenu()" style="color: #15803d; font-weight: 700;">Pricing</a>
-      <a href="index.html#about" class="botly-mobile-nav-link" onclick="closeMobileMenu()">About us</a>
+      <a href="/#capabilities" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Building with AI</a>
+      <a href="/#use-cases" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Use cases</a>
+      <a href="/#products" class="botly-mobile-nav-link" onclick="closeMobileMenu()">Products</a>
+      <a href="/#pricing" class="botly-mobile-nav-link" onclick="closeMobileMenu()" style="color: #15803d; font-weight: 700;">Pricing</a>
+      <a href="/#about" class="botly-mobile-nav-link" onclick="closeMobileMenu()">About us</a>
       <div class="botly-mobile-nav-actions">
         <!-- Mobile Auth Controls -->
         <button type="button" id="mobile-auth-login-btn" onclick="BotlyAuth.openModal(); closeMobileMenu();" class="pill-btn-outline" style="width: 100%; justify-content: center;">
@@ -187,8 +188,8 @@
           <button type="button" onclick="BotlyAuth.signOut(); closeMobileMenu();" class="nav-sign-out-btn">Sign Out</button>
         </div>
 
-        <a href="demo/customizer.html" onclick="handleSandboxAccess(event); closeMobileMenu();" class="pill-btn-dark" style="width:100%; justify-content:center;">Sandbox access</a>
-        <a href="contact.html" class="pill-btn-lime" style="width:100%; justify-content:center;" onclick="closeMobileMenu()">Contact us</a>
+        <a href="/studio" onclick="handleSandboxAccess(event); closeMobileMenu();" class="pill-btn-dark" style="width:100%; justify-content:center;">Sandbox access</a>
+        <a href="/contact" class="pill-btn-lime" style="width:100%; justify-content:center;" onclick="closeMobileMenu()">Contact us</a>
       </div>
     </div>
   </header>
@@ -366,7 +367,7 @@
   <footer style="background: #ffffff; border-top: 1px solid #e5e7eb; padding: 60px 48px 30px 48px; margin-top: 0; color: #4b5563;">
     <div style="max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; padding-bottom: 48px; border-bottom: 1px solid #f1f5f9;">
       <div>
-        <a href="index.html" style="text-decoration: none; display: inline-block; margin-bottom: 14px;">
+        <a href="/" style="text-decoration: none; display: inline-block; margin-bottom: 14px;">
           <img src="demo/botly-logo.svg" alt="Botly Pro" height="34" />
         </a>
         <p style="font-size: 14px; color: #6b7280; line-height: 1.6; max-width: 320px;">
@@ -383,31 +384,31 @@
       <div>
         <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Platform</h5>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
-          <li style="margin-bottom: 10px;"><a href="index.html#capabilities" style="color: #6b7280; text-decoration: none;">Building with AI</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#products" style="color: #6b7280; text-decoration: none;">Autonomous Intelligence</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#products" style="color: #6b7280; text-decoration: none;">In-Chat Checkout</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#products" style="color: #6b7280; text-decoration: none;">Lead Capture Engine</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#capabilities" style="color: #6b7280; text-decoration: none;">Building with AI</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#products" style="color: #6b7280; text-decoration: none;">Autonomous Intelligence</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#products" style="color: #6b7280; text-decoration: none;">In-Chat Checkout</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#products" style="color: #6b7280; text-decoration: none;">Lead Capture Engine</a></li>
         </ul>
       </div>
 
       <div>
         <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Use cases</h5>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
-          <li style="margin-bottom: 10px;"><a href="index.html#use-cases" style="color: #6b7280; text-decoration: none;">E-Commerce &amp; DTC</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#use-cases" style="color: #6b7280; text-decoration: none;">SaaS &amp; Technology</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#use-cases" style="color: #6b7280; text-decoration: none;">Financial Services</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#use-cases" style="color: #6b7280; text-decoration: none;">Healthcare &amp; Wellness</a></li>
-          <li style="margin-bottom: 10px;"><a href="index.html#use-cases" style="color: #6b7280; text-decoration: none;">Real Estate &amp; Services</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#use-cases" style="color: #6b7280; text-decoration: none;">E-Commerce &amp; DTC</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#use-cases" style="color: #6b7280; text-decoration: none;">SaaS &amp; Technology</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#use-cases" style="color: #6b7280; text-decoration: none;">Financial Services</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#use-cases" style="color: #6b7280; text-decoration: none;">Healthcare &amp; Wellness</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#use-cases" style="color: #6b7280; text-decoration: none;">Real Estate &amp; Services</a></li>
         </ul>
       </div>
 
       <div>
         <h5 style="color: #18221c; font-size: 14px; font-weight: 700; margin-bottom: 16px;">Developers &amp; Sandbox</h5>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 13.5px;">
-          <li style="margin-bottom: 10px;"><a href="index.html#pricing" style="color: #15803d; font-weight: 700; text-decoration: none;">Pricing — $10/bot</a></li>
-          <li style="margin-bottom: 10px;"><a href="demo/customizer.html" onclick="handleSandboxAccess(event)" style="color: #6b7280; text-decoration: none;">Botly Pro Customizer Studio</a></li>
+          <li style="margin-bottom: 10px;"><a href="/#pricing" style="color: #15803d; font-weight: 700; text-decoration: none;">Pricing — $10/bot</a></li>
+          <li style="margin-bottom: 10px;"><a href="/studio" onclick="handleSandboxAccess(event)" style="color: #6b7280; text-decoration: none;">Botly Pro Customizer Studio</a></li>
           <li style="margin-bottom: 10px;"><a href="javascript:void(0)" onclick="BotlyAuth.openModal()" style="color: #18221c; font-weight: 700; text-decoration: none;">Sign In / Account</a></li>
-          <li style="margin-bottom: 10px;"><a href="studio" onclick="handleSandboxAccess(event, 'webhooks')" style="color: #6b7280; text-decoration: none;">Webhook APIs (Sandbox)</a></li>
+          <li style="margin-bottom: 10px;"><a href="/studio?view=webhooks" onclick="handleSandboxAccess(event, 'webhooks')" style="color: #6b7280; text-decoration: none;">Webhook APIs (Sandbox)</a></li>
         </ul>
       </div>
     </div>
@@ -491,7 +492,7 @@
   </div>
 
   <!-- Botly Chatbot Bundle -->
-  <script src="dist/insurance-chatbot.js?v=20260921"></script>
+  <script src="/dist/insurance-chatbot.js?v=20260922"></script>
 
   <!-- Botly Chatbot Init -->
   <script>
@@ -668,7 +669,7 @@
 
     function handleSandboxAccess(e, target) {
       if (e) e.preventDefault();
-      var dest = target ? 'demo/customizer.html?view=' + encodeURIComponent(target) : 'demo/customizer.html';
+      var dest = target ? '/studio?view=' + encodeURIComponent(target) : '/studio';
       BotlyAuth.requireAuth(function() {
         window.location.href = dest;
       }, 'Sign in with your Google or Email account to access the Sandbox Studio.');

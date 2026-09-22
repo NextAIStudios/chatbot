@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Botly Cloud Inbox + Bot Registry — see ADMIN_SETUP.md.
+// 1. Replace admin@botlypro.online with your real admin email(s) below
+//    (and mirror them in admin.html -> ADMIN_EMAILS).
+// 2. Firebase console -> Firestore Database -> Rules -> paste this -> Publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in ['admin@botlypro.online'];
+    }
+
+    // Landing/contact chatbot inquiries. Visitors are NOT signed in, so
+    // anyone may CREATE a lead (field-validated); only admins may read,
+    // triage or delete.
+    function validLead() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+        'leadId', 'botId', 'botName', 'company', 'name', 'phone', 'email',
+        'need', 'goal', 'status', 'transcript', 'pageUrl', 'createdAt', 'payment'
+      ])
+        && d.name is string && d.name.size() <= 120
+        && d.phone is string && d.phone.size() <= 40
+        && d.email is string && d.email.size() <= 120
+        && d.need is string && d.need.size() <= 1200;
+    }
+
+    match /botly_leads/{leadId} {
+      allow create: if validLead();
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Studio bot registry (summaries only, no knowledge content).
+    // Signed-in owners write their own rows; admins read everything.
+    match /botly_bots/{docId} {
+      allow create, update: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+  }
+}
