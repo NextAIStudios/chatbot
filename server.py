@@ -59,6 +59,15 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
             self._send_json({"version": version})
             return
 
+        # Friendly URL: /studio opens the Webhook & Live Backend API Console.
+        # Implemented as a redirect because the Studio's asset paths are
+        # relative to /demo/ and would break if served from /studio directly.
+        if path == "/studio" or path == "/studio/":
+            self.send_response(302)
+            self.send_header("Location", "/demo/customizer.html?view=webhooks")
+            self.end_headers()
+            return
+
         # 1. Health check
         if path == "/api/health":
             self._send_json({

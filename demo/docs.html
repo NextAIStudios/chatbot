@@ -339,7 +339,7 @@
   <div class="docs-topbar-right">
     <a href="../index.html" class="topbar-link">Home</a>
     <a href="customizer.html" class="topbar-link">Sandbox Studio</a>
-    <a href="customizer.html?view=webhooks" class="topbar-link">Webhook APIs</a>
+    <a href="../studio" class="topbar-link">Webhook APIs</a>
     <a href="customizer.html" class="topbar-cta">Open Studio</a>
   </div>
 </header>
@@ -364,7 +364,7 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
         Studio
       </a>
-      <a href="customizer.html?view=webhooks" class="sidebar-mobile-nav-btn">
+      <a href="../studio" class="sidebar-mobile-nav-btn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         Webhooks
       </a>
@@ -393,9 +393,6 @@
       <a href="#react" class="sidebar-link">React / Next.js</a>
       <a href="#wordpress" class="sidebar-link">WordPress</a>
       <a href="#webhooks" class="sidebar-link">Webhook API</a>
-      <div class="sidebar-section-label">Payments</div>
-      <a href="#mpesa" class="sidebar-link">M-Pesa</a>
-      <a href="#card-checkout" class="sidebar-link">Card &amp; Links</a>
       <a href="#leads" class="sidebar-link">Lead Tracking</a>
       <div class="sidebar-section-label">Reference</div>
       <a href="#js-api" class="sidebar-link">JavaScript API</a>
@@ -421,11 +418,6 @@
           <span class="ql-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
           <div class="ql-title">Bot Memory</div>
           <div class="ql-sub">Train your bot with data</div>
-        </a>
-        <a href="#mpesa" class="quick-link-card">
-          <span class="ql-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-          <div class="ql-title">M-Pesa &amp; Cards</div>
-          <div class="ql-sub">Direct payments &amp; links</div>
         </a>
         <a href="#webhooks" class="quick-link-card">
           <span class="ql-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18221c" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
@@ -714,7 +706,7 @@ export default function RootLayout({ children }) {
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
       <h2 class="docs-h2" id="webhooks" style="margin-bottom: 0;">Webhook &amp; Live Backend API</h2>
-      <a href="customizer.html?view=webhooks" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #18221c; color: #9be553; text-decoration: none; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+      <a href="../studio" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #18221c; color: #9be553; text-decoration: none; border-radius: 9999px; font-size: 12px; font-weight: 700;">
         <span>Open Sandbox Simulator</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </a>
@@ -765,39 +757,6 @@ app.listen(3000);</pre>
     </div>
 
     <hr class="docs-divider">
-
-    <h2 class="docs-h2" id="mpesa">M-Pesa Payments</h2>
-    <p>Enable in-chat M-Pesa. When users type "pay with mpesa" or click the M-Pesa option, the bot presents paybill or till details. After payment, users submit their confirmation code (e.g. <code>UIC8E69GLQ</code>), which the bot validates and records in captured leads.</p>
-    <div class="code-block">
-      <div class="code-block-header"><span class="code-block-lang">JavaScript</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre class="code-pre">checkout: {
-  enabled: true,
-  currency: "KES",
-  mpesa: {
-    enabled: true,
-    type: "paybill",          // "paybill" | "till" | "phone"
-    number: "522522",
-    accountName: "Acme Corp",
-    accountNumber: "ORDER-001" // optional
-  }
-}</pre>
-    </div>
-
-    <h2 class="docs-h2" id="card-checkout">Card &amp; External Checkout Link</h2>
-    <p>Direct users to credit card payments or hosted checkout (Stripe, Flutterwave, PayPal, Paystack, Pesapal, or custom links).</p>
-    <div class="code-block">
-      <div class="code-block-header"><span class="code-block-lang">JavaScript</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre class="code-pre">checkout: {
-  enabled: true,
-  currency: "USD",
-  card: {
-    enabled: true,
-    url: "https://checkout.stripe.com/c/pay/cs_live_example",
-    gateway: "Stripe",        // "Stripe" | "Flutterwave" | "PayPal" | "Paystack" | "Pesapal" | "Custom"
-    label: "Pay with Card / Stripe"
-  }
-}</pre>
-    </div>
 
     <h2 class="docs-h2" id="leads">Lead Tracking</h2>
     <p>All captured leads are stored in <code>localStorage</code> under <code>botly_captured_leads</code> and viewable in the Sandbox Leads Manager.</p>
@@ -899,8 +858,6 @@ window.addEventListener('botly:intent', (e) =&gt; {
     <a href="#react" class="toc-link">React</a>
     <a href="#wordpress" class="toc-link">WordPress</a>
     <a href="#webhooks" class="toc-link">Webhooks</a>
-    <a href="#mpesa" class="toc-link">M-Pesa</a>
-    <a href="#card-checkout" class="toc-link">Card &amp; Links</a>
     <a href="#leads" class="toc-link">Leads</a>
     <a href="#js-api" class="toc-link">JS API</a>
     <a href="#events" class="toc-link">Events</a>
