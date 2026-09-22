@@ -5151,7 +5151,7 @@ window.addEventListener('botly:payment', async (event) => {
       tillName: 'Botly Pro',  // TODO(owner): till/account name shown to payers
       usd: 10,
       kes: 1290,              // TODO(owner): current KES equivalent of $10
-      intasendPaymentUrl: ''  // TODO(owner): paste your IntaSend Payment Link (dashboard -> Payment Links, fixed KES amount). When set, payers get a Pay button; manual Till stays as fallback.
+      intasendPaymentUrl: 'https://payment.intasend.com/pay/65825bd7-b9e3-4f1a-9154-ad39fff5b1b3/'  // IntaSend Payment Link (fixed KES amount) — payers get a Pay button; manual Till stays as fallback.
     };
 
     function botlyBillingDocId(botId) {
