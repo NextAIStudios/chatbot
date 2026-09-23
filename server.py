@@ -57,6 +57,11 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
 
+        # Prefix-stripping proxies (hosting path rules etc.) may forward
+        # /api/health as /health — accept both spellings for every API route.
+        if path in ("/health", "/version", "/scrape-products"):
+            path = "/api" + path
+
         # 0. Studio version (stale-tab detector polls this)
         if path == "/api/version":
             version = "dev"
@@ -138,6 +143,10 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
         """Handle POST API endpoints."""
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
+
+        # Same prefix-strip tolerance as do_GET (proxies may forward /crawl).
+        if path == "/crawl":
+            path = "/api/crawl"
 
         if path == "/api/crawl":
             content_length = int(self.headers.get("Content-Length", 0))
