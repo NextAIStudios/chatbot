@@ -112,7 +112,17 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
                 self._send_json({"found": False, "items": [], "error": "Missing 'q' query parameter"}, status_code=400)
                 return
 
-            result = scraper.scrape_products(query, site_url=site_url, max_results=limit)
+            try:
+                result = scraper.scrape_products(query, site_url=site_url, max_results=limit)
+            except Exception as exc:
+                # Never leak an HTML 500 traceback: the Studio parses JSON.
+                result = {
+                    "found": False, "query": query, "items": [],
+                    "blocked": "server_error",
+                    "error": f"Scraper crashed: {exc}",
+                }
+                self._send_json(result, status_code=500)
+                return
             self._send_json(result)
             return
 

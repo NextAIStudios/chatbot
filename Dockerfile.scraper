@@ -1,0 +1,21 @@
+# Backend service for Botly live APIs — deploy as a second Northflank service
+# (or any Python host) alongside the nginx frontend, then set this on the
+# FRONTEND service:  SCRAPER_BACKEND_URL=http://<scraper-host>:8080
+# Serves: /api/scrape-products, /api/crawl, /api/health (+ static assets).
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server.py scraper.py ./
+COPY tools/ ./tools/
+COPY dist/ ./dist/
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')"
+
+CMD ["python", "server.py", "8080"]

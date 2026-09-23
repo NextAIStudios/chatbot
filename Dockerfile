@@ -7,6 +7,9 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Default live-API block (entrypoint swaps in a proxy when SCRAPER_BACKEND_URL is set)
+COPY docker/botly-api-503.conf /etc/nginx/botly-api-active.conf
+
 # Copy all project files into nginx html directory
 COPY . /usr/share/nginx/html
 

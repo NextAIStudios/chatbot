@@ -17,4 +17,20 @@ EOF
   echo "Botly: Firebase config dynamically injected from environment variables."
 fi
 
+# Live API wiring: proxy /api/* to the Python scraper backend when configured.
+if [ -n "$SCRAPER_BACKEND_URL" ]; then
+  cat <<EOF > /etc/nginx/botly-api-active.conf
+# Generated: SCRAPER_BACKEND_URL is set - proxy live API to the backend.
+location /api/ {
+    proxy_pass ${SCRAPER_BACKEND_URL};
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_connect_timeout 30s;
+    proxy_read_timeout 60s;
+}
+EOF
+  echo "Botly: /api/* proxied to scraper backend."
+fi
+
 exec "$@"

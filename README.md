@@ -228,6 +228,15 @@ python3 server.py 8080
 # http://localhost:8080/demo/embed-example.html (Quick Embed Guide & Playground)
 ```
 
+Live APIs in production (Northflank): the nginx frontend is static-only, so `/api/*`
+answers JSON `503` unless you deploy the Python backend as a second service from
+`Dockerfile.scraper` and set `SCRAPER_BACKEND_URL=http://<scraper-host>:8080` on the
+frontend service — the entrypoint then proxies `/api/*` to it. Without a backend,
+the Studio shows a friendly "no live data" card with a direct store link instead of
+erroring. Note: big marketplaces (e.g. Jumia) often challenge datacenter IPs with a
+bot firewall; the API reports that honestly (`blocked: "waf"`) and Shopify/WooCommerce
+merchant JSON APIs are tried automatically for custom stores.
+
 ---
 
 ## 📁 Repository Structure

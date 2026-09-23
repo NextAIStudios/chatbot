@@ -394,6 +394,8 @@ export async function fetchLiveScrapedProducts(query, siteUrl = '', apiBase = ''
     if (timer) clearTimeout(timer);
 
     if (!resp.ok) return null;
+    const contentType = (resp.headers && resp.headers.get('content-type')) || '';
+    if (!contentType.includes('application/json')) return null; // static hosts answer HTML here
     const data = await resp.json();
     return data;
   } catch (err) {

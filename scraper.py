@@ -181,6 +181,128 @@ def scrape_jumia_products(html_content: str, base_url: str = "https://www.jumia.
     return products
 
 
+CHALLENGE_MARKERS = ("just a moment", "cf_chl", "challenge-form", "captcha-delivery")
+
+
+def page_looks_challenged(html_content: str | None) -> str | None:
+    """
+    Detect JS-challenge / bot-firewall interstitials served with HTTP 200
+    (e.g. Cloudflare 'Just a moment...') that contain zero product cards.
+    Returns a vendor label or None.
+    """
+    body = (html_content or "").lower()
+    if not body:
+        return None
+    if "just a moment" in body and "cloudflare" in body:
+        return "Cloudflare"
+    for marker in ("cf_chl", "challenge-form", "captcha-delivery"):
+        if marker in body:
+            return "bot firewall"
+    return None
+
+
+def map_shopify_suggest_products(payload: dict, base_origin: str, max_results: int = 5) -> list[dict]:
+    """Map Shopify /search/suggest.json product results onto the Botly item schema."""
+    try:
+        raw = payload.get("resources", {}).get("results", {}).get("products", [])
+    except AttributeError:
+        return []
+    items = []
+    for p in raw:
+        if not isinstance(p, dict) or not p.get("title"):
+            continue
+        numeric_price, currency = parse_numeric_price(str(p.get("price", "") or ""))
+        url = str(p.get("url", "") or "")
+        if url.startswith("/"):
+            url = urllib.parse.urljoin(base_origin, url)
+        elif not url.startswith("http"):
+            url = f"{base_origin}/{url}" if url else base_origin
+        items.append({
+            "name": str(p["title"]).strip(),
+            "price": numeric_price,
+            "currency": currency,
+            "rawPrice": str(p.get("price", "") or ""),
+            "url": url,
+            "rating": "⭐ —",
+            "image": str(p.get("image", "") or ""),
+            "specs": "Live from store catalog",
+            "source": "shopify_api",
+        })
+        if len(items) >= max_results:
+            break
+    return items
+
+
+def map_woocommerce_store_products(payload: list, max_results: int = 5) -> list[dict]:
+    """Map WooCommerce Store API (/wp-json/wc/store/v1/products) entries onto the Botly item schema."""
+    items = []
+    if not isinstance(payload, list):
+        return []
+    for p in payload:
+        if not isinstance(p, dict) or not p.get("name"):
+            continue
+        prices = p.get("prices", {}) if isinstance(p.get("prices"), dict) else {}
+        try:
+            minor = int(str(prices.get("price", "0") or "0"))
+            decimals = int(prices.get("currency_minor_unit", 2) or 2)
+            numeric_price = minor / (10 ** decimals)
+        except (ValueError, TypeError):
+            numeric_price = 0.0
+        currency = str(prices.get("currency_code", "") or "KES")
+        images = p.get("images", []) if isinstance(p.get("images"), list) else []
+        image = images[0].get("src", "") if images and isinstance(images[0], dict) else ""
+        items.append({
+            "name": str(p["name"]).strip(),
+            "price": numeric_price,
+            "currency": currency,
+            "rawPrice": str(prices.get("price", "") or ""),
+            "url": str(p.get("permalink", "") or ""),
+            "rating": "⭐ —",
+            "image": str(image or ""),
+            "specs": "Live from store catalog",
+            "source": "woocommerce_api",
+        })
+        if len(items) >= max_results:
+            break
+    return items
+
+
+def try_merchant_product_apis(base_origin: str, query: str, session: requests.Session,
+                              max_results: int = 5) -> tuple[list[dict], str]:
+    """
+    Query merchant JSON product APIs (Shopify suggest + WooCommerce Store API).
+    These rarely sit behind browser fingerprinting, so they succeed where raw
+    HTML scraping gets challenged. Returns (items, source_label).
+    """
+    encoded = urllib.parse.quote_plus(query)
+    json_headers = {"Accept": "application/json", "User-Agent": DEFAULT_HEADERS.get("User-Agent", "Botly/1.0")}
+    # 1. Shopify predictive-search / suggest endpoint
+    try:
+        resp = session.get(
+            f"{base_origin}/search/suggest.json?q={encoded}&resources[type]=product&resources[limit]={max_results}",
+            headers=json_headers, timeout=6, allow_redirects=True,
+        )
+        if resp.status_code == 200 and "json" in resp.headers.get("content-type", ""):
+            items = map_shopify_suggest_products(resp.json(), base_origin, max_results)
+            if items:
+                return items, "shopify_api"
+    except Exception:
+        pass
+    # 2. WooCommerce Store API (public, no auth needed on most stores)
+    try:
+        resp = session.get(
+            f"{base_origin}/wp-json/wc/store/v1/products?search={encoded}&per_page={max_results}",
+            headers=json_headers, timeout=6, allow_redirects=True,
+        )
+        if resp.status_code == 200 and "json" in resp.headers.get("content-type", ""):
+            items = map_woocommerce_store_products(resp.json(), max_results)
+            if items:
+                return items, "woocommerce_api"
+    except Exception:
+        pass
+    return [], ""
+
+
 def scrape_products(query: str, site_url: str | None = None, max_results: int = 5) -> dict:
     """
     Main product scraper entrypoint.
@@ -204,15 +326,18 @@ def scrape_products(query: str, site_url: str | None = None, max_results: int = 
 
     # 2. Determine target search URL
     target_search_url = build_jumia_search_url(clean_q)
+    base_origin = "https://www.jumia.co.ke"
+    is_jumia = True
     if site_url and "jumia" not in site_url.lower():
         # Custom Shopify / WooCommerce or generic site
         parsed = urllib.parse.urlparse(site_url if site_url.startswith("http") else f"https://{site_url}")
         base_origin = f"{parsed.scheme}://{parsed.netloc}"
         target_search_url = f"{base_origin}/search?q={urllib.parse.quote_plus(clean_q)}"
+        is_jumia = False
 
     # 3. Live HTTP request with browser headers
+    session = requests.Session()
     try:
-        session = requests.Session()
         resp = session.get(
             target_search_url,
             headers=DEFAULT_HEADERS,
@@ -220,8 +345,9 @@ def scrape_products(query: str, site_url: str | None = None, max_results: int = 
             allow_redirects=True,
         )
 
-        if resp.status_code == 200 and resp.text:
-            items = scrape_jumia_products(resp.text, max_results=max_results)
+        html = resp.text if resp.status_code == 200 else ""
+        if html:
+            items = scrape_jumia_products(html, max_results=max_results)
             if items:
                 return {
                     "found": True,
@@ -231,6 +357,46 @@ def scrape_products(query: str, site_url: str | None = None, max_results: int = 
                     "source": "beautifulsoup_live",
                     "count": len(items),
                 }
+            if is_jumia:
+                challenged = page_looks_challenged(html)
+                if challenged:
+                    return {
+                        "found": False,
+                        "query": clean_q,
+                        "items": [],
+                        "searchUrl": target_search_url,
+                        "blocked": "waf",
+                        "vendor": challenged,
+                        "error": f"{challenged} showed an automated-traffic challenge instead of products.",
+                    }
+        if not is_jumia:
+            # Merchant JSON APIs get a chance even when the HTML search page
+            # 404s or is challenged — they often live outside the WAF rules.
+            api_items, api_source = try_merchant_product_apis(base_origin, clean_q, session, max_results)
+            if api_items:
+                return {
+                    "found": True,
+                    "query": clean_q,
+                    "items": api_items,
+                    "searchUrl": target_search_url,
+                    "source": api_source,
+                    "count": len(api_items),
+                }
+        if resp.status_code != 200:
+            waf_vendor = detect_waf_block(resp.status_code, resp.headers, (resp.text or "")[:2000])
+            return {
+                "found": False,
+                "query": clean_q,
+                "items": [],
+                "searchUrl": target_search_url,
+                "blocked": "waf" if waf_vendor else "unreachable",
+                **({"vendor": waf_vendor} if waf_vendor else {}),
+                "error": (
+                    f"{waf_vendor} blocked the store request (HTTP {resp.status_code})."
+                    if waf_vendor else
+                    f"Store request failed (HTTP {resp.status_code})."
+                ),
+            }
 
     except Exception as exc:
         return {
@@ -238,6 +404,7 @@ def scrape_products(query: str, site_url: str | None = None, max_results: int = 
             "query": clean_q,
             "items": [],
             "searchUrl": target_search_url,
+            "blocked": "unreachable",
             "error": str(exc),
         }
 
@@ -1242,6 +1409,50 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(detect_waf_block(403, {}, "plain forbidden"), "bot firewall")
         self.assertIsNone(detect_waf_block(200, {}, "hello"))
         self.assertIsNone(detect_waf_block(None, {}, "ConnectTimeout"))
+
+    def test_page_looks_challenged(self):
+        """Verify JS-challenge interstitials are labelled, normal pages pass."""
+        cf_html = "<html><head><title>Just a moment...</title></head><body>Cloudflare challenge cf_chl_opt</body></html>"
+        self.assertEqual(page_looks_challenged(cf_html), "Cloudflare")
+        self.assertIsNone(page_looks_challenged('<article class="prd"><h3 class="name">Milk</h3></article>'))
+        self.assertIsNone(page_looks_challenged(""))
+        self.assertIsNone(page_looks_challenged(None))
+
+    def test_map_shopify_suggest_products(self):
+        """Verify Shopify suggest-JSON mapping onto the Botly item schema."""
+        payload = {"resources": {"results": {"products": [
+            {"title": "Fresh Milk 1L", "url": "/products/fresh-milk", "image": "https://x/m.jpg", "price": "KSh 120"},
+            {"title": "", "url": "/products/blank"},
+        ]}}}
+        items = map_shopify_suggest_products(payload, "https://demo-store.myshopify.com", 5)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["name"], "Fresh Milk 1L")
+        self.assertEqual(items[0]["url"], "https://demo-store.myshopify.com/products/fresh-milk")
+        self.assertEqual(items[0]["source"], "shopify_api")
+        self.assertEqual(map_shopify_suggest_products({}, "https://x", 5), [])
+
+    def test_map_woocommerce_store_products(self):
+        """Verify WooCommerce Store API mapping incl. minor-unit price conversion."""
+        payload = [
+            {"name": "Whole Milk", "permalink": "https://shop.test/milk",
+             "prices": {"price": "12000", "currency_code": "KES", "currency_minor_unit": 2},
+             "images": [{"src": "https://shop.test/m.jpg"}]},
+        ]
+        items = map_woocommerce_store_products(payload, 5)
+        self.assertEqual(len(items), 1)
+        self.assertAlmostEqual(items[0]["price"], 120.0)
+        self.assertEqual(items[0]["currency"], "KES")
+        self.assertEqual(items[0]["source"], "woocommerce_api")
+        self.assertEqual(map_woocommerce_store_products({"oops": 1}, 5), [])
+
+    def test_scrape_products_reports_blocked_shape(self):
+        """Unreachable stores return the honest blocked payload (never fabricated items)."""
+        res = scrape_products("milk", site_url="http://invalid.invalid", max_results=2)
+        self.assertFalse(res["found"])
+        self.assertEqual(res["items"], [])
+        self.assertEqual(res["blocked"], "unreachable")
+        self.assertTrue(res["error"])
+        self.assertIn("searchUrl", res)
 
 
 if __name__ == "__main__":
