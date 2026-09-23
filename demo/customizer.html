@@ -4163,15 +4163,7 @@ window.addEventListener('botly:payment', async (event) => {
             var detailLine = serverErrorMsg ? '<br><span style="display:block; margin-top:6px; font-size:12px; opacity:0.85;">Technical detail: ' + escapeHtml(serverErrorMsg) + '</span>' : '';
             var browserBtnHtml =
               '<button type="button" onclick="fetchWebsiteWithBrowser()" style="margin-top:10px; width:100%; padding:11px 14px; background:#0284c7; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:800; cursor:pointer;">🌐 Fetch with my browser instead</button>' +
-              '<button type="button" onclick="togglePasteTrain()" style="margin-top:8px; width:100%; padding:11px 14px; background:#fff; color:#0369a1; border:1.5px solid #0284c7; border-radius:9px; font-size:13px; font-weight:800; cursor:pointer;">📋 Paste website text instead</button>' +
-              '<div id="browser-crawl-progress" style="display:none; margin-top:8px; font-size:12px; color:#92400e; line-height:1.6;"></div>' +
-              '<div id="paste-train-box" style="display:none; margin-top:10px; padding:12px; border:1.5px dashed #0284c7; border-radius:9px; background:#f0f9ff;">' +
-              '<div style="font-weight:800; margin-bottom:4px;">Paste your website text</div>' +
-              '<div style="font-size:12px; margin-bottom:8px; opacity:0.85;">Copy text from your homepage or services page and paste it below. Your bot learns it word-for-word — nothing is uploaded anywhere.</div>' +
-              '<textarea id="paste-train-text" rows="6" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:6px; padding:8px; font-size:13px;" placeholder="Paste homepage / services / about text here..."></textarea>' +
-              '<div style="margin-top:8px; display:flex; gap:8px; align-items:center;">' +
-              '<button type="button" onclick="trainFromPastedText()" style="padding:10px 14px; background:#0284c7; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer;">Train bot from pasted text</button>' +
-              '<span id="paste-train-status" style="font-size:12px;"></span></div></div>';
+              '<div id="browser-crawl-progress" style="display:none; margin-top:8px; font-size:12px; color:#92400e; line-height:1.6;"></div>';
             if (serverBlocked === 'waf') {
               noticeHtml =
                 '<strong>🛡️ Site protected by a bot firewall' + (serverWafVendor ? ' (' + escapeHtml(serverWafVendor) + ')' : '') + '</strong> — <strong>' + escapeHtml(domain) + '</strong> refused the server crawler, so no pages were indexed.<br>' +
@@ -4182,7 +4174,7 @@ window.addEventListener('botly:payment', async (event) => {
               noticeHtml =
                 '<strong>⚠️ Live crawl unavailable</strong> — the crawler could not reach <strong>' + escapeHtml(domain) + '</strong> right now.<br>' +
                 'Your bot has been named <strong>' + escapeHtml(profile.companyName || domain) + '</strong>. ' +
-                'To give it real knowledge about your business, please add your FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, ' +
+                'To give it real knowledge about your business, please add your <strong>Company Data</strong> or FAQs manually in the earlier steps, ' +
                 'or re-scan once the site is publicly accessible.' +
                 detailLine + browserBtnHtml;
             }
@@ -4281,66 +4273,6 @@ window.addEventListener('botly:payment', async (event) => {
     // which bot firewalls usually allow even when they block the server crawler.
     // Parsed pages are converted to the same profile shape as /api/crawl and trained
     // into the same bot memory. Requires the target to allow cross-site reads (CORS).
-    function togglePasteTrain() {
-      var box = document.getElementById('paste-train-box');
-      if (box) box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
-    }
-
-    // Fallback trainer for firewall/loader-protected sites: turns pasted website
-    // text into verbatim Q&A chunks in the same bot memory the crawler uses.
-    function trainFromPastedText() {
-      var ta = document.getElementById('paste-train-text');
-      var statusEl = document.getElementById('paste-train-status');
-      var text = ta ? ta.value.trim() : '';
-      function say(msg, ok) {
-        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = ok ? '#15803d' : '#b45309'; }
-      }
-      if (!text || text.split(/\s+/).length < 10) { say('Paste at least a few sentences first.', false); return; }
-      var company = wizardState.companyName || 'your business';
-      var url = wizardState.websiteUrl || '';
-      var STOP = { about: 1, with: 1, from: 1, that: 1, this: 1, your: 1, have: 1, will: 1, more: 1, also: 1, they: 1, them: 1, what: 1, when: 1, into: 1, over: 1, such: 1, than: 1, then: 1, there: 1, their: 1, these: 1, those: 1, which: 1, while: 1, email: 1, phone: 1, contact: 1 };
-      function keywordsFor(s) {
-        var freq = {}, order = [];
-        (s.toLowerCase().match(/[a-z]{4,}/g) || []).forEach(function (w) {
-          if (STOP[w]) return;
-          if (!freq[w]) { freq[w] = 0; order.push(w); }
-          freq[w]++;
-        });
-        order.sort(function (a, b) { return freq[b] - freq[a]; });
-        return order.slice(0, 8);
-      }
-      // Chunk on blank lines (~220 words), keeping short lead lines as questions.
-      var blocks = text.split(/\n\s*\n|\r?\n/).map(function (b) { return b.trim(); }).filter(Boolean);
-      var chunks = [], cur = '';
-      blocks.forEach(function (b) {
-        if ((cur + ' ' + b).split(/\s+/).length > 220 && cur) { chunks.push(cur); cur = b; }
-        else cur = cur ? cur + '\n\n' + b : b;
-      });
-      if (cur) chunks.push(cur);
-      var qas = [];
-      chunks.slice(0, 12).forEach(function (c, idx) {
-        var firstLine = c.split('\n')[0].trim().replace(/\s+/g, ' ');
-        var question;
-        if (firstLine && firstLine.length <= 110 && c.length > firstLine.length + 40) {
-          question = firstLine;
-        } else {
-          var sent = (c.match(/^[^.!?\n]{15,140}[.!?]/) || [''])[0].trim();
-          question = sent || ('About ' + company + ' (part ' + (idx + 1) + ')');
-        }
-        qas.push({ id: 'paste_' + Date.now() + '_' + idx, question: question, answer: c.slice(0, 1200), keywords: keywordsFor(c) });
-      });
-      var totalWords = text.split(/\s+/).length;
-      var page = { id: 'pasted_' + Date.now(), title: 'Pasted website text', path: '/pasted-text', url: url, category: 'overview', wordCount: totalWords, excerpt: text.slice(0, 240), selected: true, qas: qas };
-      wizardState.indexedWebsitePages = (wizardState.indexedWebsitePages || []).concat([page]);
-      if (wizardState.activeWebProfile) wizardState.activeWebProfile.pages = wizardState.indexedWebsitePages;
-      var panel = document.getElementById('website-pages-panel');
-      if (panel) panel.style.display = 'flex';
-      if (typeof renderDiscoveredWebPages === 'function') renderDiscoveredWebPages();
-      trainBotWithSelectedPages(false);
-      say('Learned ' + qas.length + ' section(s), ' + totalWords + ' words. Preview & Deploy tabs updated.', true);
-      if (typeof showStudioToast === 'function') showStudioToast('Bot trained from pasted text (' + totalWords + ' words).');
-    }
-
     function fetchWebsiteWithBrowser() {
       var url = (wizardState.websiteUrl || '').trim();
       if (!url) {
@@ -4625,7 +4557,7 @@ window.addEventListener('botly:payment', async (event) => {
       function finish() {
         releaseBtn();
         if (!pages.length) {
-          setProgress('❌ Your browser could not read the site either (it likely blocks cross-site reads). Please add FAQs manually in the <strong>FAQ &amp; Knowledge</strong> tab, or ask the site host to allowlist the crawler.');
+          setProgress('❌ Your browser could not read the site either (it likely blocks cross-site reads). Please add Company Data or FAQs manually in the earlier steps, or ask the site host to allowlist the crawler.');
           return;
         }
         if (progressEl) progressEl.style.display = 'none';

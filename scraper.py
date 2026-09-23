@@ -10,6 +10,16 @@ import urllib.parse
 from bs4 import BeautifulSoup
 import requests
 
+# Optional Level-3 escalation: browser TLS fingerprint (defeats JA3/TLS blocks
+# that reject Python's requests stack even with browser headers). Degrades
+# gracefully when curl-cffi is not installed.
+try:
+    from curl_cffi import requests as cffi_requests
+    _CFFI_AVAILABLE = True
+except Exception:
+    cffi_requests = None
+    _CFFI_AVAILABLE = False
+
 # Realistic browser headers to prevent basic bot blocking
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -20,6 +30,28 @@ DEFAULT_HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
+}
+
+# Level-2 escalation: full browser-grade navigation header profile. Corporate
+# WAFs (Cloudflare bot management etc.) often 403 bare-bones clients while
+# passing requests that look like a real tab navigation.
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "sec-ch-ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Cache-Control": "max-age=0",
 }
 
 # Category Boundaries: Out-of-scope merchant inquiries
@@ -880,6 +912,55 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
     headers = dict(DEFAULT_HEADERS)
     session = requests.Session()
 
+    # Non-200 fetch outcomes, used to diagnose firewall blocks vs offline sites.
+    block_evidence: list[dict] = []
+    # HTTP-200 bot-check interstitials (challenge/loader pages carry no content).
+    challenge_evidence: list[dict] = []
+    # Hosts that only answer escalated fetches skip Level 1 for later pages.
+    start_level: dict = {"n": 1}
+    # Root-probe HTML cache (avoids re-fetching the homepage in phase 1).
+    root_cache: dict[str, str] = {}
+
+    def escalated_get(target_u: str, timeout: int = 6) -> tuple[str | None, str, int]:
+        """
+        Force-read fetch: escalate past bot-block layers until real HTML arrives.
+        Level 1 = plain request, Level 2 = full browser navigation headers,
+        Level 3 = browser TLS fingerprint (curl-cffi, when installed).
+        Returns (html_or_None, final_url, level_index_used).
+        """
+        levels: list = []
+        if start_level["n"] <= 1:
+            levels.append(("std", lambda: session.get(
+                target_u, headers=headers, timeout=timeout, allow_redirects=True)))
+        levels.append(("browser", lambda: session.get(
+            target_u, headers=BROWSER_HEADERS, timeout=timeout + 2, allow_redirects=True)))
+        if _CFFI_AVAILABLE:
+            levels.append(("tls", lambda: cffi_requests.get(
+                target_u, impersonate="chrome124", timeout=timeout + 4, allow_redirects=True)))
+        for level_idx, (label, do_get) in enumerate(levels):
+            try:
+                r = do_get()
+            except Exception as exc:
+                block_evidence.append({
+                    "status": None, "headers": {},
+                    "snippet": f"{label}:{type(exc).__name__}: {exc}"[:300],
+                })
+                continue
+            content_type = (r.headers.get("Content-Type") or "").lower()
+            is_html = ("html" in content_type or "xml" in content_type or not content_type)
+            if r.status_code == 200 and getattr(r, "text", "") and is_html:
+                challenged = detect_loader_challenge(r.text)
+                if not challenged:
+                    return (r.text, r.url or target_u, level_idx)
+                challenge_evidence.append({"url": r.url or target_u, "vendor": challenged})
+                continue  # challenged at this level — a higher level may clear it
+            block_evidence.append({
+                "status": r.status_code,
+                "headers": dict(r.headers or {}),
+                "snippet": (r.text or "")[:800],
+            })
+        return (None, target_u, len(levels) - 1)
+
     # 0. Host fallback: many small-business sites only answer on ONE of the
     #    apex / www hostnames (DNS or TLS misconfiguration is common, e.g. a
     #    certificate that covers www.example.com but not example.com). If the
@@ -888,18 +969,21 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
     root_probe: dict = {"ok": False, "status": None, "headers": {}, "snippet": ""}
 
     def _probe_root(candidate_url: str) -> bool:
-        try:
-            r = session.get(candidate_url, headers=headers, timeout=5, allow_redirects=True)
-            if r.status_code == 200 and r.text:
-                root_probe["ok"] = True
-                return True
+        html, final_u, level = escalated_get(candidate_url, timeout=5)
+        if html:
+            root_probe["ok"] = True
+            if level > 0:
+                start_level["n"] = 2  # host blocks plain fetches — skip Level 1 later
+            root_cache[candidate_url] = html
+            root_cache[final_u] = html
+            return True
+        if block_evidence:
+            last = block_evidence[-1]
             root_probe.update({
-                "status": r.status_code,
-                "headers": dict(r.headers or {}),
-                "snippet": (r.text or "")[:1500],
+                "status": last.get("status"),
+                "headers": dict(last.get("headers") or {}),
+                "snippet": str(last.get("snippet") or "")[:1500],
             })
-        except Exception as exc:
-            root_probe.update({"status": None, "headers": {}, "snippet": f"{type(exc).__name__}: {exc}"[:300]})
         return False
 
     if not _probe_root(url):
@@ -945,26 +1029,13 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
     visited_urls = set()
     internal_links_discovered = []
 
-    # Non-200 fetch outcomes, used to diagnose firewall blocks vs offline sites.
-    block_evidence: list[dict] = []
-    # HTTP-200 bot-check interstitials (challenge/loader pages carry no content).
-    challenge_evidence: list[dict] = []
-
     def fetch_single_url(target_u: str) -> tuple[str, str | None, str]:
         """Fetch one URL. Returns (requested_url, html_or_None, final_url_after_redirects)."""
-        try:
-            r = session.get(target_u, headers=headers, timeout=6, allow_redirects=True)
-            content_type = (r.headers.get("Content-Type") or "").lower()
-            is_html = ("html" in content_type or "xml" in content_type or not content_type)
-            if r.status_code == 200 and r.text and is_html:
-                return (target_u, r.text, r.url or target_u)
-            block_evidence.append({
-                "status": r.status_code,
-                "headers": dict(r.headers or {}),
-                "snippet": (r.text or "")[:800],
-            })
-        except Exception:
-            pass
+        if target_u in root_cache:
+            return (target_u, root_cache[target_u], target_u)
+        html, final_u, _level = escalated_get(target_u, timeout=6)
+        if html:
+            return (target_u, html, final_u)
         return (target_u, None, target_u)
 
     def parse_page_html(html: str, final_u: str, page_index: int) -> tuple[dict | None, list[str]]:
@@ -1226,15 +1297,17 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
             "error": (
                 f"Blocked by a JS verification loader: {base_origin} shows an automated browser check "
                 "('One moment, please...') instead of content to server crawlers. Real-visitor browsers "
-                "usually pass it - use 'Fetch with my browser instead' below (needs CORS), paste your "
-                "website text, or add FAQs manually."
+                "usually pass it - use 'Fetch with my browser instead' below (needs CORS), or add "
+                "Company Data/FAQs manually in the earlier tabs."
                 if challenge_vendor else
                 f"Protected by a bot firewall ({waf_vendor}): the site refused the server crawler "
                 f"(HTTP {block_status}). Business firewalls often block datacenter servers while "
-                "allowing real visitors - use 'Fetch with my browser instead' below, or add FAQs manually."
+                "allowing real visitors - use 'Fetch with my browser instead' below, or add "
+                "Company Data/FAQs manually in the earlier tabs."
                 if waf_vendor else
                 f"Could not fetch any page from {base_origin} (site offline, blocking crawlers, "
-                "invalid SSL, or unreachable from this network). Re-scan later or add FAQs manually."
+                "invalid SSL, or unreachable from this network). Re-scan later, or add "
+                "Company Data/FAQs manually in the earlier tabs."
             ),
         }
 
@@ -1527,6 +1600,73 @@ class TestScraper(unittest.TestCase):
         self.assertNotIn("/thin", paths)
         blob = " ".join(p["title"] + " " + p["excerpt"] for p in res["pages"])
         self.assertNotIn("One moment", blob)
+
+    def _gated_fixture_server(self, allow):
+        """Local HTTP server that 403s every page unless allow(headers) is True."""
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        real_para = "Liberty heritage insurance covers motor medical and life policies. "
+        PAGES = {
+            "/": ("<html><head><title>Liberty & Heritage Insurance</title></head><body><main><h1>Welcome to Liberty</h1><p>"
+                  + real_para * 12 + "</p><nav><a href='/about'>About</a></nav></main></body></html>"),
+            "/about": ("<html><head><title>About Liberty</title></head><body><main><h1>About Our Company</h1><p>"
+                       + real_para * 12 + "</p></main></body></html>"),
+        }
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path.split("?")[0] not in PAGES or not allow(self.headers):
+                    self.send_response(403)
+                    self.send_header("Content-Length", "9")
+                    self.end_headers()
+                    self.wfile.write(b"forbidden")
+                    return
+                data = PAGES[self.path.split("?")[0]].encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def log_message(self, *a):
+                pass
+
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        t = threading.Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        return srv, t
+
+    def test_escalation_browser_headers_clears_403(self):
+        """403 to plain fetches, 200 to browser navigation headers -> site crawled."""
+        srv, t = self._gated_fixture_server(lambda h: h.get("Sec-Fetch-Mode") == "navigate")
+        try:
+            res = crawl_website(f"http://127.0.0.1:{srv.server_address[1]}/", max_pages=5)
+        finally:
+            srv.shutdown()
+            t.join(timeout=5)
+        paths = sorted(p["path"] for p in res["pages"])
+        self.assertTrue(res["success"])
+        self.assertIn("/", paths)
+        self.assertIn("/about", paths)
+
+    @unittest.skipUnless(_CFFI_AVAILABLE, "curl-cffi not installed")
+    def test_escalation_tls_level_clears_403(self):
+        """403 to the requests stack, 200 to the browser TLS fingerprint -> crawled."""
+        def allow(h):
+            # L3 only: L1 sends no sec-ch-ua, L2 sends v="126", L3 sends v="124".
+            return ('v="124"' in (h.get("sec-ch-ua") or "")
+                    and "Chrome/124" in (h.get("User-Agent") or ""))
+        srv, t = self._gated_fixture_server(allow)
+        try:
+            res = crawl_website(f"http://127.0.0.1:{srv.server_address[1]}/", max_pages=5)
+        finally:
+            srv.shutdown()
+            t.join(timeout=5)
+        paths = sorted(p["path"] for p in res["pages"])
+        self.assertTrue(res["success"])
+        self.assertIn("/", paths)
+        self.assertIn("/about", paths)
 
     def test_map_shopify_suggest_products(self):
         """Verify Shopify suggest-JSON mapping onto the Botly item schema."""
