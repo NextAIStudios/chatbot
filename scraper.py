@@ -183,6 +183,12 @@ def scrape_jumia_products(html_content: str, base_url: str = "https://www.jumia.
 
 CHALLENGE_MARKERS = ("just a moment", "cf_chl", "challenge-form", "captcha-delivery")
 
+# JS verification loaders (hosting-level bot checks): title + body markers.
+# These pages answer HTTP 200 but contain zero business content — indexing
+# them poisons the bot ("Information from One moment, please...").
+LOADER_TITLE_MARKERS = ("one moment, please", "just a moment", "please verify you are", "checking your browser")
+LOADER_BODY_MARKERS = ("request is being verified", "verifying you are human", "verify you are human")
+
 
 def page_looks_challenged(html_content: str | None) -> str | None:
     """
@@ -198,6 +204,26 @@ def page_looks_challenged(html_content: str | None) -> str | None:
     for marker in ("cf_chl", "challenge-form", "captcha-delivery"):
         if marker in body:
             return "bot firewall"
+    return None
+
+
+def detect_loader_challenge(html_content: str | None) -> str | None:
+    """
+    Detect bot-check interstitials served as HTTP 200 (Cloudflare challenges,
+    hosting-level JS verification loaders). Returns a vendor label or None.
+    """
+    vendor = page_looks_challenged(html_content)
+    if vendor:
+        return vendor
+    body = (html_content or "").lower()
+    if not body:
+        return None
+    m = re.search(r"<title[^>]*>(.*?)</title>", body, re.S)
+    title = (m.group(1).strip() if m else "")
+    if any(t in title for t in LOADER_TITLE_MARKERS):
+        return "JS verification loader"
+    if any(t in body for t in LOADER_BODY_MARKERS):
+        return "JS verification loader"
     return None
 
 
@@ -921,6 +947,8 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
 
     # Non-200 fetch outcomes, used to diagnose firewall blocks vs offline sites.
     block_evidence: list[dict] = []
+    # HTTP-200 bot-check interstitials (challenge/loader pages carry no content).
+    challenge_evidence: list[dict] = []
 
     def fetch_single_url(target_u: str) -> tuple[str, str | None, str]:
         """Fetch one URL. Returns (requested_url, html_or_None, final_url_after_redirects)."""
@@ -1002,6 +1030,10 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
             # Junk headings (counters, CMS chrome) are dropped BEFORE the 8-heading
             # slice so real content sections keep their answerable-chunk slots.
             headings = [h for h in soup.find_all(["h1", "h2", "h3"]) if not is_junk_heading(h.get_text(strip=True))]
+            # Thin-content gate: loader shells / empty pages that slipped past
+            # challenge detection carry no Q&A value — never index them.
+            if word_count < 25 and not headings and not clean_phones and not emails:
+                return (None, [])
             # NOTE: keep in sync with the Studio's browser-side chunker (customizer.html).
             # 20 heading-chunks: one-page business sites list every practice area /
             # product / team member as headings (e.g. 7 law-firm practice areas sat
@@ -1110,6 +1142,10 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
                 _requested, html, final_u = future.result()
                 if not html:
                     continue
+                challenged = detect_loader_challenge(html)
+                if challenged:
+                    challenge_evidence.append({"url": final_u, "vendor": challenged})
+                    continue
                 visit_key = _normalize_visit_key(final_u)
                 if visit_key in visited_urls:
                     continue
@@ -1155,6 +1191,11 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
                 if waf_vendor:
                     block_status = ev.get("status")
                     break
+        # HTTP-200 interstitials: the site answers but only with bot checks.
+        challenge_vendor = challenge_evidence[0]["vendor"] if challenge_evidence else ""
+        if challenge_vendor and not waf_vendor:
+            waf_vendor = challenge_vendor
+            block_status = 200
         return {
             "success": False,
             "url": url,
@@ -1183,6 +1224,11 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
             "blockStatus": block_status,
             "browserFetchRecommended": bool(waf_vendor),
             "error": (
+                f"Blocked by a JS verification loader: {base_origin} shows an automated browser check "
+                "('One moment, please...') instead of content to server crawlers. Real-visitor browsers "
+                "usually pass it - use 'Fetch with my browser instead' below (needs CORS), paste your "
+                "website text, or add FAQs manually."
+                if challenge_vendor else
                 f"Protected by a bot firewall ({waf_vendor}): the site refused the server crawler "
                 f"(HTTP {block_status}). Business firewalls often block datacenter servers while "
                 "allowing real visitors - use 'Fetch with my browser instead' below, or add FAQs manually."
@@ -1417,6 +1463,70 @@ class TestScraper(unittest.TestCase):
         self.assertIsNone(page_looks_challenged('<article class="prd"><h3 class="name">Milk</h3></article>'))
         self.assertIsNone(page_looks_challenged(""))
         self.assertIsNone(page_looks_challenged(None))
+
+    def test_detect_loader_challenge(self):
+        """Verify JS-loader + Cloudflare interstitials are labelled, normal pages pass."""
+        loader = ("<html><head><title>One moment, please...</title></head><body>"
+                  "Please wait while your request is being verified...</body></html>")
+        self.assertEqual(detect_loader_challenge(loader), "JS verification loader")
+        cf = "<html><head><title>Just a moment...</title></head><body>Cloudflare</body></html>"
+        self.assertEqual(detect_loader_challenge(cf), "Cloudflare")
+        normal = ("<html><head><title>About Us</title></head><body><p>Hello world, "
+                  "we help clients every single day.</p></body></html>")
+        self.assertIsNone(detect_loader_challenge(normal))
+        self.assertIsNone(detect_loader_challenge(None))
+
+    def test_crawl_skips_loader_and_thin_pages(self):
+        """Challenge interstitials + thin pages are never indexed; real pages kept."""
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        real_para = "We are advocates helping clients with land commercial and family matters. "
+        PAGES = {
+            "/": (200, "text/html",
+                  "<html><head><title>Home</title></head><body><main><h1>Welcome</h1><p>"
+                  + real_para * 12 + "</p><nav><a href='/about'>About</a><a href='/promo'>Promo</a>"
+                  "<a href='/thin'>Thin</a></nav></main></body></html>"),
+            "/about": (200, "text/html",
+                       "<html><head><title>About Us</title></head><body><main><h1>About Our Firm</h1><p>"
+                       + real_para * 12 + "</p></main></body></html>"),
+            "/promo": (200, "text/html",
+                       "<html><head><title>One moment, please...</title><script>"
+                       "setTimeout(function(){window.location.reload();},5000);</script></head><body>"
+                       "Please wait while your request is being verified...</body></html>"),
+            "/thin": (200, "text/html",
+                      "<html><head><title>Thin</title></head><body><p>Hi there</p></body></html>"),
+        }
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                status, ctype, body = PAGES.get(self.path.split("?")[0], (404, "text/plain", ""))
+                data = body.encode()
+                self.send_response(status)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def log_message(self, *a):
+                pass
+
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        t = threading.Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        try:
+            res = crawl_website(f"http://127.0.0.1:{srv.server_address[1]}/", max_pages=5)
+        finally:
+            srv.shutdown()
+            t.join(timeout=5)
+        paths = sorted(p["path"] for p in res["pages"])
+        self.assertTrue(res["success"])
+        self.assertIn("/", paths)
+        self.assertIn("/about", paths)
+        self.assertNotIn("/promo", paths)
+        self.assertNotIn("/thin", paths)
+        blob = " ".join(p["title"] + " " + p["excerpt"] for p in res["pages"])
+        self.assertNotIn("One moment", blob)
 
     def test_map_shopify_suggest_products(self):
         """Verify Shopify suggest-JSON mapping onto the Botly item schema."""
