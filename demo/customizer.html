@@ -4164,7 +4164,13 @@ window.addEventListener('botly:payment', async (event) => {
             var browserBtnHtml =
               '<button type="button" onclick="fetchWebsiteWithBrowser()" style="margin-top:10px; width:100%; padding:11px 14px; background:#0284c7; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:800; cursor:pointer;">🌐 Fetch with my browser instead</button>' +
               '<div id="browser-crawl-progress" style="display:none; margin-top:8px; font-size:12px; color:#92400e; line-height:1.6;"></div>';
-            if (serverBlocked === 'waf') {
+            if (backendDown) {
+              noticeHtml =
+                '<strong>🔌 Botly backend not responding (HTTP ' + (backendDownStatus || 503) + ')</strong> — the server-side crawler is down or restarting, so this scan could not run. The problem is <strong>not</strong> your website.<br>' +
+                'If you run the backend: restart it (<code>python3 server.py 8080</code>), make sure <code>pip install -r requirements.txt</code> was run with Python 3.10+, then re-scan.<br>' +
+                'Meanwhile your own browser can still try reading the site directly:' +
+                detailLine + browserBtnHtml;
+            } else if (serverBlocked === 'waf') {
               noticeHtml =
                 '<strong>🛡️ Site protected by a bot firewall' + (serverWafVendor ? ' (' + escapeHtml(serverWafVendor) + ')' : '') + '</strong> — <strong>' + escapeHtml(domain) + '</strong> refused the server crawler, so no pages were indexed.<br>' +
                 'Your own browser can usually read the site just fine (firewalls typically block datacenter servers, not real visitors). ' +
@@ -4204,6 +4210,8 @@ window.addEventListener('botly:payment', async (event) => {
 
       // Flags used by applyCrawledProfile() to explain WHY the crawl produced no pages.
       var backendMissing = false;
+      var backendDown = false;
+      var backendDownStatus = 0;
       var serverErrorMsg = '';
       var serverBlocked = '';
       var serverWafVendor = '';
@@ -4227,7 +4235,14 @@ window.addEventListener('botly:payment', async (event) => {
           backendMissing = true;
           throw new Error('Crawler backend not running (HTTP ' + res.status + ' on /api/crawl)');
         }
-        if (!res.ok) throw new Error('Live crawl returned ' + res.status);
+        if (!res.ok) {
+          // 502/503/504 = OUR backend (or its host) is down — never the target site.
+          if (res.status === 502 || res.status === 503 || res.status === 504) {
+            backendDown = true;
+            backendDownStatus = res.status;
+          }
+          throw new Error('Live crawl returned ' + res.status);
+        }
         return res.json();
       })
       .then(function(liveProfile) {
@@ -4245,7 +4260,7 @@ window.addEventListener('botly:payment', async (event) => {
       .catch(function(err) {
         clearTimeout(crawlTimeout);
         var msg = (err && err.message) ? err.message : String(err);
-        var looksLikeBackendDown = backendMissing ||
+        var looksLikeBackendDown = backendMissing || backendDown ||
           msg.indexOf('Failed to fetch') !== -1 ||
           msg.indexOf('NetworkError') !== -1 ||
           msg.indexOf('Load failed') !== -1 ||
@@ -4253,7 +4268,12 @@ window.addEventListener('botly:payment', async (event) => {
         if (looksLikeBackendDown && !backendMissing) {
           // Confirm via the health endpoint before blaming the backend.
           fetch('/api/health', { method: 'GET' }).then(function(h) {
-            if (!h.ok) backendMissing = true;
+            if (h.status === 502 || h.status === 503 || h.status === 504) {
+              backendDown = true;
+              backendDownStatus = h.status;
+            } else if (!h.ok && !backendDown) {
+              backendMissing = true;
+            }
             console.warn('Live BeautifulSoup crawler endpoint unreachable, falling back to local profile:', err);
             applyCrawledProfile(fallbackProfile);
           }).catch(function() {
@@ -4272,7 +4292,42 @@ window.addEventListener('botly:payment', async (event) => {
     // Runs fetch() in the visitor's OWN browser (their trusted IP + real browser TLS),
     // which bot firewalls usually allow even when they block the server crawler.
     // Parsed pages are converted to the same profile shape as /api/crawl and trained
-    // into the same bot memory. Requires the target to allow cross-site reads (CORS).
+    // into the same bot memory. When the target blocks cross-site reads (CORS),
+    // public CORS relays are tried automatically — no backend needed.
+
+    // Public CORS relays (raw-HTML endpoints, no key needed). Chained in order.
+    function botlyCorsRelayUrls(u) {
+      var enc = encodeURIComponent(u);
+      return [
+        'https://api.allorigins.win/raw?url=' + enc,
+        'https://corsproxy.io/?url=' + enc,
+        'https://api.codetabs.com/v1/proxy?quest=' + enc
+      ];
+    }
+
+    // Fetch a page with the visitor's browser: direct first, then CORS relays.
+    // Resolves with HTML text; rejects only when every route fails.
+    function fetchPageWithCorsFallback(u) {
+      function looksLikeHtml(t) {
+        return /<\s*(html|body|main|article|div|p[\s>])/i.test((t || '').slice(0, 6000));
+      }
+      function viaRelay(i) {
+        var urls = botlyCorsRelayUrls(u);
+        if (i >= urls.length) return Promise.reject(new Error('all read routes blocked'));
+        return fetch(urls[i], { method: 'GET', credentials: 'omit' }).then(function (res) {
+          if (!res.ok) return viaRelay(i + 1);
+          return res.text().then(function (t) {
+            return looksLikeHtml(t) ? t : viaRelay(i + 1);
+          });
+        }).catch(function () { return viaRelay(i + 1); });
+      }
+      return fetch(u, { method: 'GET', credentials: 'omit' }).then(function (res) {
+        if (!res.ok) return viaRelay(0);
+        return res.text().then(function (t) {
+          return looksLikeHtml(t) ? t : viaRelay(0);
+        });
+      }).catch(function () { return viaRelay(0); });
+    }
     function fetchWebsiteWithBrowser() {
       var url = (wizardState.websiteUrl || '').trim();
       if (!url) {
@@ -4515,11 +4570,8 @@ window.addEventListener('botly:payment', async (event) => {
       }
 
       function fetchOne(u) {
-        // credentials:omit — required so CORS-open (Access-Control-Allow-Origin: *) sites work.
-        return fetch(u, { method: 'GET', credentials: 'omit' }).then(function (res) {
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.text();
-        });
+        // Direct read first; public CORS relays if the site blocks cross-site reads.
+        return fetchPageWithCorsFallback(u);
       }
 
       function pathOf(u) {
