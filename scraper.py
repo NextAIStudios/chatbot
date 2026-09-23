@@ -42,7 +42,8 @@ BROWSER_HEADERS = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    # No Accept-Encoding: requests/urllib3 negotiates what it can decode.
+    # (Advertising `br` without brotli installed yields undecodable garbage.)
     "Upgrade-Insecure-Requests": "1",
     "Sec-Fetch-Dest": "document",
     "Sec-Fetch-Mode": "navigate",
@@ -891,6 +892,43 @@ def detect_waf_block(status_code, headers, body_snippet=""):
     return "bot firewall"
 
 
+def discover_wordpress_urls(base_origin: str, session: requests.Session, headers: dict, limit: int = 30) -> list[str]:
+    """
+    List WordPress pages/posts via the public REST API — finds real content
+    that is neither linked from the homepage nor present in the sitemap
+    (common on Elementor one-pagers with orphan service pages).
+    Off-site links are filtered later by rank_and_filter_urls.
+    """
+    found: list[str] = []
+    try:
+        for endpoint in ("pages", "posts"):
+            if len(found) >= limit:
+                break
+            r = session.get(
+                f"{base_origin}/wp-json/wp/v2/{endpoint}?per_page=100&_fields=link",
+                headers=headers, timeout=6, allow_redirects=True,
+            )
+            if r.status_code != 200:
+                continue
+            try:
+                payload = r.json()
+            except Exception:
+                continue
+            if not isinstance(payload, list):
+                continue
+            for item in payload:
+                link = (item.get("link") if isinstance(item, dict) else "") or ""
+                if not link.startswith(("http://", "https://")):
+                    continue
+                if link not in found:
+                    found.append(link)
+                if len(found) >= limit:
+                    break
+    except Exception:
+        pass
+    return found
+
+
 def crawl_website(url: str, max_pages: int = 20) -> dict:
     """
     Crawls a target merchant or business website using BeautifulSoup.
@@ -1002,6 +1040,11 @@ def crawl_website(url: str, max_pages: int = 20) -> dict:
     candidate_urls = [url]
     if sitemap_urls:
         candidate_urls.extend(sitemap_urls)
+    # 1b. WordPress REST Discovery (unlinked pages/posts)
+    try:
+        candidate_urls.extend(discover_wordpress_urls(base_origin, session, headers))
+    except Exception:
+        pass
 
     # 2. Filter & Rank
     ranked_urls = rank_and_filter_urls(candidate_urls, base_origin, domain, clean_domain)
@@ -1703,6 +1746,47 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(res["blocked"], "unreachable")
         self.assertTrue(res["error"])
         self.assertIn("searchUrl", res)
+
+    def test_discover_wordpress_urls(self):
+        """WP REST pages/posts surfaces unlinked content; non-WP sites yield []."""
+        import json
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                port = self.server.server_address[1]
+                if self.path.startswith("/wp-json/wp/v2/pages"):
+                    body = json.dumps([{"link": f"http://127.0.0.1:{port}/hidden-service/"}])
+                elif self.path.startswith("/wp-json/wp/v2/posts"):
+                    body = json.dumps([{"link": f"http://127.0.0.1:{port}/news/hello/"}])
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                data = body.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def log_message(self, *a):
+                pass
+
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        t = threading.Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        try:
+            import requests
+            base = f"http://127.0.0.1:{srv.server_address[1]}"
+            found = discover_wordpress_urls(base, requests.Session(), dict(DEFAULT_HEADERS))
+            self.assertIn(f"{base}/hidden-service/", found)
+            self.assertIn(f"{base}/news/hello/", found)
+            self.assertEqual(discover_wordpress_urls(base + "/nope", requests.Session(), dict(DEFAULT_HEADERS)), [])
+        finally:
+            srv.shutdown()
+            t.join(timeout=5)
 
 
 if __name__ == "__main__":

@@ -1095,6 +1095,119 @@
         padding: 10px 12px 13px 10px;
       }
     }
+    /* Website scan animation: radar orb + shimmer track + done pill */
+    .scan-stage {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .scan-orb {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+    }
+    .scan-orb::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #0284c7, rgba(2, 132, 199, 0) 70%);
+      -webkit-mask: radial-gradient(farthest-side, transparent 58%, #000 60%);
+      mask: radial-gradient(farthest-side, transparent 58%, #000 60%);
+      animation: scan-spin 1.1s linear infinite;
+    }
+    .scan-orb::after {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: #0284c7;
+      animation: scan-pulse 1.4s ease-in-out infinite;
+    }
+    .scan-orb span {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid #bae6fd;
+    }
+    @keyframes scan-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes scan-pulse {
+      0%, 100% { transform: scale(0.72); opacity: 0.65; }
+      50% { transform: scale(1); opacity: 1; }
+    }
+    .scan-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .scan-label {
+      font-weight: 800;
+      font-size: 13px;
+      color: #0c4a6e;
+    }
+    .scan-track {
+      height: 6px;
+      border-radius: 99px;
+      background: #dbeafe;
+      overflow: hidden;
+      position: relative;
+    }
+    .scan-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 38%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #38bdf8, #0284c7);
+      animation: scan-slide 1.3s ease-in-out infinite;
+    }
+    @keyframes scan-slide {
+      0% { left: -38%; }
+      100% { left: 100%; }
+    }
+    .scan-done {
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      color: #065f46;
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-radius: 10px;
+      padding: 10px 14px;
+      animation: scan-pop 0.35s ease;
+    }
+    @keyframes scan-pop {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .scan-tick {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10b981;
+      color: #fff;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .btn-spin {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-top-color: #fff;
+      animation: scan-spin 0.8s linear infinite;
+      vertical-align: -2px;
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body class="studio-body studio-mode-customize">
@@ -1790,8 +1903,17 @@
 
             <!-- Crawl Status Progress Indicator -->
             <div id="website-sync-status" class="web-crawl-progress" style="display: none;">
-              <div id="web-crawl-msg" style="font-weight: 700;">Connecting...</div>
-              <div class="web-crawl-steps" id="web-crawl-sub">Scanning sitemap &amp; internal links...</div>
+              <div class="scan-stage" id="web-scan-stage">
+                <div class="scan-orb"><span></span></div>
+                <div class="scan-meta">
+                  <div id="web-crawl-msg" class="scan-label">Scanning website…</div>
+                  <div class="scan-track"><div class="scan-fill"></div></div>
+                </div>
+              </div>
+              <div class="scan-done" id="web-scan-done" style="display: none;">
+                <span class="scan-tick">✓</span><span id="web-scan-done-text">Done</span>
+              </div>
+              <div class="web-crawl-steps" id="web-crawl-sub" style="display: none;"></div>
             </div>
 
             <!-- Bot Tuned Success Notification -->
@@ -4189,7 +4311,7 @@ window.addEventListener('botly:payment', async (event) => {
       if (tunedBanner) tunedBanner.style.display = 'none';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>Crawling sitemap &amp; pages...</span>';
+        btn.innerHTML = '<span class="btn-spin"></span><span>Scanning…</span>';
       }
       if (statusBox) statusBox.style.display = 'flex';
 
@@ -4210,11 +4332,31 @@ window.addEventListener('botly:payment', async (event) => {
 
       var fallbackProfile = profileKey ? CURATED_WEBSITE_PROFILES[profileKey] : generateSyntheticDomainPages(url);
 
-      if (statusMsg) statusMsg.innerHTML = 'Connecting to <strong>' + escapeHtml(domain) + '</strong> with BeautifulSoup...';
-      if (statusSub) statusSub.textContent = 'Crawling live pages, extracting headings, meta tags, and pricing...';
+      if (window.__scanDoneTimer) { clearTimeout(window.__scanDoneTimer); window.__scanDoneTimer = null; }
+      var scanStage = document.getElementById('web-scan-stage');
+      var scanDone = document.getElementById('web-scan-done');
+      if (scanStage) scanStage.style.display = 'flex';
+      if (scanDone) scanDone.style.display = 'none';
+      if (statusMsg) statusMsg.textContent = 'Scanning website…';
+      if (statusSub) statusSub.textContent = '';
 
       function applyCrawledProfile(profile) {
-        if (statusBox) statusBox.style.display = 'none';
+        var gotPages = !!(profile && profile.pages && profile.pages.length);
+        if (gotPages && statusBox) {
+          var scanStage2 = document.getElementById('web-scan-stage');
+          var scanDone2 = document.getElementById('web-scan-done');
+          var scanDoneText = document.getElementById('web-scan-done-text');
+          if (scanStage2) scanStage2.style.display = 'none';
+          if (scanDoneText) scanDoneText.textContent = 'Done — ' + profile.pages.length + ' page' + (profile.pages.length === 1 ? '' : 's') + ' indexed';
+          if (scanDone2) scanDone2.style.display = 'flex';
+          statusBox.style.display = 'flex';
+          if (window.__scanDoneTimer) clearTimeout(window.__scanDoneTimer);
+          window.__scanDoneTimer = setTimeout(function () {
+            if (statusBox) statusBox.style.display = 'none';
+          }, 2800);
+        } else if (statusBox) {
+          statusBox.style.display = 'none';
+        }
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Re-scan &amp; Index Website</span>';
