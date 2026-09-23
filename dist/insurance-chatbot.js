@@ -125,8 +125,8 @@
       name: 'Botly Insurance',
       tagline: 'Next-Gen Insurance AI Platform',
       logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232563eb"><path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-2.33v8.02z"/></svg>',
-      supportEmail: 'care@botly.ai',
-      supportPhone: '+1 (800) 555-0199',
+      supportEmail: '',
+      supportPhone: '',
       websiteUrl: 'https://botly.ai',
       licenseNumber: 'INS-LIC-2026-882190'
     },
@@ -1890,7 +1890,8 @@
       var goals = cfg.goals || (cfg.goal ? [cfg.goal] : ['lead_generation']);
       var compName = (cfg.company && cfg.company.name) ? cfg.company.name : '';
       var teamLabel = compName && compName !== 'Botly' && compName !== 'Botly Pro' ? 'the ' + compName + ' team' : 'our team';
-      var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '+1 (800) 555-0199';
+      var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '';
+      var emailAddr = (cfg.company && cfg.company.supportEmail) ? cfg.company.supportEmail : '';
 
       var candidateList = [];
       var stage = mem.goalStage;
@@ -2063,11 +2064,19 @@
           type: 'customer_support',
           text: '💬 Did that answer your question, or would you like a quick callback from our support team?'
         });
-        candidateList.push({
-          key: 'sup_phone_escalate',
-          type: 'customer_support',
-          text: '💬 Our team is available at **' + phoneNum + '** — want an advisor to reach out to you directly?'
-        });
+        if (phoneNum) {
+          candidateList.push({
+            key: 'sup_phone_escalate',
+            type: 'customer_support',
+            text: '💬 Our team is available at **' + phoneNum + '** — want an advisor to reach out to you directly?'
+          });
+        } else if (emailAddr) {
+          candidateList.push({
+            key: 'sup_email_escalate',
+            type: 'customer_support',
+            text: '💬 Our team is available at **' + emailAddr + '** — want an advisor to reach out to you directly?'
+          });
+        }
       }
       // 4. If topic is Onboarding / Getting Started
       else if (isOnboarding) {

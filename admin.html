@@ -409,11 +409,16 @@
           '<td style="white-space:nowrap;">Q:' + (b.faqCount || 0) + ' D:' + (b.docCount || 0) + ' W:' + (b.webCount || 0) + '</td>' +
           '<td>' + (b.apiEnabled ? '<span class="pill green">live</span>' : '<span class="pill grey">off</span>') + '</td>' +
           '<td style="white-space:nowrap;">' + (b.active ? '<span class="pill green">active</span>' : '<span class="pill grey">locked</span>') +
-            '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" onclick="toggleBotActive(\'' + b._id + '\',' + (b.active ? 'false' : 'true') + ')">' + (b.active ? 'Deactivate' : 'Activate') + '</button></td>' +
+            '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" onclick="toggleBotActive(\'' + b._id + '\',' + (b.active ? 'false' : 'true') + ')">' + (b.active ? 'Deactivate' : 'Activate') + '</button>' +
+            ' <button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" title="Open in Studio and edit on behalf of the owner" onclick="editBotInStudio(\'' + b._id + '\')">Edit</button></td>' +
           '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(b.updatedAt)) + '</td>' +
         '</tr>';
       });
       document.getElementById('bots-list').innerHTML = html + '</tbody></table>';
+    }
+
+    function editBotInStudio(docId) {
+      window.open('/studio?editBot=' + encodeURIComponent(docId), '_blank');
     }
 
     function toggleBotActive(docId, to) {

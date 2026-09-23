@@ -370,6 +370,7 @@ export const CATALOG_DATABASE = {
 export async function fetchLiveScrapedProducts(query, siteUrl = '', apiBase = '') {
   try {
     if (!query || typeof query !== 'string' || !query.trim()) return null;
+    if (!siteUrl || typeof siteUrl !== 'string' || !siteUrl.trim()) return null; // blank store URL = no live scrape (never silently query another merchant)
     const cleanQ = encodeURIComponent(query.trim());
     const cleanUrl = siteUrl ? encodeURIComponent(siteUrl.trim()) : '';
     let base = apiBase;

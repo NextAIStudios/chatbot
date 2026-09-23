@@ -48,6 +48,7 @@ Upgrades:
     P79 Human handover advertises only owner-configured contacts (no fake
         fallback number; Botly-self email is david@nextaistudios.com).
     P80 Support-acceptance lead-intro likewise drops fallback contacts.
+    P81-P83 Widget init defaults + support follow-up carry no fallback contacts.
     (P2i/P9b retargeted onto the P79/P80-era text they were superseded by.)
 
 Usage: python3 tools/upgrade-dist-conversational.py [--check]
@@ -1011,6 +1012,43 @@ PATCHES = [
           action: 'LEAD_CAPTURE',
           inquiredNeed: 'Support Specialist Callback (' + topicDesc + ')',
           leadIntro: "I'd be glad to connect you with our support team!" + _supLine + "\\n\\nWhat's your **full name**, so an agent can call you right back?\"""",
+        1,
+    ),
+    (
+        "P81 widget ships no default contacts",
+        """      supportEmail: 'care@botly.ai',
+      supportPhone: '+1 (800) 555-0199',""",
+        """      supportEmail: '',
+      supportPhone: '',""",
+        1,
+    ),
+    (
+        "P82 support follow-up resolves configured email too",
+        """      var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '+1 (800) 555-0199';""",
+        """      var phoneNum = (cfg.company && cfg.company.supportPhone) ? cfg.company.supportPhone : '';
+      var emailAddr = (cfg.company && cfg.company.supportEmail) ? cfg.company.supportEmail : '';""",
+        1,
+    ),
+    (
+        "P83 support follow-up omits missing contacts",
+        """        candidateList.push({
+          key: 'sup_phone_escalate',
+          type: 'customer_support',
+          text: '💬 Our team is available at **' + phoneNum + '** — want an advisor to reach out to you directly?'
+        });""",
+        """        if (phoneNum) {
+          candidateList.push({
+            key: 'sup_phone_escalate',
+            type: 'customer_support',
+            text: '💬 Our team is available at **' + phoneNum + '** — want an advisor to reach out to you directly?'
+          });
+        } else if (emailAddr) {
+          candidateList.push({
+            key: 'sup_email_escalate',
+            type: 'customer_support',
+            text: '💬 Our team is available at **' + emailAddr + '** — want an advisor to reach out to you directly?'
+          });
+        }""",
         1,
     ),
 ]

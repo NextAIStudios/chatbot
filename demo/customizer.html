@@ -1449,7 +1449,7 @@
               <span>Support Email (Optional)</span>
               <span class="form-hint">For team notifications &amp; handover</span>
             </label>
-            <input type="email" id="wiz-support-email" class="wiz-input" placeholder="support@yourcompany.com" value="care@mycompany.com">
+            <input type="email" id="wiz-support-email" class="wiz-input" placeholder="support@yourcompany.com" value="">
           </div>
 
           <div class="form-group">
@@ -1457,7 +1457,7 @@
               <span>Support Phone (Optional)</span>
               <span class="form-hint">For team calls &amp; direct handover</span>
             </label>
-            <input type="tel" id="wiz-support-phone" class="wiz-input" placeholder="+1 (800) 555-0199" value="+1 (800) 555-0199">
+            <input type="tel" id="wiz-support-phone" class="wiz-input" placeholder="+254 712 345 678" value="">
           </div>
         </div>
 
@@ -1856,7 +1856,7 @@
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
               <div class="form-group" style="margin-bottom: 12px;">
                 <label class="form-label" style="margin-bottom: 4px;"><span>Target Store Search URL / Merchant Domain</span></label>
-                <input type="url" id="wiz-catalog-store-url" class="wiz-input" placeholder="https://www.jumia.co.ke or https://mystore.com" value="https://www.jumia.co.ke" oninput="handleCatalogConfigChange()">
+                <input type="url" id="wiz-catalog-store-url" class="wiz-input" placeholder="https://yourstore.com — enter your company's store URL" oninput="handleCatalogConfigChange()">
                 <small style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
                   Supports Jumia Kenya, Shopify, WooCommerce, or custom ecommerce catalog search URLs.
                 </small>
@@ -2812,8 +2812,8 @@ window.addEventListener('botly:payment', async (event) => {
       botName: 'Botly Pro',
       botTitle: 'AI Assistant',
       greeting: "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.",
-      supportEmail: 'care@mycompany.com',
-      supportPhone: '+1 (800) 555-0199',
+      supportEmail: '',
+      supportPhone: '',
       logoUrl: '', // Custom uploaded or pasted logo
       primaryColor: '#18221c',
       accentColor: '#9be553',
@@ -3050,10 +3050,22 @@ window.addEventListener('botly:payment', async (event) => {
       var qInput = document.getElementById('wiz-test-scrape-q');
       var q = (qInput ? qInput.value : 'milk').trim() || 'milk';
       var storeUrlEl = document.getElementById('wiz-catalog-store-url');
-      var storeUrl = (storeUrlEl ? storeUrlEl.value : '').trim() || 'https://www.jumia.co.ke';
+      var storeUrl = (storeUrlEl ? storeUrlEl.value : '').trim();
 
       var resBox = document.getElementById('test-scrape-results-box');
       var btn = document.getElementById('btn-test-scrape-go');
+      if (!storeUrl) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Scrape Now ⚡';
+        }
+        if (resBox) {
+          resBox.style.display = 'block';
+          resBox.innerHTML = '<div style="color: #b45309; font-weight: 700; line-height: 1.6;">Enter your store URL above first — e.g. https://yourstore.com — then hit Scrape Now.</div>';
+        }
+        if (storeUrlEl && storeUrlEl.focus) storeUrlEl.focus();
+        return;
+      }
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Scraping...';
@@ -5119,6 +5131,12 @@ window.addEventListener('botly:payment', async (event) => {
           '    }';
       }
 
+      var embedBotId = (window.BotlyChatbotManager && BotlyChatbotManager.getEmbedBotId) ? BotlyChatbotManager.getEmbedBotId() : 'bot_default';
+      // Shipped snippets carry only contacts the merchant actually configured — never fake fallbacks.
+      var companyLines = '      name: ' + JSON.stringify(wizardState.companyName);
+      if (wizardState.supportEmail) companyLines += ',\n      supportEmail: ' + JSON.stringify(wizardState.supportEmail);
+      if (wizardState.supportPhone) companyLines += ',\n      supportPhone: ' + JSON.stringify(wizardState.supportPhone);
+
       var code =
 '<!-- 1. Include Botly Pro Stylesheet & JavaScript Bundle -->\n' +
 '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n' +
@@ -5127,13 +5145,11 @@ window.addEventListener('botly:payment', async (event) => {
 '<script>\n' +
 '  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
-'    botId: ' + JSON.stringify(((window.BotlyChatbotManager && BotlyChatbotManager.getActiveBotId) ? BotlyChatbotManager.getActiveBotId() : 'bot_default')) + ', // keeps this bot\'s leads & contacts separate\n' +
+'    botId: ' + JSON.stringify(embedBotId) + ', // keeps this bot\'s leads & contacts separate\n' +
 '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
-'      name: ' + JSON.stringify(wizardState.companyName) + ',\n' +
-'      supportEmail: ' + JSON.stringify(wizardState.supportEmail || 'care@botly.ai') + ',\n' +
-'      supportPhone: ' + JSON.stringify(wizardState.supportPhone || '+1 (800) 555-0199') + '\n' +
+companyLines + '\n' +
 '    },\n' +
 '    bot: {\n' +
 '      name: ' + JSON.stringify(wizardState.botName) + ',\n' +
@@ -5168,6 +5184,10 @@ window.addEventListener('botly:payment', async (event) => {
     };
 
     function botlyBillingDocId(botId) {
+      try {
+        var ab = (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBot) ? BotlyChatbotManager.getActiveBot() : null;
+        if (ab && ab.adminEdit && ab.adminEdit.docId) return ab.adminEdit.docId;
+      } catch (e) {}
       var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
       if (!user || !user.uid || !botId) return null;
       return String(user.uid).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) + '__' + String(botId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
@@ -5232,6 +5252,7 @@ window.addEventListener('botly:payment', async (event) => {
     }
 
     var botlyPendingCopyAfterActivation = false;
+    var paywallPollTimer = null;
 
     function openPaywallModal(opts) {
       opts = opts || {};
@@ -5263,6 +5284,7 @@ window.addEventListener('botly:payment', async (event) => {
     function closePaywallModal() {
       var old = document.getElementById('paywall-modal');
       if (old) old.remove();
+      if (paywallPollTimer) { clearInterval(paywallPollTimer); paywallPollTimer = null; }
     }
     function renderPaywallDone() {
       var body = document.getElementById('paywall-body');
@@ -5285,88 +5307,82 @@ window.addEventListener('botly:payment', async (event) => {
       var botName = '';
       try { botName = wizardState.botName || ''; } catch (e) {}
       var payUrl = (BOTLY_BILLING.intasendPaymentUrl || '').trim();
+      if (!payUrl) {
+        body.innerHTML =
+          '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:14px;font-size:13.5px;color:#b91c1c;line-height:1.6;">' +
+            'Online payments are not configured yet. Please contact <a href="mailto:david@nextaistudios.com" style="color:#b91c1c;font-weight:800;">david@nextaistudios.com</a>.' +
+          '</div>';
+        return;
+      }
       var payChips = '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:8px 0 12px 0;">' +
         '<span style="font-size:10.5px;font-weight:800;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;border-radius:6px;padding:2px 8px;">M-PESA</span>' +
         '<span style="font-size:10.5px;font-weight:800;font-style:italic;color:#1e3a8a;background:#dbeafe;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;">VISA</span>' +
         '<span style="font-size:10.5px;font-weight:800;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;">Mastercard</span>' +
         '<span style="font-size:10.5px;font-weight:800;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 8px;">+ cards</span>' +
       '</div>';
-      var payBtn = payUrl ? '<a href="' + escapeHtml(payUrl) + '" target="_blank" rel="noopener" style="display:block;text-align:center;background:#0ea5e9;color:#fff;border-radius:10px;padding:12px;font-size:14px;font-weight:800;text-decoration:none;margin-bottom:6px;">Pay KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + ' securely &#8599;</a><div style="text-align:center;color:#94a3b8;font-size:11.5px;margin:6px 0 0 0;">M-Pesa, Visa, Mastercard &amp; cards via IntaSend &middot; or pay manually below</div>' + payChips : '';
       body.innerHTML =
-        '<p style="font-size:13px;color:#475569;line-height:1.6;margin:0 0 12px 0;">Publishing <strong>' + escapeHtml(botName || 'this bot') + '</strong> costs a one-time <strong>$' + BOTLY_BILLING.usd + '</strong> (KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '). Building and previewing stay free forever.</p>' +
-        payBtn +
-        '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;font-size:13px;line-height:1.7;color:#0f172a;margin-bottom:12px;">' +
-          '<strong>1.</strong> On ' + escapeHtml(BOTLY_BILLING.method) + ', <strong>Send Money / Buy Goods</strong> to:<br>' +
-          '<div style="font-size:20px;font-weight:800;letter-spacing:0.5px;margin:4px 0;">Till ' + escapeHtml(BOTLY_BILLING.tillNumber) + '</div>' +
-          '<div style="color:#64748b;font-size:12.5px;">' + escapeHtml(BOTLY_BILLING.tillName) + ' · KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '</div>' +
-          '<strong>2.</strong> Paste your ' + escapeHtml(BOTLY_BILLING.method) + ' confirmation code below and submit.' +
-        '</div>' +
-        '<div id="paywall-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:9px 11px;font-size:12.5px;margin-bottom:10px;"></div>' +
-        '<label style="font-size:12px;font-weight:800;color:#334155;">' + (payUrl ? 'Payment reference (M-Pesa code or IntaSend ref)' : 'M-Pesa confirmation code') + '</label>' +
-        '<input id="paywall-code" type="text" placeholder="' + (payUrl ? 'e.g. UIC8E69GLQ or INV-...' : 'e.g. UIC8E69GLQ') + '" style="width:100%;margin:5px 0 10px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
-        '<label style="font-size:12px;font-weight:800;color:#334155;">Your M-Pesa phone (for verification)</label>' +
-        '<input id="paywall-phone" type="tel" placeholder="e.g. 0712 345 678" style="width:100%;margin:5px 0 12px 0;padding:11px 12px;border:1.5px solid #cbd5e1;border-radius:9px;font-size:14px;box-sizing:border-box;">' +
-        '<button type="button" onclick="submitPaymentClaim()" style="width:100%;background:#18221c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">I\u2019ve paid — Submit for verification</button>' +
-        '<button type="button" id="paywall-recheck" style="width:100%;margin-top:8px;background:#fff;color:#18221c;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;">↻ I\u2019ve been approved — check again</button>';
-      var recheck = document.getElementById('paywall-recheck');
-      if (recheck) recheck.onclick = function() {
+        '<p style="font-size:13px;color:#475569;line-height:1.6;margin:0 0 12px 0;">Publishing <strong>' + escapeHtml(botName || 'this bot') + '</strong> costs a one-time <strong>$' + BOTLY_BILLING.usd + '</strong> (KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + '). Pay securely with M-Pesa or card — this window unlocks automatically once confirmed.</p>' +
+        '<a id="paywall-paylink" href="' + escapeHtml(payUrl) + '" target="_blank" rel="noopener" style="display:block;text-align:center;background:#0ea5e9;color:#fff;border-radius:10px;padding:13px;font-size:15px;font-weight:800;text-decoration:none;">Pay KES ' + Number(BOTLY_BILLING.kes).toLocaleString() + ' securely &#8599;</a>' +
+        '<div style="text-align:center;color:#94a3b8;font-size:11.5px;margin:6px 0 0 0;">M-Pesa, Visa, Mastercard &amp; cards via IntaSend</div>' +
+        payChips +
+        '<div id="paywall-status" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;color:#475569;line-height:1.6;">After paying, keep this window open — activation is detected automatically.</div>';
+      var link = document.getElementById('paywall-paylink');
+      if (link) link.addEventListener('click', function() { paywallLogLinkClaim(); });
+      try {
+        var last = localStorage.getItem(paywallClaimKey(botlyActiveBotId()));
+        if (last && (Date.now() - Number(last)) < 86400000) paywallNoteClaim();
+      } catch (e) {}
+      if (paywallPollTimer) clearInterval(paywallPollTimer);
+      paywallPollTimer = setInterval(function() {
+        if (!document.getElementById('paywall-modal')) {
+          clearInterval(paywallPollTimer); paywallPollTimer = null; return;
+        }
         botlyCheckActivation(botlyActiveBotId(), function(r) {
-          if (r.active) { renderPaywallDone(); }
-          else {
-            var e = document.getElementById('paywall-error');
-            if (e) { e.textContent = 'Still pending — we verify payments shortly after you submit the code above.'; e.style.display = 'block'; }
+          if (r.active) {
+            if (paywallPollTimer) { clearInterval(paywallPollTimer); paywallPollTimer = null; }
+            renderPaywallDone();
           }
         });
-      };
+      }, 6000);
     }
-    function renderPaywallPending() {
-      var body = document.getElementById('paywall-body');
-      if (!body) return;
-      body.innerHTML =
-        '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:14px;font-size:13.5px;color:#78350f;line-height:1.6;">' +
-          '⏳ <strong>Claim received!</strong><br>We verify payments (M-Pesa & card) shortly. This window and your Copy button unlock automatically once approved — just hit check again.' +
-        '</div>' +
-        '<button type="button" id="paywall-check2" style="width:100%;margin-top:12px;background:#18221c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">↻ Check approval status</button>';
-      var btn = document.getElementById('paywall-check2');
-      if (btn) btn.onclick = function() {
-        botlyCheckActivation(botlyActiveBotId(), function(r) {
-          if (r.active) renderPaywallDone(); else renderPaywallPending();
-        });
-      };
+    function paywallClaimKey(botId) { return 'paywall_claim_' + (botId || 'default'); }
+    function paywallNoteClaim() {
+      var s = document.getElementById('paywall-status');
+      if (s) {
+        s.style.background = '#fffbeb'; s.style.border = '1px solid #fcd34d'; s.style.color = '#78350f';
+        s.innerHTML = '&#9203; <strong>Payment link opened.</strong> Complete payment in the new tab — this window unlocks automatically once confirmed.';
+      }
     }
-    function submitPaymentClaim() {
-      var errBox = document.getElementById('paywall-error');
-      var showErr = function(m) { if (errBox) { errBox.textContent = m; errBox.style.display = 'block'; } };
-      var codeEl = document.getElementById('paywall-code');
-      var phoneEl = document.getElementById('paywall-phone');
-      var code = codeEl ? codeEl.value.trim().toUpperCase() : '';
-      var phone = phoneEl ? phoneEl.value.trim() : '';
-      if (code.length < 6) { showErr('Enter the M-Pesa confirmation code from your payment SMS.'); return; }
-      var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
-      if (!user || !user.uid) { showErr('Please sign in first.'); return; }
-      var db = botlyCloudDb();
-      if (!db) { showErr('Could not reach the server. Check your connection and try again.'); return; }
-      var botId = botlyActiveBotId();
-      var company = '', botName = '';
-      try { company = wizardState.companyName || ''; botName = wizardState.botName || ''; } catch (e) {}
-      db.collection('botly_payments').add({
-        ownerUid: user.uid,
-        ownerEmail: user.email || null,
-        botId: botId,
-        companyName: String(company).slice(0, 120),
-        botName: String(botName).slice(0, 120),
-        mpesaCode: code.slice(0, 40),
-        phone: String(phone).slice(0, 40),
-        amountUSD: BOTLY_BILLING.usd,
-        amountKES: BOTLY_BILLING.kes,
-        provider: ((BOTLY_BILLING.intasendPaymentUrl || '').trim() ? 'intasend_link' : 'mpesa_till'),
-        status: 'pending',
-        createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
-      }).then(function() { renderPaywallPending(); }).catch(function(err) {
-        showErr('Submit failed: ' + (err && err.message ? err.message : 'please try again.'));
-      });
+    function paywallLogLinkClaim() {
+      // Best-effort pending claim so the owner can approve in Admin; deduped per bot per day.
+      try {
+        var botId = botlyActiveBotId();
+        var key = paywallClaimKey(botId);
+        var last = null;
+        try { last = localStorage.getItem(key); } catch (e) {}
+        if (last && (Date.now() - Number(last)) < 86400000) { paywallNoteClaim(); return; }
+        var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+        var db = botlyCloudDb();
+        if (!user || !user.uid || !db) return;
+        var company = '', botName = '';
+        try { company = wizardState.companyName || ''; botName = wizardState.botName || ''; } catch (e) {}
+        db.collection('botly_payments').add({
+          ownerUid: user.uid,
+          ownerEmail: user.email || null,
+          botId: botId,
+          companyName: String(company).slice(0, 120),
+          botName: String(botName).slice(0, 120),
+          provider: 'intasend_link',
+          status: 'pending',
+          amountUSD: BOTLY_BILLING.usd,
+          amountKES: BOTLY_BILLING.kes,
+          createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+          try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
+          paywallNoteClaim();
+        }).catch(function() {});
+      } catch (e) {}
     }
-
     function copyFinalEmbed() {
       if (window.BotlyAuth && !BotlyAuth.isAuthenticated()) {
         BotlyAuth.requireAuth(function() {
@@ -5544,8 +5560,8 @@ window.addEventListener('botly:payment', async (event) => {
       if (botNameEl) wizardState.botName = botNameEl.value.trim() || 'Botly Pro';
       if (botTitleEl) wizardState.botTitle = botTitleEl.value.trim() || 'AI Assistant';
       if (greetingEl) wizardState.greeting = greetingEl.value.trim() || "Hey! How can I help you today?";
-      if (emailEl) wizardState.supportEmail = emailEl.value.trim() || 'care@mycompany.com';
-      if (phoneEl) wizardState.supportPhone = phoneEl.value.trim() || '+1 (800) 555-0199';
+      if (emailEl) wizardState.supportEmail = emailEl.value.trim() || '';
+      if (phoneEl) wizardState.supportPhone = phoneEl.value.trim() || '';
 
       if (!window.BotlyChatbot) return;
 
@@ -5616,8 +5632,8 @@ window.addEventListener('botly:payment', async (event) => {
           company: {
             name: wizardState.companyName,
             websiteUrl: wizardState.websiteUrl || (wizardState.activeWebProfile ? ('https://' + (wizardState.activeWebProfile.domain || 'jumia.co.ke')) : ''),
-            supportEmail: wizardState.supportEmail,
-            supportPhone: wizardState.supportPhone || '+1 (800) 555-0199'
+            supportEmail: wizardState.supportEmail || '',
+            supportPhone: wizardState.supportPhone || ''
           },
           bot: {
             name: wizardState.botName,
@@ -5708,8 +5724,8 @@ window.addEventListener('botly:payment', async (event) => {
           botTitle: 'AI Assistant',
           purposes: ['lead_generation', 'customer_support'],
           greeting: "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.",
-          supportEmail: 'care@mycompany.com',
-          supportPhone: '+1 (800) 555-0199',
+          supportEmail: '',
+          supportPhone: '',
           logoUrl: '',
           primaryColor: '#18221c',
           accentColor: '#9be553',
@@ -5825,12 +5841,14 @@ window.addEventListener('botly:payment', async (event) => {
           var db = window.firebase.firestore();
           (bots || []).forEach(function(b) {
             if (!b || !b.id) return;
-            var docId = String(user.uid).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) + '__' +
-                        String(b.id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
-            db.collection('botly_bots').doc(docId).set({
-              ownerUid: user.uid,
-              ownerEmail: user.email || null,
-              botId: b.id,
+            // Admin-edit mode: write back to the OWNER's doc, preserving their ownership.
+            var ae = b.adminEdit || null;
+            var docId = ae ? ae.docId : (String(user.uid).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) + '__' +
+                        String(b.id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60));
+            var payload = {
+              ownerUid: ae ? ae.ownerUid : user.uid,
+              ownerEmail: ae ? (ae.ownerEmail || null) : (user.email || null),
+              botId: ae ? (ae.botId || b.id) : b.id,
               companyName: b.companyName || '',
               botName: b.botName || '',
               botTitle: b.botTitle || '',
@@ -5842,7 +5860,26 @@ window.addEventListener('botly:payment', async (event) => {
               websiteUrl: b.websiteUrl || null,
               clientUpdatedAt: b.updatedAt || null,
               updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }).catch(function() {});
+            };
+            // Full editable config (no trained chunks — those stay local-only).
+            // Lets an admin open + edit any bot from the Admin page.
+            try {
+              var cfg = {
+                companyName: b.companyName || '', botName: b.botName || '', botTitle: b.botTitle || '',
+                purposes: b.purposes || [], greeting: b.greeting || '',
+                supportEmail: b.supportEmail || '', supportPhone: b.supportPhone || '',
+                logoUrl: b.logoUrl || '', primaryColor: b.primaryColor || '', accentColor: b.accentColor || '',
+                backgroundColor: b.backgroundColor || '', websiteUrl: b.websiteUrl || '',
+                catalogStoreUrl: b.catalogStoreUrl || '', faqs: b.faqs || [],
+                checkoutConfig: b.checkoutConfig || {}, apiConfig: b.apiConfig || {},
+                sourceToggles: b.sourceToggles || {}
+              };
+              if (JSON.stringify(cfg).length < 800000) {
+                payload.config = cfg;
+                payload.configUpdatedAt = window.firebase.firestore.FieldValue.serverTimestamp();
+              }
+            } catch (e) {}
+            db.collection('botly_bots').doc(docId).set(payload, { merge: true }).catch(function() {});
           });
         } catch (e) {}
       }
@@ -5858,6 +5895,18 @@ window.addEventListener('botly:payment', async (event) => {
         try {
           localStorage.setItem(ACTIVE_KEY, id);
         } catch(e) {}
+      }
+
+      function getActiveBot() {
+        var bots = getAllBots();
+        var id = getActiveBotId();
+        return bots.find(function(b) { return b.id === id; }) || bots[0] || null;
+      }
+
+      function getEmbedBotId() {
+        var b = getActiveBot();
+        if (b && b.adminEdit && b.adminEdit.botId) return b.adminEdit.botId;
+        return b ? b.id : 'bot_default';
       }
 
       function syncActiveBotFromUI() {
@@ -5914,6 +5963,7 @@ window.addEventListener('botly:payment', async (event) => {
         bot.indexedWebsitePages = wizardState.indexedWebsitePages ? JSON.parse(JSON.stringify(wizardState.indexedWebsitePages)) : [];
         bot.kbVersion = KB_SCHEMA_VERSION;
         bot.websiteUrl = wizardState.websiteUrl || 'https://mycompany.com';
+        bot.catalogStoreUrl = wizardState.catalogStoreUrl || '';
         bot.activeWebProfile = wizardState.activeWebProfile ? JSON.parse(JSON.stringify(wizardState.activeWebProfile)) : null;
         bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
         bot.apiConfig = wizardState.apiConfig ? JSON.parse(JSON.stringify(wizardState.apiConfig)) : {};
@@ -5961,6 +6011,7 @@ window.addEventListener('botly:payment', async (event) => {
               '<div class="chatbot-card-company" title="' + escapeHtml(bot.companyName) + '">' +
                 escapeHtml(bot.companyName || 'Untitled Company') +
               '</div>' +
+              (bot.adminEdit ? '<div class="chatbot-card-active-dot" style="background:#0ea5e9;" title="Admin edit — on behalf of ' + escapeHtml(bot.adminEdit.ownerEmail || bot.adminEdit.ownerUid || '') + '"></div>' : '') +
               (isActive ? '<div class="chatbot-card-active-dot" title="Currently Active"></div>' : '') +
             '</div>' +
             '<div class="chatbot-card-meta">' +
@@ -6022,8 +6073,8 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.botTitle = bot.botTitle || 'AI Assistant';
         wizardState.purposes = bot.purposes ? bot.purposes.slice() : ['lead_generation', 'customer_support'];
         wizardState.greeting = bot.greeting || "Hey! How can I help you today? Ask me anything about our services, pricing, or getting started.";
-        wizardState.supportEmail = bot.supportEmail || 'care@mycompany.com';
-        wizardState.supportPhone = bot.supportPhone || '+1 (800) 555-0199';
+        wizardState.supportEmail = bot.supportEmail || '';
+        wizardState.supportPhone = bot.supportPhone || '';
         wizardState.logoUrl = bot.logoUrl || '';
         wizardState.primaryColor = bot.primaryColor || '#18221c';
         wizardState.accentColor = bot.accentColor || '#9be553';
@@ -6032,6 +6083,7 @@ window.addEventListener('botly:payment', async (event) => {
         wizardState.websiteChunks = bot.websiteChunks ? JSON.parse(JSON.stringify(bot.websiteChunks)) : [];
         wizardState.indexedWebsitePages = bot.indexedWebsitePages ? JSON.parse(JSON.stringify(bot.indexedWebsitePages)) : [];
         wizardState.websiteUrl = bot.websiteUrl || 'https://mycompany.com';
+        wizardState.catalogStoreUrl = bot.catalogStoreUrl || '';
         wizardState.activeWebProfile = bot.activeWebProfile || null;
         wizardState.faqs = bot.faqs ? JSON.parse(JSON.stringify(bot.faqs)) : [];
         wizardState.checkoutConfig = bot.checkoutConfig ? JSON.parse(JSON.stringify(bot.checkoutConfig)) : {};
@@ -6072,6 +6124,8 @@ window.addEventListener('botly:payment', async (event) => {
         if (pEl) pEl.value = wizardState.supportPhone;
         var wUrlEl = document.getElementById('wiz-website-url');
         if (wUrlEl) wUrlEl.value = wizardState.websiteUrl;
+        var sUrlEl = document.getElementById('wiz-catalog-store-url');
+        if (sUrlEl) sUrlEl.value = wizardState.catalogStoreUrl || '';
 
         // Restore checkout inputs
         var chkItemEl = document.getElementById('wiz-checkout-item');
@@ -6235,6 +6289,8 @@ window.addEventListener('botly:payment', async (event) => {
         init: init,
         getAllBots: getAllBots,
         getActiveBotId: getActiveBotId,
+        getActiveBot: getActiveBot,
+        getEmbedBotId: getEmbedBotId,
         syncActiveBotFromUI: syncActiveBotFromUI,
         saveCurrentBot: syncActiveBotFromUI,
         createNewBot: createNewBot,
@@ -6245,6 +6301,114 @@ window.addEventListener('botly:payment', async (event) => {
     })();
 
     window.BotlyChatbotManager = BotlyChatbotManager;
+
+    // ==================================================
+    // ADMIN EDIT-ON-BEHALF (?editBot=<botly_bots docId>)
+    // Lets an allowlisted admin open any user's bot from the Admin page
+    // and edit it in the Studio; saves sync back to the OWNER's cloud doc.
+    // Trained website/doc memory stays on the owner's browser (local-only).
+    // ==================================================
+    var BOTLY_ADMIN_EDIT_CTX = null;
+
+    function botlyIsAdminEmail(email) {
+      var list = window.BOTLY_ADMIN_EMAILS || ['muindidiego@gmail.com'];
+      return !!(email && list.indexOf(email) !== -1);
+    }
+
+    function botlyScrubAdminEditTags() {
+      // Without ?editBot, local admin copies become plain local bots so a
+      // later save can never sync to someone else's cloud doc by accident.
+      try {
+        var raw = localStorage.getItem('botly_saved_chatbots_v1');
+        if (!raw) return;
+        var bots = JSON.parse(raw);
+        if (!Array.isArray(bots)) return;
+        var changed = false;
+        bots.forEach(function(b) { if (b && b.adminEdit) { delete b.adminEdit; changed = true; } });
+        if (changed) localStorage.setItem('botly_saved_chatbots_v1', JSON.stringify(bots));
+      } catch (e) {}
+    }
+
+    function botlyInitAdminEdit() {
+      var docId = null;
+      try { docId = new URLSearchParams(window.location.search).get('editBot'); } catch (e) {}
+      if (!docId) { botlyScrubAdminEditTags(); return; }
+      if (!window.BotlyAuth || typeof BotlyAuth.requireAuth !== 'function') return;
+      BotlyAuth.requireAuth(function() {
+        var user = (typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+        if (!user || !botlyIsAdminEmail(user.email || '')) {
+          showStudioToast('Admin access only — ?editBot ignored.');
+          return;
+        }
+        var db = botlyCloudDb();
+        if (!db) { showStudioToast('Could not reach the cloud database.'); return; }
+        showStudioToast('Loading bot for admin edit…');
+        db.collection('botly_bots').doc(docId).get().then(function(snap) {
+          var d = (snap && snap.exists && snap.data) ? snap.data() : null;
+          if (!d) { showStudioToast('Bot not found in cloud registry.'); return; }
+          var cfg = d.config || null;
+          if (!cfg) {
+            showStudioToast('No cloud config yet — ask the owner to open & save this bot in the Studio once.');
+            return;
+          }
+          var bots = BotlyChatbotManager.getAllBots();
+          var localId = 'ae__' + String(docId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+          var bot = bots.find(function(x) { return x.id === localId; });
+          var ae = { docId: docId, ownerUid: d.ownerUid || '', ownerEmail: d.ownerEmail || '', botId: d.botId || '' };
+          if (!bot) {
+            bot = {
+              id: localId, companyName: cfg.companyName || d.companyName || 'My Company',
+              botName: cfg.botName || d.botName || 'Botly Pro', botTitle: cfg.botTitle || d.botTitle || 'AI Assistant',
+              purposes: ((cfg.purposes || d.purposes || []).slice()), greeting: cfg.greeting || '',
+              supportEmail: cfg.supportEmail || '', supportPhone: cfg.supportPhone || '',
+              logoUrl: cfg.logoUrl || '', primaryColor: cfg.primaryColor || '#18221c',
+              accentColor: cfg.accentColor || '#9be553', backgroundColor: cfg.backgroundColor || '#ffffff',
+              websiteUrl: cfg.websiteUrl || d.websiteUrl || '', catalogStoreUrl: cfg.catalogStoreUrl || '',
+              faqs: cfg.faqs || [], checkoutConfig: cfg.checkoutConfig || {}, apiConfig: cfg.apiConfig || {},
+              sourceToggles: cfg.sourceToggles || { faq: true, docs: true, web: true },
+              documentChunks: [], websiteChunks: [], indexedWebsitePages: [], activeWebProfile: null,
+              adminEdit: ae, createdAt: Date.now(), updatedAt: Date.now()
+            };
+            bots.push(bot);
+            try { localStorage.setItem('botly_saved_chatbots_v1', JSON.stringify(bots)); } catch (e) {}
+          } else {
+            bot.adminEdit = ae;
+          }
+          BOTLY_ADMIN_EDIT_CTX = ae;
+          BotlyChatbotManager.switchBot(localId);
+          goStep(1);
+          botlyRenderAdminEditBanner();
+          showStudioToast('Editing "' + (bot.botName || 'bot') + '" on behalf of ' + (d.ownerEmail || d.ownerUid || 'owner'));
+        }).catch(function(err) {
+          showStudioToast('Admin load failed: ' + ((err && err.message) || err));
+        });
+      }, 'Sign in as admin to edit this bot.');
+    }
+
+    function botlyRenderAdminEditBanner() {
+      var old = document.getElementById('admin-edit-banner');
+      if (old) old.remove();
+      if (!BOTLY_ADMIN_EDIT_CTX) return;
+      var bar = document.createElement('div');
+      bar.id = 'admin-edit-banner';
+      bar.style.cssText = 'position:sticky;top:0;z-index:60000;background:#0ea5e9;color:#fff;font-size:13px;font-weight:700;padding:9px 16px;display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;';
+      bar.innerHTML = 'Admin edit — <span>' + escapeHtml(BOTLY_ADMIN_EDIT_CTX.botId || '') + '</span> on behalf of <span>' + escapeHtml(BOTLY_ADMIN_EDIT_CTX.ownerEmail || BOTLY_ADMIN_EDIT_CTX.ownerUid || '') + '</span> · saves sync to their cloud bot' +
+        ' <button type="button" onclick="botlyExitAdminEdit()" style="background:#fff;color:#0ea5e9;border:none;border-radius:8px;padding:4px 12px;font-weight:800;cursor:pointer;">Exit</button>';
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+
+    function botlyExitAdminEdit() {
+      BOTLY_ADMIN_EDIT_CTX = null;
+      var old = document.getElementById('admin-edit-banner');
+      if (old) old.remove();
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.delete('editBot');
+        window.history.replaceState({}, document.title, u.pathname + (u.search || '') + (u.hash || ''));
+      } catch (e) {}
+      botlyScrubAdminEditTags();
+      showStudioToast('Exited admin edit mode.');
+    }
 
     function handleCreateNewCompanyBot() {
       var _nc = null;
@@ -7138,6 +7302,7 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
     document.addEventListener('DOMContentLoaded', function() {
       applyResponsiveNav();
       BotlyChatbotManager.init();
+      botlyInitAdminEdit();
       renderFaqsList();
       updatePurposeUI();
       applyBotLiveConfig();
@@ -7191,16 +7356,4 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
     });
   </script>
 </body>
-</html>
-e) {}
-    });
-  </script>
-</body>
-</html>
-atch(e) {}
-    });
-  </script>
-</body>
-</html>
->
 </html>
