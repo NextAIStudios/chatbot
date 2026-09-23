@@ -1014,6 +1014,87 @@
       background: #e2e8f0;
       color: #0f172a;
     }
+    /* Modern Studio toast: dark glass pill, gradient icon chip, progress bar */
+    .studio-toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translate(-50%, -18px);
+      z-index: 9999999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: min(560px, 92vw);
+      padding: 12px 14px 15px 12px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.93);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #f8fafc;
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.45;
+      box-shadow: 0 12px 32px rgba(2, 132, 199, 0.28), 0 4px 12px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(125, 211, 252, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      overflow: hidden;
+    }
+    .studio-toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+    .studio-toast .st-ic {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .studio-toast .st-msg {
+      flex: 1;
+    }
+    .studio-toast .st-x {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0 0 4px;
+      flex-shrink: 0;
+    }
+    .studio-toast .st-x:hover {
+      color: #fff;
+    }
+    .studio-toast .st-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transform-origin: left;
+    }
+    .studio-toast.show .st-bar {
+      animation: st-shrink 4.2s linear forwards;
+    }
+    @keyframes st-shrink {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+    @media (max-width: 480px) {
+      .studio-toast {
+        font-size: 12.5px;
+        padding: 10px 12px 13px 10px;
+      }
+    }
   </style>
 </head>
 <body class="studio-body studio-mode-customize">
@@ -6591,13 +6672,46 @@ companyLines + '\n' +
       if (!t) {
         t = document.createElement('div');
         t.id = 'studio-toast';
+        t.setAttribute('role', 'status');
+        var ic = document.createElement('span');
+        ic.className = 'st-ic';
+        var mm = document.createElement('span');
+        mm.className = 'st-msg';
+        var bar = document.createElement('span');
+        bar.className = 'st-bar';
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'st-x';
+        x.setAttribute('aria-label', 'Dismiss');
+        x.textContent = '×';
+        x.onclick = function () { t.className = 'studio-toast'; };
+        t.appendChild(ic);
+        t.appendChild(mm);
+        t.appendChild(x);
+        t.appendChild(bar);
         document.body.appendChild(t);
       }
-      t.textContent = msg;
+      // Split a leading emoji into the gradient icon chip (textContent only — safe).
+      var full = String(msg || '');
+      var icon = '✨';
+      var text = full;
+      try {
+        var lead = full.match(/^([\u2600-\u27BF\u2B00-\u2BFF\u{1F000}-\u{1FAFF}\uFE0F\u200D\s]+)/u);
+        if (lead && lead[1].trim()) {
+          icon = lead[1].trim();
+          text = full.slice(lead[1].length).trim() || full;
+        }
+      } catch (e) {}
+      t.querySelector('.st-ic').textContent = icon;
+      t.querySelector('.st-msg').textContent = text;
+      // Restart the slide/progress animation on repeat toasts.
+      t.className = 'studio-toast';
+      void t.offsetWidth;
       t.className = 'studio-toast show';
-      setTimeout(function() {
+      if (window.__studioToastTimer) clearTimeout(window.__studioToastTimer);
+      window.__studioToastTimer = setTimeout(function () {
         t.className = 'studio-toast';
-      }, 3500);
+      }, 4200);
     }
 
     // ==================================================
