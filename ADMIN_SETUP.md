@@ -75,16 +75,17 @@ Building and previewing are free. Copying the embed code requires an
    the IntaSend dashboard before approving. (Full API automation —
    STK push + auto-activation — needs the secret key on a backend, so it
    stays a manual-verify step while the Studio is statically hosted.)
-2. **Re-publish the rules.** `firestore.rules` now also covers the
-   `botly_payments` collection and protects the `active` flag (owners
-   cannot self-activate). Paste the file into Firestore → Rules → Publish
-   again after every rules change.
-3. **Flow.** The user clicks Copy Embed Code → pays via the M-Pesa
-   instructions → pastes their confirmation code → you see the claim in
-   `/admin` → **Payments** → **Verify** (checks the code against your
-   M-Pesa statement first!). Approving flips the bot to Active and the
-   user's Copy button unlocks. You can also toggle Active manually in the
-   **Chatbots** tab (e.g. to grandfather existing bots).
+2. **Re-publish the rules.** `firestore.rules` covers the
+   `botly_payments` collection and the `active` flag: owners may flip
+   their own bot `active` false→true only (paywall auto-claim), and only
+   admins can flip it back off. Paste the file into Firestore → Rules →
+   Publish again after every rules change.
+3. **Flow (auto-activation).** The user clicks the IntaSend pay link → a
+   pending claim is filed in `/admin` → **Payments** and the bot
+   **activates instantly** — the user's Copy button unlocks within
+   seconds. Review pending claims against your IntaSend dashboard:
+   **Verify** approves, while **✕** rejects *and deactivates* the bot.
+   You can also toggle Active manually in the **Chatbots** tab.
 
 ## Notes
 

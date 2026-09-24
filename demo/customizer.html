@@ -5664,6 +5664,21 @@ companyLines + '\n' +
         }).then(function() {
           try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
           paywallNoteClaim();
+          // Trust-first auto-activation: unlock the bot the moment the payer
+          // opens the payment link. The claim stays `pending` for admin review —
+          // rejecting it in Admin also deactivates the bot.
+          try {
+            var docId = botlyBillingDocId(botId);
+            if (docId) {
+              db.collection('botly_bots').doc(docId).set({
+                active: true,
+                activatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+                activationSource: 'auto_link_claim',
+                ownerUid: user.uid,
+                botId: botId
+              }, { merge: true }).catch(function() {});
+            }
+          } catch (e) {}
         }).catch(function() {});
       } catch (e) {}
     }

@@ -109,7 +109,7 @@
         <div class="toolbar">
           <input type="search" id="payments-search" placeholder="Search owner, bot, M-Pesa code…" oninput="renderPayments()">
           <button class="btn btn-ghost" onclick="loadPayments(true)">↻ Refresh</button>
-          <span class="hint" id="payments-hint">Verify M-Pesa codes, then approve to activate the bot</span>
+          <span class="hint" id="payments-hint">Bots auto-activate on payment — Verify to approve, ✕ to reject &amp; deactivate</span>
         </div>
         <div class="card" style="padding: 8px 10px;"><div id="payments-list"><div class="empty">Loading…</div></div></div>
       </div>
@@ -325,7 +325,7 @@
         var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>');
         var actions = (st === 'pending')
           ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✓ Verify</button> ' +
-            '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="rejectPayment(\'' + x._id + '\')">✕</button>'
+            '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" title="Reject claim and deactivate the bot" onclick="rejectPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✕</button>'
           : '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
         html += '<tr>' +
           '<td><strong>' + escapeHtml(x.botName || '—') + '</strong><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.ownerEmail || '') + ' · ' + escapeHtml(x.companyName || '') + '</span></td>' +
@@ -340,7 +340,7 @@
     }
 
     function verifyPayment(id, ownerUid, botId) {
-      if (!adminDb || !confirm('Approve this payment and ACTIVATE the bot?')) return;
+      if (!adminDb || !confirm('Approve this payment? (The bot usually auto-activated already.)')) return;
       var ts = firebase.firestore.FieldValue.serverTimestamp();
       var batch = adminDb.batch();
       batch.update(adminDb.collection('botly_payments').doc(id), { status: 'approved', decidedAt: ts });
@@ -354,9 +354,17 @@
         loadBots(false);
       }).catch(function(err) { alert('Verify failed: ' + (err && err.message ? err.message : err)); });
     }
-    function rejectPayment(id) {
-      if (!adminDb || !confirm('Reject this payment claim?')) return;
-      adminDb.collection('botly_payments').doc(id).update({ status: 'rejected', decidedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    function rejectPayment(id, ownerUid, botId) {
+      if (!adminDb || !confirm('Reject this payment claim AND DEACTIVATE the bot?')) return;
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var batch = adminDb.batch();
+      batch.update(adminDb.collection('botly_payments').doc(id), { status: 'rejected', decidedAt: ts });
+      // Bots auto-activate on payment: a rejection must also pull the plug.
+      if (ownerUid && botId) {
+        batch.set(adminDb.collection('botly_bots').doc(botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId)),
+          { active: false, deactivatedAt: ts, deactivationReason: 'payment_rejected', ownerUid: ownerUid, botId: botId }, { merge: true });
+      }
+      batch.commit()
         .then(function() {
           paymentsCache.forEach(function(x) { if (x._id === id) { x.status = 'rejected'; x.decidedAt = new Date(); } });
           var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
