@@ -1,34 +1,38 @@
-# ⚡ Botly Pro | Conversational AI Platform for Every Company
+# Botly Pro | Conversational AI Platform for Every Company
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success.svg)](package.json)
-[![PCI-DSS](https://img.shields.io/badge/Payments-In--Chat%20PCI--DSS-green.svg)](src/payments)
 [![White-Label](https://img.shields.io/badge/White--Label-100%25%20Customizable-purple.svg)](demo/customizer.html)
 [![Quick Embed Guide](https://img.shields.io/badge/Guide-Quick%20Embed-brightgreen.svg)](QUICK_EMBED_GUIDE.md)
 
-Botly Pro is a modern, plug-and-play conversational AI chatbot widget designed for **every company** that needs an intelligent assistant. Features deep natural language understanding, **proactive lead capture** (names, phones, unlisted requests), **seamless in-chat payment checkout** (Card, Apple Pay, Google Pay, M-Pesa), human follow-up triage, and a live **White-Label Customizer Studio**.
+Botly Pro is a modern, plug-and-play conversational AI chatbot widget designed for **every company** that needs an intelligent assistant. Features deep natural language understanding, **proactive lead capture** (names, phones, unlisted requests), **live product catalog answers** (real prices and store links), human follow-up triage, and a live **White-Label Customizer Studio**.
 
-> 📖 **Looking to embed Botly Pro quickly?** Check out the comprehensive **[⚡ Quick Embed Guide (QUICK_EMBED_GUIDE.md)](QUICK_EMBED_GUIDE.md)** or explore the interactive **[Integration Playground](demo/embed-example.html)**.
+> **Looking to embed Botly Pro quickly?** Check out the comprehensive **[Quick Embed Guide (QUICK_EMBED_GUIDE.md)](QUICK_EMBED_GUIDE.md)** or explore the interactive **[Integration Playground](demo/embed-example.html)**.
 
 ---
 
-## 🚀 Key Capabilities
+## Company
 
-- **🎯 4 Distinct Company Goals:** Easily configure Botly's primary objective:
+**Botly Pro is built, owned, and maintained by NextAI Studios Limited** (https://nextaistudios.com). All rights reserved. For sales, support, or partnership inquiries, contact david@nextaistudios.com.
+
+---
+
+## Key Capabilities
+
+- **3 Distinct Company Goals:** Easily configure Botly's primary objective:
   1. `lead_generation`: Captures prospective buyer names, phone numbers, and custom inquiries with local CRM storage and 1-click CSV export.
-  2. `payment_checkout`: Displays pre-approved quotes, discount promo codes (`SAVE15`), and executes PCI-compliant checkout in-chat.
-  3. `customer_support`: Resolves everyday questions autonomously and triages complex inquiries to human specialists.
-  4. `consultation_booking`: Books 1-on-1 advisor consultations and callback appointments.
-- **💬 Human-Like Follow-up Dynamics:** Just like a real human advisor, Botly naturally asks contextual follow-up questions tailored to your chosen tone (`supportive`, `professional`, `conversational`, `sales_focused`).
-- **⚡ Instant In-Chat Payment Checkout:** Customers review their quote, apply promo codes, and pay immediately in chat via **Credit/Debit Card, Apple Pay, or M-Pesa** without being redirected to external portals.
-- **📄 Verifiable Digital Certificates & Receipts:** Automatically generates policy or transaction IDs (`POL-2026-XXXXXX`), downloadable/printable certificates, and itemized receipts upon checkout.
-- **🎨 100% White-Label & Easily Customizable:** Custom brand colors, logo, agent persona, products, pricing formulas, and currencies (`$`, `€`, `£`, `KSh`, etc.).
-- **🧩 Zero-Dependency Plug & Play:** Embeds into any HTML site, WordPress, Shopify, Webflow, React, Vue, Next.js, Python, or Node.js app in 60 seconds.
-- **🛠️ Visual Brand Customizer Studio:** Includes a live visual editor (`demo/customizer.html`) with interactive company goal switches, lead manager modal, and instant code generation.
+  2. `customer_support`: Resolves everyday questions autonomously and triages complex inquiries to human specialists.
+  3. `consultation_booking`: Books 1-on-1 advisor consultations and callback appointments.
+- **Human-Like Follow-up Dynamics:** Just like a real human advisor, Botly naturally asks contextual follow-up questions tailored to your chosen tone (`supportive`, `professional`, `conversational`, `sales_focused`).
+- **Live Product Catalog Answers:** Connect a Shopify or WooCommerce store and Botly answers product questions with live names, prices, and direct store links — shoppers check out on the store as normal.
+- **Website-to-Bot Knowledge Scan:** Point the Studio at a company website and Botly crawls its pages into chatbot memory automatically, with a page-by-page review before training.
+- **100% White-Label & Easily Customizable:** Custom brand colors, logo, agent persona, products, pricing formulas, and currencies (`$`, `€`, `£`, `KSh`, etc.).
+- **Zero-Dependency Plug & Play:** Embeds into any HTML site, WordPress, Shopify, Webflow, React, Vue, Next.js, Python, or Node.js app in 60 seconds.
+- **Visual Brand Customizer Studio:** Includes a live visual editor (`demo/customizer.html`) with interactive company goal switches, lead manager modal, and instant code generation.
 
 ---
 
-## 📦 30-Second Quickstart
+## 30-Second Quickstart
 
 ### Embed on Any Website (HTML / Static / CDN)
 
@@ -49,7 +53,7 @@ Add the CSS stylesheet in your `<head>` and the script before the closing `</bod
       supportPhone: "+1 (800) 555-0199",
       supportEmail: "care@acmeco.example.com"
     },
-    goal: "lead_generation", // 'lead_generation' | 'payment_checkout' | 'customer_support' | 'consultation_booking'
+    goal: "lead_generation", // 'lead_generation' | 'customer_support' | 'consultation_booking'
     bot: {
       name: "Botly",
       title: "Solutions Advisor"
@@ -66,25 +70,25 @@ Add the CSS stylesheet in your `<head>` and the script before the closing `</bod
 </script>
 ```
 
-> **Want framework-specific code for React, Next.js, Vue, WordPress, Shopify, Python, or Node.js?**  
-> See the **[⚡ Comprehensive Quick Embed Guide](QUICK_EMBED_GUIDE.md)**.
+> **Want framework-specific code for React, Next.js, Vue, WordPress, Shopify, Python, or Node.js?**
+> See the **[Comprehensive Quick Embed Guide](QUICK_EMBED_GUIDE.md)**.
 
 ---
 
-## 🎨 Interactive White-Label Studio & Embed Playground
+## Interactive White-Label Studio & Embed Playground
 
 Explore the interactive demos included in this repository:
 
 1. **[Botly Customizer Studio (`demo/customizer.html`)](demo/customizer.html):**
    - Live visual editor for colors, logos, and agent personas.
-   - Switch between 4 Company Goals in real time.
-   - Configure Lead Capture prompts and In-Chat Payment gateways (Card, Apple Pay, M-Pesa).
+   - Switch between Company Goals in real time.
+   - Configure Lead Capture prompts and Live Catalog settings.
    - Leads Manager modal with goal filters and 1-click CSV export.
    - Download `company-chatbot-config.json` or copy auto-generated embed codes.
 
 2. **[Quick Embed Playground (`demo/embed-example.html`)](demo/embed-example.html):**
    - Interactive framework code switcher (HTML, React, Next.js, Vue, WordPress, Shopify, Webflow, Python, Node).
-   - Live testing chips: Simulate lead capture, trigger instant checkout, export CSV.
+   - Live testing chips: Simulate lead capture, live catalog search, export CSV.
    - Full SDK reference table.
 
 3. **[Landing Page Demo (`index.html`)](index.html):**
@@ -92,35 +96,27 @@ Explore the interactive demos included in this repository:
 
 ---
 
-## 💳 In-Chat Payment Checkout Flow
+## Live Catalog Answer Flow
 
-The chatbot handles conversions without ever leaving the conversation thread:
+The chatbot answers product questions with live store data, then hands the shopper to the store:
 
 ```
-[ User asks: "Get a quote" or clicks "Buy Now" ]
+[ User asks: "Do you have whole milk?" ]
                    ↓
-[ Bot runs dynamic underwriting / service questionnaire ]
+[ Bot queries the connected store catalog live ]
                    ↓
-[ Bot renders Pre-Approved Quote Card with Annual/Monthly options ]
+[ Bot replies with product name, live price & store link ]
+   • Fresh Whole Milk 1L — KES 185
+   • "View in store" deep link
                    ↓
-[ User taps "💳 Buy Policy Now" or triggers checkout ]
-                   ↓
-[ Bot mounts interactive in-chat Checkout Card ]
-   • Method Selection: Card / Apple Pay / M-Pesa
-   • Promo Code entry (e.g. SAVE15 = 15% discount)
-   • 256-Bit SSL & PCI-DSS Level 1 Badging
-                   ↓
-[ Live 3D-Secure Biometric Authorization Simulation ]
-                   ↓
-[ Digital Policy Certificate & Official Receipt Issued ]
-   • Policy Ref: POL-2026-XXXXXX
-   • Instant Day 1 Effective Coverage
-   • Print / Save PDF Certificate buttons
+[ Shopper checks out on the store as normal ]
 ```
+
+Note: Botly Pro does not process payments itself — checkout always happens on the merchant's own store.
 
 ---
 
-## ⚙️ Configuration Reference
+## Configuration Reference
 
 ```javascript
 InsuranceChatbot.init({
@@ -133,13 +129,13 @@ InsuranceChatbot.init({
   },
 
   // Primary Company Goal
-  goal: 'lead_generation', // 'lead_generation' | 'payment_checkout' | 'customer_support' | 'consultation_booking'
+  goal: 'lead_generation', // 'lead_generation' | 'customer_support' | 'consultation_booking'
 
   // Bot Persona
   bot: {
     name: 'Botly',
     title: 'Certified Solutions Advisor',
-    greeting: "Hello! 👋 I'm Botly, your 24/7 digital assistant. How can I help you today?",
+    greeting: "Hello! I'm Botly, your 24/7 digital assistant. How can I help you today?",
     typingDelayMs: 400
   },
 
@@ -166,28 +162,18 @@ InsuranceChatbot.init({
     tone: 'conversational' // 'supportive' | 'professional' | 'conversational' | 'sales_focused'
   },
 
-  // Currency & Payment
+  // Currency
   currency: {
     code: 'USD',
     symbol: '$',
     locale: 'en-US'
-  },
-  checkout: {
-    enabled: true,
-    allowCard: true,
-    allowApplePay: true,
-    allowMpesa: true,
-    promoCodes: {
-      'SAVE15': 0.15,
-      'SAFE20': 0.20
-    }
   }
 });
 ```
 
 ---
 
-## 🛠️ Public JavaScript SDK API (`window.InsuranceChatbot`)
+## Public JavaScript SDK API (`window.InsuranceChatbot`)
 
 | Method | Description |
 |---|---|
@@ -195,21 +181,20 @@ InsuranceChatbot.init({
 | `InsuranceChatbot.open()` | Expands the chat window into view. |
 | `InsuranceChatbot.close()` | Collapses the chat window back into the floating launcher icon. |
 | `InsuranceChatbot.toggle()` | Toggles the open/closed state of the widget. |
-| `InsuranceChatbot.setCompanyGoal(goalKey)` | Dynamically reconfigures the company goal (`lead_generation`, `payment_checkout`, etc.). |
+| `InsuranceChatbot.setCompanyGoal(goalKey)` | Dynamically reconfigures the company goal (`lead_generation`, `customer_support`, etc.). |
 | `InsuranceChatbot.simulateUnlistedInquiry(query)` | Simulates an unlisted customer question to test lead capture triage. |
-| `InsuranceChatbot.startCheckout(quote)` | Opens the chat and displays the interactive in-chat checkout card. |
 | `InsuranceChatbot.getCapturedLeads()` | Returns array of all captured leads from local CRM storage. |
 | `InsuranceChatbot.exportLeadsCSV()` | Generates and downloads a clean CSV file of captured inquiries. |
 | `InsuranceChatbot.reset()` | Clears conversation state and restarts fresh welcome flow. |
 
 ---
 
-## 🧪 Testing & Verification
+## Testing & Verification
 
 Run the automated test suite:
 
 ```bash
-# Run 47 unit & integration tests covering NLP, quotes, payments, and company goals
+# Run 234 unit & integration tests covering NLP, quotes, catalog, and company goals
 npm test
 ```
 
@@ -223,7 +208,7 @@ pip install -r requirements.txt
 python3 server.py 8080
 
 # View in browser:
-# http://localhost:8080/index.html            (Botly Landing Page)
+# http://localhost:8080/index.html              (Botly Landing Page)
 # http://localhost:8080/demo/customizer.html   (Botly Customizer Studio)
 # http://localhost:8080/demo/embed-example.html (Quick Embed Guide & Playground)
 ```
@@ -239,7 +224,7 @@ merchant JSON APIs are tried automatically for custom stores.
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 chatbot/
@@ -260,9 +245,9 @@ chatbot/
 │   │   ├── claims-flow.js             # Incident & claims filing assistant
 │   │   └── policy-lookup-flow.js      # Policy lookup & triage
 │   ├── payments/
-│   │   ├── checkout-flow.js           # In-chat checkout coordinator
-│   │   ├── payment-card.js            # Interactive payment card UI (Card/Apple Pay/M-Pesa)
-│   │   └── receipt-generator.js       # Digital policy certificate & receipt builder
+│   │   ├── checkout-flow.js           # Legacy in-chat checkout coordinator (retired)
+│   │   ├── payment-card.js            # Legacy payment card UI (retired)
+│   │   └── receipt-generator.js       # Legacy receipt builder (retired)
 │   └── core/
 │       ├── chatbot-widget.js          # Master controller & Public SDK
 │       ├── ui-renderer.js             # DOM renderer & animations
@@ -274,7 +259,7 @@ chatbot/
 │   ├── botly-logo.svg                 # Botly vector brand logo
 │   └── botly-icon.svg                 # Botly favicon & brand icon
 ├── tests/
-│   └── widget.test.js                 # 47 automated tests
+│   └── widget.test.js                 # Automated widget tests
 ├── QUICK_EMBED_GUIDE.md               # Complete framework embed guide
 ├── package.json
 ├── README.md
@@ -283,6 +268,6 @@ chatbot/
 
 ---
 
-## 📄 License
+## License
 
 MIT License © 2026 NextAI Studios Limited. Botly Pro is a product of NextAI Studios Limited.
