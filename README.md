@@ -1,6 +1,6 @@
 # Botly Pro | Conversational AI Platform for Every Company
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success.svg)](package.json)
 [![White-Label](https://img.shields.io/badge/White--Label-100%25%20Customizable-purple.svg)](demo/customizer.html)
 [![Quick Embed Guide](https://img.shields.io/badge/Guide-Quick%20Embed-brightgreen.svg)](QUICK_EMBED_GUIDE.md)
@@ -47,7 +47,7 @@ Add the CSS stylesheet in your `<head>` and the script before the closing `</bod
 
 <!-- 3. Initialize with your company branding & goal -->
 <script>
-  InsuranceChatbot.init({
+  BotlyChatbot.init({
     company: {
       name: "Acme Corporation",
       supportPhone: "+1 (800) 555-0199",
@@ -119,7 +119,7 @@ Note: Botly Pro does not process payments itself — checkout always happens on 
 ## Configuration Reference
 
 ```javascript
-InsuranceChatbot.init({
+BotlyChatbot.init({
   // Company Branding
   company: {
     name: 'Acme Corporation',
@@ -173,19 +173,21 @@ InsuranceChatbot.init({
 
 ---
 
-## Public JavaScript SDK API (`window.InsuranceChatbot`)
+## Public JavaScript SDK API (`window.BotlyChatbot`)
+
+The widget also answers to the aliases `window.BotlyProChatbot` and `window.Botly` (`window.InsuranceChatbot` still works for backward compatibility).
 
 | Method | Description |
 |---|---|
-| `InsuranceChatbot.init(config)` | Mounts and initializes the chatbot widget with custom options. |
-| `InsuranceChatbot.open()` | Expands the chat window into view. |
-| `InsuranceChatbot.close()` | Collapses the chat window back into the floating launcher icon. |
-| `InsuranceChatbot.toggle()` | Toggles the open/closed state of the widget. |
-| `InsuranceChatbot.setCompanyGoal(goalKey)` | Dynamically reconfigures the company goal (`lead_generation`, `customer_support`, etc.). |
-| `InsuranceChatbot.simulateUnlistedInquiry(query)` | Simulates an unlisted customer question to test lead capture triage. |
-| `InsuranceChatbot.getCapturedLeads()` | Returns array of all captured leads from local CRM storage. |
-| `InsuranceChatbot.exportLeadsCSV()` | Generates and downloads a clean CSV file of captured inquiries. |
-| `InsuranceChatbot.reset()` | Clears conversation state and restarts fresh welcome flow. |
+| `BotlyChatbot.init(config)` | Mounts and initializes the chatbot widget with custom options. |
+| `BotlyChatbot.open()` | Expands the chat window into view. |
+| `BotlyChatbot.close()` | Collapses the chat window back into the floating launcher icon. |
+| `BotlyChatbot.toggle()` | Toggles the open/closed state of the widget. |
+| `BotlyChatbot.setCompanyGoal(goalKey)` | Dynamically reconfigures the company goal (`lead_generation`, `customer_support`, etc.). |
+| `BotlyChatbot.simulateUnlistedInquiry(query)` | Simulates an unlisted customer question to test lead capture triage. |
+| `BotlyChatbot.getCapturedLeads()` | Returns array of all captured leads from local CRM storage. |
+| `BotlyChatbot.exportLeadsCSV()` | Generates and downloads a clean CSV file of captured inquiries. |
+| `BotlyChatbot.reset()` | Clears conversation state and restarts fresh welcome flow. |
 
 ---
 
@@ -229,7 +231,7 @@ merchant JSON APIs are tried automatically for custom stores.
 ```
 chatbot/
 ├── dist/                              # Standalone drop-in bundles (Zero dependencies)
-│   ├── insurance-chatbot.js           # UMD bundle (window.InsuranceChatbot)
+│   ├── insurance-chatbot.js           # UMD bundle (window.BotlyChatbot)
 │   └── insurance-chatbot.css          # Core widget design system stylesheet
 ├── src/
 │   ├── config/
@@ -263,11 +265,11 @@ chatbot/
 ├── QUICK_EMBED_GUIDE.md               # Complete framework embed guide
 ├── package.json
 ├── README.md
-└── LICENSE                            # MIT License
+└── LICENSE                            # Proprietary commercial license
 ```
 
 ---
 
 ## License
 
-MIT License © 2026 NextAI Studios Limited. Botly Pro is a product of NextAI Studios Limited.
+Proprietary commercial license © 2026 NextAI Studios Limited. Botly Pro is a product of NextAI Studios Limited — all rights reserved. See LICENSE.
