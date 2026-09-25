@@ -1867,7 +1867,7 @@ PATCHES = [
     (
         "P100 lead mail builder",
         """  // BOTLY-CLOUD: fire-and-forget lead sync to the Botly Cloud inbox (Firestore).""",
-        """  // ---- P100: admin lead alert (opt-in via config.leadAlerts) ----
+        """  // ---- P100: admin lead alert (all bots unless leadAlerts:false) ----
   // Anonymous mail shape {to,message} per firestore.rules (fixed recipient).
   // Self-contained (own escaper) so it stays unit-testable by extraction.
   function botlyLeadMailDoc(lead, botName, company, botId, pageUrl) {
@@ -1895,7 +1895,7 @@ PATCHES = [
 
   // BOTLY-CLOUD: fire-and-forget lead sync to the Botly Cloud inbox (Firestore).""",
         1,
-        ["// ---- P100: admin lead alert (opt-in via config.leadAlerts) ----"],
+        ["// ---- P100: admin lead alert (all bots unless leadAlerts:false) ----"],
     ),
 ]
 

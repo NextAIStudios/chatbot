@@ -64,15 +64,23 @@ service cloud.firestore {
 
     // Activation claims. Owners file + read their own claims. `pending`
     // rows are legacy/manual; `paid` rows are filed by /activated after
-    // an IntaSend return (always with the activationRef). Admins triage:
-    // Verify confirms, Deactivate/Reject revokes the license.
+    // an IntaSend return. ANTI-ABUSE: a `paid` claim's doc id IS its
+    // activationRef (one claim per payment - duplicates fail), and the
+    // ref must already sit in botly_refs for the SAME bot + owner, i.e.
+    // a real /activated batch ran with it. Claims for never-activated
+    // refs, and cross-bot ref reuse, fail closed (get() on a missing
+    // ref errors -> deny). Pending rows are untouched.
     match /botly_payments/{claimId} {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
         && (request.resource.data.status == 'pending'
           || (request.resource.data.status == 'paid'
             && request.resource.data.activationRef is string
-            && request.resource.data.activationRef.size() >= 6));
+            && request.resource.data.activationRef.size() >= 6
+            && claimId == request.resource.data.activationRef
+            && request.resource.data.botId is string
+            && get(/databases/$(database)/documents/botly_refs/$(claimId)).data.ownerUid == request.auth.uid
+            && get(/databases/$(database)/documents/botly_refs/$(claimId)).data.botId == request.resource.data.botId));
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow update, delete: if isAdmin();

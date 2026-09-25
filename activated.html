@@ -365,11 +365,11 @@
       batch.commit().then(function() {
         // Paper trail (best-effort): `paid` claim + admin email.
         try {
-          db.collection('botly_payments').add({
+          db.collection('botly_payments').doc(refId).set({
             ownerUid: user.uid, ownerEmail: user.email || null, botId: botId,
             companyName: String(d.companyName || '').slice(0, 120),
             botName: String(d.botName || '').slice(0, 120),
-            provider: 'intasend_link', status: 'paid', activationRef: ref,
+            provider: 'intasend_link', status: 'paid', activationRef: refId, // canonical (sanitized) ref: claim id == ref, one claim per payment
             amountUSD: ACTIVATED_BILLING.usd, amountKES: ACTIVATED_BILLING.kes,
             createdAt: ts
           }).catch(function() {});

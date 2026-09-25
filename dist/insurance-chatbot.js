@@ -2747,7 +2747,7 @@
     } catch(e) {}
     return botlyMemLeadsGet();
   }
-  // ---- P100: admin lead alert (opt-in via config.leadAlerts) ----
+  // ---- P100: admin lead alert (all bots unless leadAlerts:false) ----
   // Anonymous mail shape {to,message} per firestore.rules (fixed recipient).
   // Self-contained (own escaper) so it stays unit-testable by extraction.
   function botlyLeadMailDoc(lead, botName, company, botId, pageUrl) {
