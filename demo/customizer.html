@@ -5709,6 +5709,30 @@ companyLines + '\n' +
         s.innerHTML = '&#9203; <strong>Payment link opened.</strong> Complete payment in the new tab — this window unlocks automatically once confirmed.';
       }
     }
+    // Claim-mail builder (pure — unit-tested in /tmp/mail-test.js). Shape must
+    // satisfy firestore.rules -> mail: fixed admin recipient only.
+    function botlyBuildClaimMail(c) {
+      var clean = function(v, n) { return String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n); };
+      var bot = clean(c.botName, 50) || 'Unnamed bot';
+      var co = clean(c.companyName, 40);
+      var row = function(k, v) {
+        return '<tr><td style="padding:3px 10px 3px 0;color:#64748b;">' + k + '</td><td><strong>' + escapeHtml(v) + '</strong></td></tr>';
+      };
+      return {
+        to: 'muindidiego@gmail.com',
+        message: {
+          subject: '\uD83D\uDCB0 Payment claim: ' + bot + (co ? ' (' + co + ')' : '') + ' — $' + c.amountUSD + ' / KES ' + c.amountKES,
+          html: '<p>New Botly Pro payment claim filed from the Studio paywall:</p><table>' +
+            row('Bot', bot) + row('Company', co || '—') + row('Owner', clean(c.ownerEmail, 120) || '—') +
+            row('Amount', '$' + c.amountUSD + ' / KES ' + c.amountKES) +
+            row('Provider', clean(c.provider, 40) || 'intasend_link') + row('Bot ID', clean(c.botId, 120) || '—') +
+            row('Filed', clean(c.filedAt, 60) || '') +
+            '</table><p>Match it against your IntaSend dashboard, then <strong>Verify</strong> or <strong>✕</strong> in ' +
+            '<a href="https://www.botlypro.online/admin">Botly Admin → Payments</a>.</p>'
+        }
+      };
+    }
+
     function paywallLogLinkClaim() {
       // Best-effort pending claim so the owner can approve in Admin; deduped per bot per day.
       try {
@@ -5735,6 +5759,18 @@ companyLines + '\n' +
           createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
         }).then(function() {
           try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
+          // Admin email ping (best-effort): the Trigger Email extension
+          // watches `mail` and forwards this to muindidiego@gmail.com.
+          try {
+            var claimMail = botlyBuildClaimMail({
+              botName: botName, companyName: company, ownerEmail: user.email || '',
+              botId: botId, amountUSD: BOTLY_BILLING.usd, amountKES: BOTLY_BILLING.kes,
+              provider: 'intasend_link', filedAt: new Date().toLocaleString()
+            });
+            claimMail.ownerUid = user.uid;
+            claimMail.createdAt = window.firebase.firestore.FieldValue.serverTimestamp();
+            db.collection('mail').add(claimMail).catch(function() {});
+          } catch (e) {}
           paywallNoteClaim();
           // VERIFY-ONLY: opening the pay link only FILES the claim above —
           // nothing here may activate the bot. It unlocks solely when an

@@ -77,6 +77,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Admin claim-mail outbox for the "Trigger Email from Firestore"
+    // extension (watches `mail`; sends via the Admin SDK, bypassing
+    // rules). Owners may only CREATE tightly-shaped mails to the fixed
+    // admin address — no arbitrary recipients, sizes capped.
+    match /mail/{mailId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['to', 'message', 'ownerUid', 'createdAt'])
+        && request.resource.data.to == 'muindidiego@gmail.com'
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.message.keys().hasOnly(['subject', 'html'])
+        && request.resource.data.message.subject is string
+        && request.resource.data.message.subject.size() <= 160
+        && request.resource.data.message.html is string
+        && request.resource.data.message.html.size() <= 6000;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Post-chat ratings from paid-bot embeds. Visitors are anonymous, so
     // anyone may CREATE a rating (field-validated, forced unapproved);
     // only APPROVED ratings are publicly readable (landing-page

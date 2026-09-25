@@ -1737,6 +1737,13 @@ PATCHES = [
         ["// ---- P97: runtime license check (anti-theft) ----"],
     ),
 
+    (
+        "P98 24h license cache TTL (revokes bite fast)",
+        """      if ((Date.now() - Number(o.ts)) > 7 * 24 * 3600 * 1000) return false;""",
+        """      if ((Date.now() - Number(o.ts)) > 24 * 3600 * 1000) return false; // 24h TTL so admin revokes bite within a day""",
+        1,
+    ),
+
 ]
 
 

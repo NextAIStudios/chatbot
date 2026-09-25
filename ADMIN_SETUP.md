@@ -94,6 +94,26 @@ Building and previewing are free. Copying the embed code requires an
    toggle Active manually in the **Chatbots** tab (edit the matching
    `botly_licenses/{botId}` row too — the embed reads the license,
    not the bot row).
+4. **Deactivate when the money never arrives.** An approved payment row
+   has **⏻ Deactivate**: the claim becomes `revoked`, the bot
+   deactivates AND its public license is revoked, so the embed locks
+   (visitors with a cached license go dark within 24h). Changed your
+   mind? **↻ Re-verify** approves again. The **Chatbots** tab
+   Activate/Deactivate toggle writes the license too. Bots approved
+   before the license system existed show a locked embed until you
+   press **⛨ License** on the payment row (one click rewrites the
+   license from the Studio domain binding). Embeds track
+   `chatbot@main`, so already-deployed snippets pick up enforcement
+   automatically — nobody needs to re-copy.
+5. **Email alerts for new claims.** Install the Firebase extension
+   "Trigger Email from Firestore": console → Extensions → install
+   `firestore-send-email`, collection `mail`, SMTP connection URI
+   (SendGrid free tier, or Gmail with an App Password:
+   `smtps://ADDRESS:PASSWORD@smtp.gmail.com:465`). The Studio then
+   files one mail doc per bot per day to **muindidiego@gmail.com**
+   the moment a payer opens the pay link. Match each mail against
+   your IntaSend dashboard — IntaSend's own merchant emails remain
+   the proof that money actually moved.
 
 ## Notes
 

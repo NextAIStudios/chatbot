@@ -408,7 +408,7 @@
       var html = '<table class="grid"><thead><tr><th>Bot / owner</th><th>M-Pesa code</th><th>Amount</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>';
       rows.forEach(function(x) {
         var st = x.status || 'pending';
-        var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>');
+        var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'revoked' ? '<span class="pill red">revoked</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>'));
         // Fraud watch (pending rows only): nonstandard amount, repeat claims
         // for the same bot, and claims sitting >48h unreviewed.
         var flags = '';
@@ -420,10 +420,15 @@
           try { created = (x.createdAt && x.createdAt.toDate) ? x.createdAt.toDate().getTime() : new Date(x.createdAt).getTime(); } catch (e) {}
           if (created && (Date.now() - created) > 48 * 3600 * 1000) flags += ' <span class="pill red" title="Unreviewed for over 48h">stale</span>';
         }
+        var idArgs = '(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')';
+        var decided = '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
         var actions = (st === 'pending')
-          ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✓ Verify</button> ' +
-            '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" title="Reject claim and deactivate the bot" onclick="rejectPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✕</button>'
-          : '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
+          ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment' + idArgs + '">✓ Verify</button> ' +
+            '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" title="Reject claim and deactivate the bot" onclick="rejectPayment' + idArgs + '">✕</button>'
+          : (st === 'approved'
+            ? decided + '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" title="Money never arrived? Deactivate the bot and revoke its license" onclick="deactivateApproved' + idArgs + '">⏻ Deactivate</button> ' +
+              '<button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" title="Rewrite the public license from the Studio domain binding" onclick="syncLicense' + idArgs + '">⛨ License</button>'
+            : decided + '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" title="Approve this claim after all" onclick="verifyPayment' + idArgs + '">↻ Re-verify</button>');
         html += '<tr>' +
           '<td><strong>' + escapeHtml(x.botName || '—') + '</strong><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.ownerEmail || '') + ' · ' + escapeHtml(x.companyName || '') + '</span></td>' +
           '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span><br><span style="color:var(--muted);font-size:11px;">via ' + escapeHtml(x.provider || 'intasend_link') + '</span></td>' +
@@ -489,6 +494,44 @@
         }).catch(function(err) { alert('Reject failed: ' + (err && err.message ? err.message : err)); });
     }
 
+    // Post-approval kill switch: money never arrived → mark revoked,
+    // deactivate the bot AND revoke the public license (embed locks).
+    function deactivateApproved(id, ownerUid, botId) {
+      if (!adminDb || !confirm('Deactivate this bot AND revoke its license? Its embed will lock (up to 24h for already-cached visitors).')) return;
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var batch = adminDb.batch();
+      batch.update(adminDb.collection('botly_payments').doc(id), { status: 'revoked', decidedAt: ts });
+      if (ownerUid && botId) {
+        batch.set(adminDb.collection('botly_bots').doc(botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId)),
+          { active: false, deactivatedAt: ts, deactivationReason: 'admin_deactivate_unpaid', ownerUid: ownerUid, botId: botId }, { merge: true });
+        batch.set(adminDb.collection('botly_licenses').doc(botlySanitizeId(botId)),
+          { active: false, botId: botId, revokedAt: ts }, { merge: true });
+      }
+      batch.commit().then(function() {
+        paymentsCache.forEach(function(x) { if (x._id === id) { x.status = 'revoked'; x.decidedAt = new Date(); } });
+        renderPayments();
+        loadBots(false);
+      }).catch(function(err) { alert('Deactivate failed: ' + (err && err.message ? err.message : err)); });
+    }
+    // License repair: rewrite an approved bot's public license from its
+    // Studio domain binding (fixes pre-license approvals whose embeds lock).
+    function syncLicense(id, ownerUid, botId) {
+      if (!adminDb || !ownerUid || !botId) return;
+      if (!confirm('Rewrite the public license for this bot from its Studio domain binding?')) return;
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var botDocId = botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId);
+      adminDb.collection('botly_bots').doc(botDocId).get().then(function(snap) {
+        var domains = [];
+        try {
+          var dd = (snap && snap.exists && snap.data()) ? String(snap.data().deployDomain || '').trim().toLowerCase() : '';
+          if (dd) domains = [dd];
+        } catch (e) {}
+        return adminDb.collection('botly_licenses').doc(botlySanitizeId(botId)).set(
+          { active: true, botId: botId, ownerUid: ownerUid, domains: domains, updatedAt: ts }, { merge: true });
+      }).then(function() { alert('License rewritten.'); })
+        .catch(function(err) { alert('License sync failed: ' + (err && err.message ? err.message : err)); });
+    }
+
     function loadBots(manual) {
       if (!adminDb) return;
       if (manual) document.getElementById('bots-list').innerHTML = '<div class="empty">Loading…</div>';
@@ -546,13 +589,26 @@
     }
 
     function toggleBotActive(docId, to) {
-      if (!adminDb || !confirm((to ? 'Activate' : 'Deactivate') + ' this bot?')) return;
-      adminDb.collection('botly_bots').doc(docId).set(
-        { active: to, activatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
-        .then(function() {
-          botsCache.forEach(function(b) { if (b._id === docId) b.active = to; });
-          renderBots();
-        }).catch(function(err) { alert('Update failed: ' + (err && err.message ? err.message : err)); });
+      if (!adminDb || !confirm((to ? 'Activate' : 'Deactivate') + ' this bot? The public license is updated too, so the embed ' + (to ? 'unlocks.' : 'locks.'))) return;
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var row = null;
+      botsCache.forEach(function(b) { if (b._id === docId) row = b; });
+      var batch = adminDb.batch();
+      batch.set(adminDb.collection('botly_bots').doc(docId),
+        to ? { active: true, activatedAt: ts, activationSource: 'admin_toggle' }
+           : { active: false, deactivatedAt: ts, deactivationReason: 'admin_toggle' }, { merge: true });
+      if (row && row.botId) {
+        var lic = { active: to, botId: row.botId, ownerUid: row.ownerUid || null, updatedAt: ts };
+        if (to) {
+          var dd = String(row.deployDomain || '').trim().toLowerCase();
+          lic.domains = dd ? [dd] : [];
+        } else { lic.revokedAt = ts; }
+        batch.set(adminDb.collection('botly_licenses').doc(botlySanitizeId(row.botId)), lic, { merge: true });
+      }
+      batch.commit().then(function() {
+        botsCache.forEach(function(b) { if (b._id === docId) b.active = to; });
+        renderBots();
+      }).catch(function(err) { alert('Update failed: ' + (err && err.message ? err.message : err)); });
     }
 
     function renderSetup(probe) {

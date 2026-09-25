@@ -2948,7 +2948,7 @@
       if (!raw) return false;
       var o = JSON.parse(raw);
       if (!o || o.ok !== 1 || !o.ts) return false;
-      if ((Date.now() - Number(o.ts)) > 7 * 24 * 3600 * 1000) return false;
+      if ((Date.now() - Number(o.ts)) > 24 * 3600 * 1000) return false; // 24h TTL so admin revokes bite within a day
       return true;
     } catch (e) { return false; }
   };
