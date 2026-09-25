@@ -2103,13 +2103,21 @@
         =========================================== -->
         <div class="wizard-panel" id="panel-5">
           <div class="panel-header">
-            <h2 class="panel-title">5. Ready to Ship!</h2>
-            <p class="panel-subtitle">Copy this 2-line snippet and paste it right before &lt;/body&gt; in your website.</p>
+            <h2 class="panel-title">5. Publish &amp; Ship!</h2>
+            <p class="panel-subtitle">Publish your training, pay $10 once, paste the snippet — later edits sync live by themselves.</p>
           </div>
 
           <!-- Activation banner (paywall status; rendered by renderActivationBanner) -->
           <div id="ship-activation-banner" style="border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.55; margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569;">
             Checking activation…
+          </div>
+
+          <!-- Publish to live: pushes training to the cloud; edits auto-sync after -->
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 12.5px; font-weight: 800; color: #0f172a;">🚀 Publish your bot</div>
+            <div id="ship-publish-status" style="font-size: 12.5px; color: #475569; line-height: 1.55;">Checking publish status…</div>
+            <button type="button" id="btn-publish-bot" onclick="botlyPublishAndContinue()" style="width: 100%; padding: 12px; background: #18221c; color: #ffffff; border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer;"><span>🚀 Publish &amp; continue →</span></button>
+            <div style="font-size: 11.5px; color: #64748b; line-height: 1.5;">Publishing pushes your training to the cloud — afterwards every edit syncs to your live bot automatically. No re-copying.</div>
           </div>
 
           <!-- License domain lock: the paid embed only runs on this domain -->
@@ -3171,7 +3179,7 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (n === 5) { renderDeployPreview(); renderActivationBanner(null); }
+      if (n === 5) { renderDeployPreview(); renderActivationBanner(null); botlyRenderPublishStatus(); }
 
       var activePill = document.getElementById('wstep-' + n);
       if (activePill && activePill.scrollIntoView) {
@@ -5422,100 +5430,160 @@ window.addEventListener('botly:payment', async (event) => {
       } catch (e) {}
     }
 
-    function buildDeployCode() {
-      // NOTE: retired sample placeholders are excluded so shipped bots never answer from sample text.
+    // Single source of truth for the shipped init payload: buildDeployCode()
+    // serializes it (snippet), botlyPublishConfig() stores it (cloud config),
+    // and /activated re-renders it (post-payment copy page). Keep the key
+    // names EXACTLY equal to the BotlyChatbot.init() options.
+    function botlyCollectInitPayload() {
       var faqsForBot = getEffectiveFaqs();
       var allKnowledge = getActiveKnowledge(faqsForBot).all;
+      var embedBotId = (window.BotlyChatbotManager && BotlyChatbotManager.getEmbedBotId) ? BotlyChatbotManager.getEmbedBotId() : 'bot_default';
+      var upd = Date.now();
+      try { var ab = BotlyChatbotManager.getActiveBot(); if (ab && ab.updatedAt) upd = ab.updatedAt; } catch (e) {}
+      var cc = wizardState.checkoutConfig || {};
+      var hasMpesa = !!(cc.mpesaNumber && String(cc.mpesaNumber).trim());
+      var hasCard = !!(cc.externalUrl && String(cc.externalUrl).trim());
+      var p = {
+        mode: 'saas',
+        botId: embedBotId,
+        publishedEmbed: true,
+        configUpdatedAt: upd,
+        disableQuickReplies: true,
+        ratings: { enabled: true },
+        goals: wizardState.purposes ? wizardState.purposes.slice() : [],
+        company: { name: wizardState.companyName },
+        bot: { name: wizardState.botName, title: wizardState.botTitle, greeting: wizardState.greeting },
+        theme: {
+          primaryColor: wizardState.primaryColor, accentColor: wizardState.accentColor,
+          backgroundColor: wizardState.backgroundColor, headerBg: wizardState.primaryColor
+        }
+      };
+      if (wizardState.supportEmail) p.company.supportEmail = wizardState.supportEmail;
+      if (wizardState.supportPhone) p.company.supportPhone = wizardState.supportPhone;
+      if (wizardState.logoUrl) p.bot.avatar = wizardState.logoUrl;
+      if (allKnowledge.length > 0) {
+        p.customKnowledge = allKnowledge.map(function(item) {
+          var o = { question: item.question, answer: item.answer };
+          if (item.source) o.source = item.source;
+          if (item.sourceUrl) o.sourceUrl = item.sourceUrl;
+          return o;
+        });
+      }
+      if (wizardState.apiConfig && wizardState.apiConfig.enabled && wizardState.apiConfig.endpoint) {
+        p.api = { enabled: true, endpoint: wizardState.apiConfig.endpoint, mode: wizardState.apiConfig.mode || 'hybrid' };
+      }
+      if (hasMpesa || hasCard) {
+        var co = { enabled: true };
+        if (hasMpesa) {
+          co.mpesa = { type: cc.mpesaType || 'buy_goods', number: cc.mpesaNumber, currency: cc.currency || 'KES' };
+          if (cc.mpesaType === 'paybill' && cc.mpesaAccount) co.mpesa.account = cc.mpesaAccount;
+          if (cc.mpesaBusinessName) co.mpesa.businessName = cc.mpesaBusinessName;
+          if (cc.amount) co.mpesa.amount = cc.amount;
+          if (cc.itemName) co.mpesa.item = cc.itemName;
+        }
+        if (hasCard) {
+          co.card = { url: cc.externalUrl, buttonLabel: cc.cardButtonLabel || 'Proceed to Card Checkout ↗', currency: cc.cardCurrency || 'USD' };
+          if (cc.cardAmount) co.card.amount = cc.cardAmount;
+          if (cc.cardItemName) co.card.item = cc.cardItemName;
+        }
+        if (hasCard) co.externalUrl = cc.externalUrl;
+        if (cc.itemName) co.item = cc.itemName;
+        p.checkout = co;
+      }
+      return p;
+    }
+
+    function buildDeployCode() {
+      // NOTE: retired sample placeholders are excluded so shipped bots never answer from sample text.
+      var p = botlyCollectInitPayload();
 
       var knowledgePart = '';
-      if (allKnowledge.length > 0) {
+      if (p.customKnowledge && p.customKnowledge.length > 0) {
         knowledgePart = ',\n      customKnowledge: [\n';
-        allKnowledge.forEach(function(item, i) {
+        p.customKnowledge.forEach(function(item, i) {
           knowledgePart += '        {\n' +
             '          question: ' + JSON.stringify(item.question) + ',\n' +
             '          answer: ' + JSON.stringify(item.answer) +
             (item.source ? ',\n          source: ' + JSON.stringify(item.source) : '') +
             (item.sourceUrl ? ',\n          sourceUrl: ' + JSON.stringify(item.sourceUrl) : '') +
-            '\n        }' + (i < allKnowledge.length - 1 ? ',' : '') + '\n';
+            '\n        }' + (i < p.customKnowledge.length - 1 ? ',' : '') + '\n';
         });
         knowledgePart += '      ]';
       }
 
-      var avatarPart = wizardState.logoUrl
-        ? ',\n      avatar: ' + JSON.stringify(wizardState.logoUrl)
+      var avatarPart = (p.bot.avatar)
+        ? ',\n      avatar: ' + JSON.stringify(p.bot.avatar)
         : '';
 
-      var apiPart = (wizardState.apiConfig && wizardState.apiConfig.enabled && wizardState.apiConfig.endpoint)
-        ? ',\n    api: {\n      enabled: true,\n      endpoint: ' + JSON.stringify(wizardState.apiConfig.endpoint) + ',\n      mode: ' + JSON.stringify(wizardState.apiConfig.mode || 'hybrid') + '\n    }'
+      var apiPart = (p.api && p.api.enabled && p.api.endpoint)
+        ? ',\n    api: {\n      enabled: true,\n      endpoint: ' + JSON.stringify(p.api.endpoint) + ',\n      mode: ' + JSON.stringify(p.api.mode || 'hybrid') + '\n    }'
         : '';
 
-      // Shipped snippets carry checkout ONLY for methods the merchant configured
-      // (Till number and/or card URL) — never placeholder business names/amounts.
       var checkoutPart = '';
-      var cc = wizardState.checkoutConfig || {};
-      var hasMpesa = !!(cc.mpesaNumber && String(cc.mpesaNumber).trim());
-      var hasCard = !!(cc.externalUrl && String(cc.externalUrl).trim());
-      if (hasMpesa || hasCard) {
+      if (p.checkout && p.checkout.enabled) {
         var mpesaBlock = '';
-        if (hasMpesa) {
-          var mLines = ['        type: ' + JSON.stringify(cc.mpesaType || 'buy_goods')];
-          mLines.push('        number: ' + JSON.stringify(cc.mpesaNumber));
-          if (cc.mpesaType === 'paybill' && cc.mpesaAccount) mLines.push('        account: ' + JSON.stringify(cc.mpesaAccount));
-          if (cc.mpesaBusinessName) mLines.push('        businessName: ' + JSON.stringify(cc.mpesaBusinessName));
-          if (cc.amount) mLines.push('        amount: ' + JSON.stringify(cc.amount));
-          mLines.push('        currency: ' + JSON.stringify(cc.currency || 'KES'));
-          if (cc.itemName) mLines.push('        item: ' + JSON.stringify(cc.itemName));
+        if (p.checkout.mpesa) {
+          var mp = p.checkout.mpesa;
+          var mLines = ['        type: ' + JSON.stringify(mp.type || 'buy_goods')];
+          mLines.push('        number: ' + JSON.stringify(mp.number));
+          if (mp.type === 'paybill' && mp.account) mLines.push('        account: ' + JSON.stringify(mp.account));
+          if (mp.businessName) mLines.push('        businessName: ' + JSON.stringify(mp.businessName));
+          if (mp.amount) mLines.push('        amount: ' + JSON.stringify(mp.amount));
+          mLines.push('        currency: ' + JSON.stringify(mp.currency || 'KES'));
+          if (mp.item) mLines.push('        item: ' + JSON.stringify(mp.item));
           mpesaBlock = '      // Method 1: M-Pesa Direct In-Chat Setup\n      mpesa: {\n' + mLines.join(',\n') + '\n      }';
         }
         var cardBlock = '';
-        if (hasCard) {
-          var cLines = ['        url: ' + JSON.stringify(cc.externalUrl)];
-          cLines.push('        buttonLabel: ' + JSON.stringify(cc.cardButtonLabel || 'Proceed to Card Checkout ↗'));
-          if (cc.cardAmount) cLines.push('        amount: ' + JSON.stringify(cc.cardAmount));
-          cLines.push('        currency: ' + JSON.stringify(cc.cardCurrency || 'USD'));
-          if (cc.cardItemName) cLines.push('        item: ' + JSON.stringify(cc.cardItemName));
+        if (p.checkout.card) {
+          var cd = p.checkout.card;
+          var cLines = ['        url: ' + JSON.stringify(cd.url)];
+          cLines.push('        buttonLabel: ' + JSON.stringify(cd.buttonLabel || 'Proceed to Card Checkout ↗'));
+          if (cd.amount) cLines.push('        amount: ' + JSON.stringify(cd.amount));
+          cLines.push('        currency: ' + JSON.stringify(cd.currency || 'USD'));
+          if (cd.item) cLines.push('        item: ' + JSON.stringify(cd.item));
           cardBlock = '      // Method 2: Card & External Payment Link Setup\n      card: {\n' + cLines.join(',\n') + '\n      }';
         }
         var topExtra = '';
-        if (hasCard) topExtra += ',\n      externalUrl: ' + JSON.stringify(cc.externalUrl);
-        if (cc.itemName) topExtra += ',\n      item: ' + JSON.stringify(cc.itemName);
+        if (p.checkout.externalUrl) topExtra += ',\n      externalUrl: ' + JSON.stringify(p.checkout.externalUrl);
+        if (p.checkout.item) topExtra += ',\n      item: ' + JSON.stringify(p.checkout.item);
         checkoutPart = ',\n    checkout: {\n      enabled: true\n' +
           (mpesaBlock ? ',\n' + mpesaBlock : '') +
           (cardBlock ? ',\n' + cardBlock : '') +
           topExtra + '\n    }';
       }
 
-      var embedBotId = (window.BotlyChatbotManager && BotlyChatbotManager.getEmbedBotId) ? BotlyChatbotManager.getEmbedBotId() : 'bot_default';
       // Shipped snippets carry only contacts the merchant actually configured — never fake fallbacks.
-      var companyLines = '      name: ' + JSON.stringify(wizardState.companyName);
-      if (wizardState.supportEmail) companyLines += ',\n      supportEmail: ' + JSON.stringify(wizardState.supportEmail);
-      if (wizardState.supportPhone) companyLines += ',\n      supportPhone: ' + JSON.stringify(wizardState.supportPhone);
+      var companyLines = '      name: ' + JSON.stringify(p.company.name);
+      if (p.company.supportEmail) companyLines += ',\n      supportEmail: ' + JSON.stringify(p.company.supportEmail);
+      if (p.company.supportPhone) companyLines += ',\n      supportPhone: ' + JSON.stringify(p.company.supportPhone);
 
       var code =
 '<!-- 1. Include Botly Pro Stylesheet & JavaScript Bundle -->\n' +
 '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n' +
 '<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n' +
-'<!-- 2. Initialize ' + wizardState.companyName + ' Botly Pro Chatbot ($10 Flat) -->\n' +
+'<!-- 2. Initialize ' + p.company.name + ' Botly Pro Chatbot ($10 Flat) -->\n' +
 '<script>\n' +
 '  BotlyChatbot.init({\n' +
 '    mode: "saas",\n' +
-'    botId: ' + JSON.stringify(embedBotId) + ', // keeps this bot\'s leads & contacts separate\n' +
+'    botId: ' + JSON.stringify(p.botId) + ', // keeps this bot\'s leads & contacts separate\n' +
+'    publishedEmbed: true, // live config: Studio publishes update this bot automatically\n' +
+'    configUpdatedAt: ' + p.configUpdatedAt + ', // inline fallback freshness (cloud wins when newer)\n' +
 '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
 '    ratings: { enabled: true }, // post-chat rating card (paid bots)\n' +
-'    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
+'    goals: ' + JSON.stringify(p.goals) + ',\n' +
 '    company: {\n' +
 companyLines + '\n' +
 '    },\n' +
 '    bot: {\n' +
-'      name: ' + JSON.stringify(wizardState.botName) + ',\n' +
-'      title: ' + JSON.stringify(wizardState.botTitle) + ',\n' +
-'      greeting: ' + JSON.stringify(wizardState.greeting) + avatarPart + '\n' +
+'      name: ' + JSON.stringify(p.bot.name) + ',\n' +
+'      title: ' + JSON.stringify(p.bot.title) + ',\n' +
+'      greeting: ' + JSON.stringify(p.bot.greeting) + avatarPart + '\n' +
 '    },\n' +
 '    theme: {\n' +
-'      primaryColor: "' + wizardState.primaryColor + '",\n' +
-'      accentColor: "' + wizardState.accentColor + '",\n' +
-(wizardState.backgroundColor && wizardState.backgroundColor !== '#ffffff' ? '      backgroundColor: "' + wizardState.backgroundColor + '",\n' : '') +
-'      headerBg: "' + wizardState.primaryColor + '"\n' +
+'      primaryColor: "' + p.theme.primaryColor + '",\n' +
+'      accentColor: "' + p.theme.accentColor + '",\n' +
+(p.theme.backgroundColor && p.theme.backgroundColor !== '#ffffff' ? '      backgroundColor: "' + p.theme.backgroundColor + '",\n' : '') +
+'      headerBg: "' + p.theme.headerBg + '"\n' +
 '    }' + knowledgePart + apiPart + checkoutPart + '\n' +
 '  });\n' +
 '<\/script>';
@@ -5524,7 +5592,86 @@ companyLines + '\n' +
       if (el) el.textContent = code;
     }
 
+
     // ============================================================
+    // ============================================================
+    // BOTLY PUBLISH: push training to the cloud so the live bot stays
+    // fresh. Publish once, then pay — afterwards every Studio save
+    // auto-syncs (debounced) to the deployed bot. No re-copying.
+    // ============================================================
+    var botlyPublishTimer = null;
+    function botlySanitizeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120); }
+    function botlyPublishConfig(opts) {
+      opts = opts || {};
+      try {
+        var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+        var db = botlyCloudDb();
+        var botId = botlyActiveBotId();
+        if (!user || !user.uid || !db || !botId) { if (!opts.silent) alert('Sign in to publish.'); return; }
+        var payload = botlyCollectInitPayload();
+        var doc = {
+          ownerUid: user.uid, botId: botId, config: payload,
+          kbVersion: (typeof KB_SCHEMA_VERSION !== 'undefined' ? KB_SCHEMA_VERSION : 1),
+          updatedAt: Date.now(),
+          publishedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        };
+        var size = 0;
+        try { size = JSON.stringify(doc).length; } catch (e) {}
+        if (size > 900000) { if (!opts.silent) alert('Bot too large to publish (' + Math.round(size / 1024) + ' KB). Trim FAQs/documents and retry.'); return; }
+        db.collection('botly_configs').doc(botlySanitizeId(botId)).set(doc).then(function() {
+          try {
+            var bots = getAllBots();
+            bots.forEach(function(b) { if (b.id === botId) { b.published = true; b.publishedAt = Date.now(); } });
+            saveAllBots(bots);
+          } catch (e) {}
+          try {
+            var docId = botlyBillingDocId(botId);
+            if (docId) db.collection('botly_bots').doc(docId).set({ published: true, publishedAt: window.firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(function() {});
+          } catch (e) {}
+          botlyRenderPublishStatus();
+          if (opts.then) { try { opts.then(); } catch (e) {} }
+        }).catch(function(err) {
+          if (!opts.silent) alert('Publish failed: ' + (err && err.message ? err.message : err));
+        });
+      } catch (e) { if (!opts.silent) alert('Publish failed.'); }
+    }
+    function botlySchedulePublish() {
+      try {
+        var b = (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBot) ? BotlyChatbotManager.getActiveBot() : null;
+        if (!b || !b.published) return;
+        if (botlyPublishTimer) clearTimeout(botlyPublishTimer);
+        botlyPublishTimer = setTimeout(function() { botlyPublishTimer = null; botlyPublishConfig({ silent: true }); }, 3000);
+      } catch (e) {}
+    }
+    function botlyPublishAndContinue() {
+      botlyPublishConfig({ then: function() {
+        botlyCheckActivation(botlyActiveBotId(), function(res) {
+          if (res && res.active) {
+            try { renderDeployPreview(); } catch (e) {}
+            alert('Live bot updated! Your deployed chatbot picks up the changes automatically.');
+          } else { openPaywallModal({ pendingCopy: false }); }
+        });
+      } });
+    }
+    function botlyRenderPublishStatus() {
+      try {
+        var box = document.getElementById('ship-publish-status');
+        var btn = document.getElementById('btn-publish-bot');
+        if (!box || !btn) return;
+        var b = (window.BotlyChatbotManager && BotlyChatbotManager.getActiveBot) ? BotlyChatbotManager.getActiveBot() : null;
+        if (b && b.published) {
+          var when = b.publishedAt ? new Date(b.publishedAt).toLocaleString() : '';
+          box.innerHTML = '🚀 <strong>Published &amp; live</strong>' + (when ? ' · updated ' + escapeHtml(when) : '') + ' — edits auto-sync to your deployed bot.';
+          box.style.background = '#f0fdf4'; box.style.border = '1.5px solid #bbf7d0'; box.style.color = '#14532d';
+          btn.innerHTML = '<span>🔄 Update live bot &amp; continue →</span>';
+        } else {
+          box.textContent = 'Not published yet — publish pushes your training to the cloud, then you pay $10 to go live.';
+          box.style.background = '#fffbeb'; box.style.border = '1.5px solid #fde68a'; box.style.color = '#92400e';
+          btn.innerHTML = '<span>🚀 Publish &amp; continue →</span>';
+        }
+      } catch (e) {}
+    }
+
     // BOTLY BILLING: one-time activation per bot (M-Pesa, manual verify).
     // Building + previewing is free; Copy Embed Code requires an
     // activated bot. Owner: SET YOUR REAL TILL NUMBER + KES AMOUNT.
@@ -5684,10 +5831,6 @@ companyLines + '\n' +
         '<div id="paywall-status" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;color:#475569;line-height:1.6;">After paying, keep this window open — activation is detected automatically.</div>';
       var link = document.getElementById('paywall-paylink');
       if (link) link.addEventListener('click', function() { paywallLogLinkClaim(); });
-      try {
-        var last = localStorage.getItem(paywallClaimKey(botlyActiveBotId()));
-        if (last && (Date.now() - Number(last)) < 86400000) paywallNoteClaim();
-      } catch (e) {}
       if (paywallPollTimer) clearInterval(paywallPollTimer);
       paywallPollTimer = setInterval(function() {
         if (!document.getElementById('paywall-modal')) {
@@ -5701,84 +5844,27 @@ companyLines + '\n' +
         });
       }, 6000);
     }
-    function paywallClaimKey(botId) { return 'paywall_claim_' + (botId || 'default'); }
     function paywallNoteClaim() {
       var s = document.getElementById('paywall-status');
       if (s) {
         s.style.background = '#fffbeb'; s.style.border = '1px solid #fcd34d'; s.style.color = '#78350f';
-        s.innerHTML = '&#9203; <strong>Payment link opened.</strong> Complete payment in the new tab — this window unlocks automatically once confirmed.';
+        s.innerHTML = '&#9203; <strong>Payment link opened.</strong> Complete payment in the new tab — you\'ll land on your embed page automatically, and this window unlocks too. <a href="/activated" target="_blank" rel="noopener" style="color:#92400e;font-weight:800;">Already paid? Open your embed page →</a>';
       }
     }
-    // Claim-mail builder (pure — unit-tested in /tmp/mail-test.js). Shape must
-    // satisfy firestore.rules -> mail: fixed admin recipient only.
-    function botlyBuildClaimMail(c) {
-      var clean = function(v, n) { return String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n); };
-      var bot = clean(c.botName, 50) || 'Unnamed bot';
-      var co = clean(c.companyName, 40);
-      var row = function(k, v) {
-        return '<tr><td style="padding:3px 10px 3px 0;color:#64748b;">' + k + '</td><td><strong>' + escapeHtml(v) + '</strong></td></tr>';
-      };
-      return {
-        to: 'muindidiego@gmail.com',
-        message: {
-          subject: '\uD83D\uDCB0 Payment claim: ' + bot + (co ? ' (' + co + ')' : '') + ' — $' + c.amountUSD + ' / KES ' + c.amountKES,
-          html: '<p>New Botly Pro payment claim filed from the Studio paywall:</p><table>' +
-            row('Bot', bot) + row('Company', co || '—') + row('Owner', clean(c.ownerEmail, 120) || '—') +
-            row('Amount', '$' + c.amountUSD + ' / KES ' + c.amountKES) +
-            row('Provider', clean(c.provider, 40) || 'intasend_link') + row('Bot ID', clean(c.botId, 120) || '—') +
-            row('Filed', clean(c.filedAt, 60) || '') +
-            '</table><p>Match it against your IntaSend dashboard, then <strong>Verify</strong> or <strong>✕</strong> in ' +
-            '<a href="https://www.botlypro.online/admin">Botly Admin → Payments</a>.</p>'
-        }
-      };
-    }
-
     function paywallLogLinkClaim() {
-      // Best-effort pending claim so the owner can approve in Admin; deduped per bot per day.
+      // IntaSend-return model: opening the pay link files NOTHING — no claim,
+      // no email. /activated records everything after IntaSend redirects back
+      // on success. We only sync (so the bot row exists) + stash which bot
+      // is being paid for (same-browser fallback for /activated).
+      try { syncActiveBotFromUI(); } catch (e) {}
       try {
         var botId = botlyActiveBotId();
-        var key = paywallClaimKey(botId);
-        var last = null;
-        try { last = localStorage.getItem(key); } catch (e) {}
-        if (last && (Date.now() - Number(last)) < 86400000) { paywallNoteClaim(); return; }
-        var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
-        var db = botlyCloudDb();
-        if (!user || !user.uid || !db) return;
-        var company = '', botName = '';
-        try { company = wizardState.companyName || ''; botName = wizardState.botName || ''; } catch (e) {}
-        db.collection('botly_payments').add({
-          ownerUid: user.uid,
-          ownerEmail: user.email || null,
-          botId: botId,
-          companyName: String(company).slice(0, 120),
-          botName: String(botName).slice(0, 120),
-          provider: 'intasend_link',
-          status: 'pending',
-          amountUSD: BOTLY_BILLING.usd,
-          amountKES: BOTLY_BILLING.kes,
-          createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
-        }).then(function() {
-          try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
-          // Admin email ping (best-effort): the Trigger Email extension
-          // watches `mail` and forwards this to muindidiego@gmail.com.
-          try {
-            var claimMail = botlyBuildClaimMail({
-              botName: botName, companyName: company, ownerEmail: user.email || '',
-              botId: botId, amountUSD: BOTLY_BILLING.usd, amountKES: BOTLY_BILLING.kes,
-              provider: 'intasend_link', filedAt: new Date().toLocaleString()
-            });
-            claimMail.ownerUid = user.uid;
-            claimMail.createdAt = window.firebase.firestore.FieldValue.serverTimestamp();
-            db.collection('mail').add(claimMail).catch(function() {});
-          } catch (e) {}
-          paywallNoteClaim();
-          // VERIFY-ONLY: opening the pay link only FILES the claim above —
-          // nothing here may activate the bot. It unlocks solely when an
-          // admin presses Verify in admin.html (the paywall polls
-          // botlyCheckActivation and this window unlocks automatically).
-        }).catch(function() {});
+        try { localStorage.setItem('botly_last_pay_bot', botId); } catch (e) {}
+        try { localStorage.setItem('botly_last_pay_ts', String(Date.now())); } catch (e) {}
+        paywallNoteClaim();
       } catch (e) {}
     }
+
     function copyFinalEmbed() {
       if (window.BotlyAuth && !BotlyAuth.isAuthenticated()) {
         BotlyAuth.requireAuth(function() {
@@ -6141,6 +6227,8 @@ companyLines + '\n' +
           websiteChunks: [],
           websiteUrl: 'https://mycompany.com',
           deployDomain: '',
+          published: false,
+          publishedAt: null,
           indexedWebsitePages: [],
           activeWebProfile: null,
           sourceToggles: { faq: true, docs: true, web: true },
@@ -6267,6 +6355,7 @@ companyLines + '\n' +
               apiEnabled: !!(b.apiConfig && b.apiConfig.enabled),
               websiteUrl: b.websiteUrl || null,
               deployDomain: b.deployDomain || null,
+              published: !!b.published,
               clientUpdatedAt: b.updatedAt || null,
               updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -6386,6 +6475,7 @@ companyLines + '\n' +
         saveAllBots(bots);
         renderList();
         botlySyncBotsToCloud(bots);
+        try { botlySchedulePublish(); } catch (e) {}
       }
 
       function renderList() {

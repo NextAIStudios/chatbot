@@ -69,50 +69,37 @@ Building and previewing are free. Copying the embed code requires an
    `tillNumber`, `tillName`, `kes`. Redeploy after changing it.
    **Using IntaSend?** Create a Payment Link in your IntaSend dashboard
    (fixed amount = the KES price), paste the link into
-   `intasendPaymentUrl`, and payers get a **Pay securely** button
-   (M-Pesa + cards) with the manual Till kept as fallback. Opening the
-   link files a pending claim automatically (one per bot per day) — the
-   bot itself stays LOCKED until you press Verify. Match each claim
-   against your IntaSend dashboard before approving. (Full API
-   automation — STK push + instant approval — needs the secret key on a
-   backend, so approval stays a manual-verify step while the Studio is
-   statically hosted.)
-2. **Re-publish the rules.** `firestore.rules` enforces VERIFY-ONLY
-   activation: owners may never touch their bot's `active` flag (neither
-   on create nor update — not even via the Firebase console), and only
-   admins can flip it. It also publishes the `botly_licenses`
-   collection (public read so embeds can verify; admin-only write).
-   Paste the file into Firestore → Rules → Publish again after every
-   rules change — **the license check does nothing until this ships.**
-3. **Flow (verify-only).** The user clicks the IntaSend pay link → a
-   pending claim lands in `/admin` → **Payments** (watch the
-   `amount?`, `×N claims` and `stale` fraud flags) → you match it
-   against your IntaSend dashboard → **Verify** activates the bot,
-   writes its public license (carrying the Studio-captured domain
-   binding), and the user's paywall unlocks automatically within
-   seconds. **✕** rejects *and revokes* the license. You can also
-   toggle Active manually in the **Chatbots** tab (edit the matching
-   `botly_licenses/{botId}` row too — the embed reads the license,
-   not the bot row).
-4. **Deactivate when the money never arrives.** An approved payment row
-   has **⏻ Deactivate**: the claim becomes `revoked`, the bot
-   deactivates AND its public license is revoked, so the embed locks
-   (visitors with a cached license go dark within 24h). Changed your
-   mind? **↻ Re-verify** approves again. The **Chatbots** tab
-   Activate/Deactivate toggle writes the license too. Bots approved
-   before the license system existed show a locked embed until you
-   press **⛨ License** on the payment row (one click rewrites the
-   license from the Studio domain binding). Embeds track
-   `chatbot@main`, so already-deployed snippets pick up enforcement
-   automatically — nobody needs to re-copy.
-5. **Email alerts for new claims.** Install the Firebase extension
-   "Trigger Email from Firestore": console → Extensions → install
-   `firestore-send-email`, collection `mail`, SMTP connection URI
-   (SendGrid free tier, or Gmail with an App Password:
-   `smtps://ADDRESS:PASSWORD@smtp.gmail.com:465`). The Studio then
-   files one mail doc per bot per day to **muindidiego@gmail.com**
-   the moment a payer opens the pay link. Match each mail against
-   your IntaSend dashboard — IntaSend's own merchant emails remain
+   `intasendPaymentUrl`, and set the link's **success redirect URL** to
+   `https://www.botlypro.online/activated` — payers land there after
+   paying and the bot auto-activates (license included). Opening the
+   pay link files nothing by itself; everything is recorded on return.
+2. **Re-publish the rules.** `firestore.rules` runs AUDIT-MODEL
+   activation: owners flip their own bot false→true only via
+   `/activated` (fresh `activationRef` + source stamp required), write
+   only their own bot's license (uid+botId pinned, domains capped),
+   and publish only their own bot's live config (`botly_configs`,
+   public read). One reference activates exactly one bot
+   (`botly_refs` first-come registry). Paste into Firestore → Rules →
+   Publish after every rules change.
+3. **Flow (publish → pay → auto-activate → audit).** The owner trains
+   → **publishes** (config to the cloud; later edits auto-sync within
+   seconds) → pays $10 on IntaSend → lands on `/activated` → bot
+   activates, license written, `paid` claim filed, admin emailed. You
+   confirm each `paid` row against your IntaSend dashboard (match the
+   `ref` shown): leave it, or **⏻ Deactivate** (revokes the license;
+   embed locks within 24h). Lost redirects: the payer pastes their
+   IntaSend reference manually on `/activated`. Bots with no payment
+   row but `active` = interrupted paper trail — check by email/time.
+4. **Deactivate / re-verify.** `pending`, `paid`, approved and revoked
+   rows all triage the same way: Verify confirms (+rewrites license),
+   ✕/⏻ revokes, ↻ re-approves. The **Chatbots** tab toggle writes the
+   license too. **⛨ License** rewrites one bot's license from its
+   Studio domain. Embeds track `chatbot@main`, so deployed snippets
+   pick up enforcement automatically — nobody re-copies.
+5. **Email alerts.** Install "Trigger Email from Firestore"
+   (collection `mail`, SMTP URI). Owner-shape mails fire from
+   `/activated` on every auto-activation; anonymous-shape mails fire on every chatbot lead unless a bot opts out (`leadAlerts: false`) — both
+   to **muindidiego@gmail.com**. IntaSend's own merchant emails remain
    the proof that money actually moved.
 
 ## Notes

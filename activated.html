@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Botly Pro — Payment Received, Copy Your Embed Code</title>
+  <link rel="icon" type="image/svg+xml" href="/demo/botly-icon.svg">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="/demo/firebase-config.js?v=20260922"></script>
+  <script src="/demo/firebase-config.local.js?v=20260922" onerror="this.remove()"></script>
+  <script src="/demo/firebase-auth.js?v=20260922"></script>
+  <style>
+    :root { --ink: #18221c; --lime: #9be553; --bg: #f4f6f3; --card: #ffffff; --muted: #64748b; --line: #e2e8f0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: #0f172a; }
+    .topbar { background: var(--ink); color: #fff; padding: 12px 22px; display: flex; align-items: center; gap: 12px; }
+    .topbar img { width: 26px; height: 26px; }
+    .topbar h1 { font-size: 16px; margin: 0; font-weight: 800; }
+    .topbar h1 span { color: var(--lime); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 26px 16px 60px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    .btn { border: none; border-radius: 10px; padding: 12px 20px; font-weight: 800; font-size: 14px; cursor: pointer; display: inline-block; text-decoration: none; }
+    .btn-lime { background: var(--lime); color: var(--ink); }
+    .btn-dark { background: var(--ink); color: #fff; }
+    .btn-ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-block { display: block; width: 100%; text-align: center; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .codebox { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.6; white-space: pre; overflow-x: auto; max-height: 320px; overflow-y: auto; margin: 12px 0; }
+    .field { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14px; font-family: inherit; }
+    .okbox { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #14532d; border-radius: 12px; padding: 14px; font-size: 13.5px; line-height: 1.6; }
+    .warnbox { background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e; border-radius: 12px; padding: 14px; font-size: 13.5px; line-height: 1.6; }
+    .errbox { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 12px; padding: 14px; font-size: 13.5px; line-height: 1.6; }
+    .botpick { display: block; width: 100%; text-align: left; background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
+    .botpick:hover { border-color: var(--lime); }
+    .spin { display: inline-block; width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: sp 0.8s linear infinite; vertical-align: -4px; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <img src="/demo/botly-icon.svg" alt="">
+    <h1>Botly <span>Pro</span></h1>
+  </div>
+  <div class="wrap">
+    <div class="card" id="activated-body">
+      <div style="text-align:center;padding:30px 0;"><span class="spin"></span><p class="muted">Confirming your payment…</p></div>
+    </div>
+  </div>
+  <script>
+    // ================================================================
+    // /activated — IntaSend success-return page + Copy Embed Code home.
+    // IntaSend redirects here ONLY on successful payment. The page:
+    //   1. identifies the bot (?bot=, else last-pay stash, else picker),
+    //   2. auto-activates it + writes the license (audit-mailed),
+    //   3. files the `paid` claim + admin email,
+    //   4. shows the Copy Embed Code snippet.
+    // Route: https://www.botlypro.online/activated (nginx try_files
+    // $uri.html — no nginx change needed for this file).
+    // ================================================================
+    var ACTIVATED_BILLING = { usd: 10, kes: 1290 }; // SYNC with BOTLY_BILLING in demo/customizer.html
+
+    function activatedEsc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function activatedParam(name) {
+      try { return new URLSearchParams(window.location.search).get(name) || ''; } catch (e) { return ''; }
+    }
+    function activatedSanitize(s) {
+      return String(s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120);
+    }
+    function activatedBotDocId(uid, botId) {
+      return activatedSanitize(uid).slice(0, 60) + '__' + activatedSanitize(botId).slice(0, 60);
+    }
+    // IntaSend may append its own reference to the redirect — harvest the
+    // first recognised one (param-agnostic: works with or without it).
+    function activatedHarvestRef() {
+      var names = ['invoice_id', 'invoice', 'reference', 'api_ref', 'transaction_id', 'checkout_id', 'payment_id', 'order_id', 'receipt'];
+      for (var i = 0; i < names.length; i++) {
+        var v = activatedParam(names[i]);
+        if (v && v.trim().length >= 6) return v.trim().slice(0, 120);
+      }
+      return '';
+    }
+
+    // Success-mail builder (pure — unit-tested in /tmp/mail-test.js).
+    // Owner shape (a): { to, message } + caller adds ownerUid + createdAt.
+    function activatedBuildClaimMail(c) {
+      var clean = function(v, n) { return String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n); };
+      var bot = clean(c.botName, 60) || 'Unnamed bot';
+      var co = clean(c.companyName, 50);
+      var row = function(k, v) {
+        return '<tr><td style="padding:3px 10px 3px 0;color:#64748b;">' + k + '</td><td><strong>' + activatedEsc(v) + '</strong></td></tr>';
+      };
+      return {
+        to: 'muindidiego@gmail.com',
+        message: {
+          subject: '✅ Payment received: ' + bot + (co ? ' (' + co + ')' : '') + ' — $' + c.amountUSD + ' / KES ' + c.amountKES,
+          html: '<p>A payer returned from IntaSend and the bot auto-activated (license written). Please confirm in your IntaSend dashboard — revoke in Admin → Payments if bogus:</p><table>' +
+            row('Bot', bot) + row('Company', co || '—') + row('Owner', clean(c.ownerEmail, 120) || '—') +
+            row('Amount', '$' + c.amountUSD + ' / KES ' + c.amountKES) +
+            row('Reference', clean(c.ref, 120) || '—') + row('Bot ID', clean(c.botId, 120) || '—') +
+            row('Domain', clean(c.domain, 120) || '—') + row('Filed', clean(c.filedAt, 60) || '') +
+            '</table><p><a href="https://www.botlypro.online/admin">Open Botly Admin → Payments</a></p>'
+        }
+      };
+    }
+
+    // Snippet renderer — MUST mirror buildDeployCode() in
+    // demo/customizer.html field-for-field (pinned by /tmp/snippet-test.js).
+    function activatedBuildSnippet(p) {
+      p = p || {};
+      var knowledgePart = '';
+      if (p.customKnowledge && p.customKnowledge.length > 0) {
+        knowledgePart = ',\n      customKnowledge: [\n';
+        p.customKnowledge.forEach(function(item, i) {
+          knowledgePart += '        {\n' +
+            '          question: ' + JSON.stringify(item.question) + ',\n' +
+            '          answer: ' + JSON.stringify(item.answer) +
+            (item.source ? ',\n          source: ' + JSON.stringify(item.source) : '') +
+            (item.sourceUrl ? ',\n          sourceUrl: ' + JSON.stringify(item.sourceUrl) : '') +
+            '\n        }' + (i < p.customKnowledge.length - 1 ? ',' : '') + '\n';
+        });
+        knowledgePart += '      ]';
+      }
+      var avatarPart = (p.bot && p.bot.avatar) ? ',\n      avatar: ' + JSON.stringify(p.bot.avatar) : '';
+      var apiPart = (p.api && p.api.enabled && p.api.endpoint)
+        ? ',\n    api: {\n      enabled: true,\n      endpoint: ' + JSON.stringify(p.api.endpoint) + ',\n      mode: ' + JSON.stringify(p.api.mode || 'hybrid') + '\n    }' : '';
+      var checkoutPart = '';
+      if (p.checkout && p.checkout.enabled) {
+        var mpesaBlock = '', cardBlock = '', topExtra = '';
+        var mp = p.checkout.mpesa, cd = p.checkout.card;
+        if (mp) {
+          var mLines = ['        type: ' + JSON.stringify(mp.type || 'buy_goods')];
+          mLines.push('        number: ' + JSON.stringify(mp.number));
+          if (mp.type === 'paybill' && mp.account) mLines.push('        account: ' + JSON.stringify(mp.account));
+          if (mp.businessName) mLines.push('        businessName: ' + JSON.stringify(mp.businessName));
+          if (mp.amount) mLines.push('        amount: ' + JSON.stringify(mp.amount));
+          mLines.push('        currency: ' + JSON.stringify(mp.currency || 'KES'));
+          if (mp.item) mLines.push('        item: ' + JSON.stringify(mp.item));
+          mpesaBlock = '      // Method 1: M-Pesa Direct In-Chat Setup\n      mpesa: {\n' + mLines.join(',\n') + '\n      }';
+        }
+        if (cd) {
+          var cLines = ['        url: ' + JSON.stringify(cd.url)];
+          cLines.push('        buttonLabel: ' + JSON.stringify(cd.buttonLabel || 'Proceed to Card Checkout ↗'));
+          if (cd.amount) cLines.push('        amount: ' + JSON.stringify(cd.amount));
+          cLines.push('        currency: ' + JSON.stringify(cd.currency || 'USD'));
+          if (cd.item) cLines.push('        item: ' + JSON.stringify(cd.item));
+          cardBlock = '      // Method 2: Card & External Payment Link Setup\n      card: {\n' + cLines.join(',\n') + '\n      }';
+        }
+        if (p.checkout.externalUrl) topExtra += ',\n      externalUrl: ' + JSON.stringify(p.checkout.externalUrl);
+        if (p.checkout.item) topExtra += ',\n      item: ' + JSON.stringify(p.checkout.item);
+        checkoutPart = ',\n    checkout: {\n      enabled: true\n' + (mpesaBlock ? ',\n' + mpesaBlock : '') + (cardBlock ? ',\n' + cardBlock : '') + topExtra + '\n    }';
+      }
+      var companyLines = '      name: ' + JSON.stringify((p.company && p.company.name) || '');
+      if (p.company && p.company.supportEmail) companyLines += ',\n      supportEmail: ' + JSON.stringify(p.company.supportEmail);
+      if (p.company && p.company.supportPhone) companyLines += ',\n      supportPhone: ' + JSON.stringify(p.company.supportPhone);
+      return '<!-- 1. Include Botly Pro Stylesheet & JavaScript Bundle -->\n' +
+        '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.css">\n' +
+        '<script src="https://cdn.jsdelivr.net/gh/NextAIStudios/chatbot@main/dist/insurance-chatbot.js"><\/script>\n\n' +
+        '<!-- 2. Initialize ' + ((p.company && p.company.name) || '') + ' Botly Pro Chatbot ($10 Flat) -->\n' +
+        '<script>\n' +
+        '  BotlyChatbot.init({\n' +
+        '    mode: "saas",\n' +
+        '    botId: ' + JSON.stringify(p.botId || 'bot_default') + ', // keeps this bot\'s leads & contacts separate\n' +
+        '    publishedEmbed: true, // live config: Studio publishes update this bot automatically\n' +
+        '    configUpdatedAt: ' + Number(p.configUpdatedAt || 0) + ', // inline fallback freshness (cloud wins when newer)\n' +
+        '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
+        '    ratings: { enabled: true }, // post-chat rating card (paid bots)\n' +
+        '    goals: ' + JSON.stringify(p.goals || []) + ',\n' +
+        '    company: {\n' + companyLines + '\n' +
+        '    },\n' +
+        '    bot: {\n' +
+        '      name: ' + JSON.stringify((p.bot && p.bot.name) || '') + ',\n' +
+        '      title: ' + JSON.stringify((p.bot && p.bot.title) || '') + ',\n' +
+        '      greeting: ' + JSON.stringify((p.bot && p.bot.greeting) || '') + avatarPart + '\n' +
+        '    },\n' +
+        '    theme: {\n' +
+        '      primaryColor: "' + ((p.theme && p.theme.primaryColor) || '') + '",\n' +
+        '      accentColor: "' + ((p.theme && p.theme.accentColor) || '') + '",\n' +
+        ((p.theme && p.theme.backgroundColor && p.theme.backgroundColor !== '#ffffff') ? '      backgroundColor: "' + p.theme.backgroundColor + '",\n' : '') +
+        '      headerBg: "' + ((p.theme && p.theme.headerBg) || '') + '"\n' +
+        '    }' + knowledgePart + apiPart + checkoutPart + '\n' +
+        '  });\n' +
+        '<\/script>';
+    }
+
+    function activatedBody(html) {
+      var el = document.getElementById('activated-body');
+      if (el) el.innerHTML = html;
+    }
+    function activatedDb() {
+      try {
+        var cfg = window.BOTLY_FIREBASE_CONFIG || {};
+        if (!cfg.apiKey || cfg.apiKey === 'YOUR_API_KEY') return null;
+        if (!window.firebase || !window.firebase.firestore) return null;
+        if (!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(cfg);
+        return window.firebase.firestore();
+      } catch (e) { return null; }
+    }
+    function activatedUser() {
+      try {
+        return (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
+      } catch (e) { return null; }
+    }
+
+    function activatedBoot() {
+      var user = activatedUser();
+      var db = activatedDb();
+      if (!user || !user.uid || !db) {
+        activatedBody(
+          '<h2 style="margin-top:0;">🔒 Sign in required</h2>' +
+          '<p class="muted">This page activates <strong>your</strong> chatbot, so please sign in with the same account you used in the Studio.</p>' +
+          '<button class="btn btn-dark btn-block" onclick="activatedSignIn()">Sign in to continue</button>'
+        );
+        return;
+      }
+      var botId = activatedParam('bot');
+      var ref = activatedHarvestRef();
+      if (!botId) {
+        try { botId = localStorage.getItem('botly_last_pay_bot') || ''; } catch (e) {}
+      }
+      if (!botId) { activatedShowPicker(db, user, ref); return; }
+      activatedResolve(db, user, botId, ref);
+    }
+    function activatedSignIn() {
+      try {
+        if (window.BotlyAuth && typeof BotlyAuth.requireAuth === 'function') {
+          BotlyAuth.requireAuth(function() { activatedBoot(); }, 'Sign in to activate your chatbot.');
+        } else { activatedBody('<div class="errbox">Sign-in is unavailable right now. Please open the <a href="/studio">Studio</a> and sign in there first.</div>'); }
+      } catch (e) {}
+    }
+
+    function activatedShowPicker(db, user, ref) {
+      activatedBody('<h2 style="margin-top:0;">Which bot did you pay for?</h2><p class="muted">We couldn\'t tell from this visit (different browser or expired tab) — pick the bot below to continue.</p><div id="activated-picklist"><span class="spin"></span></div>');
+      db.collection('botly_bots').where('ownerUid', '==', user.uid).orderBy('updatedAt', 'desc').limit(50).get().then(function(snap) {
+        var html = '';
+        snap.forEach(function(doc) {
+          var d = doc.data() || {};
+          var nm = d.botName || d.botId || doc.id;
+          html += '<button class="botpick" onclick="activatedPick(\'' + activatedEsc(d.botId || '') + '\')"><strong>' + activatedEsc(nm) + '</strong> <span class="muted">· ' + activatedEsc(d.companyName || '') + '</span>' +
+            (d.active ? ' <span style="color:#15803d;font-weight:800;">● active</span>' : ' <span style="color:#b45309;font-weight:800;">○ unpaid</span>') + '</button>';
+        });
+        var box = document.getElementById('activated-picklist');
+        if (box) box.innerHTML = html || '<div class="warnbox">No chatbots found in this account yet. <a href="/studio">Build one in the Studio</a> first.</div>';
+      }).catch(function() {
+        var box = document.getElementById('activated-picklist');
+        if (box) box.innerHTML = '<div class="errbox">Couldn\'t load your chatbots. Check your connection and reload.</div>';
+      });
+    }
+    function activatedPick(botId) {
+      if (!botId) return;
+      try { localStorage.setItem('botly_last_pay_bot', botId); } catch (e) {}
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.set('bot', botId);
+        window.history.replaceState({}, '', u.toString());
+      } catch (e) {}
+      activatedBoot();
+    }
+
+    function activatedResolve(db, user, botId, ref) {
+      var docId = activatedBotDocId(user.uid, botId);
+      activatedBody('<div style="text-align:center;padding:30px 0;"><span class="spin"></span><p class="muted">Loading your chatbot…</p></div>');
+      db.collection('botly_bots').doc(docId).get().then(function(snap) {
+        var d = (snap && snap.exists && snap.data()) || null;
+        if (!d) {
+          // Never synced from the Studio: create the inactive row first so
+          // the activation update below passes the rules (create requires
+          // active=false; owners can never create an active row).
+          var seed = { ownerUid: user.uid, ownerEmail: user.email || null, botId: botId, active: false, createdAt: window.firebase.firestore.FieldValue.serverTimestamp() };
+          db.collection('botly_bots').doc(docId).set(seed, { merge: true }).then(function() {
+            activatedResolve(db, user, botId, ref);
+          }).catch(function() {
+            activatedBody('<div class="errbox">We couldn\'t find that bot in your account. Please open the <a href="/studio">Studio</a> once (it syncs automatically) and come back.</div>');
+          });
+          return;
+        }
+        var active = d.active === true;
+        if (active && (!ref || ref === (d.activationRef || ''))) {
+          activatedShowSuccess(db, user, botId, d, false); // already recorded — no writes, no mail
+          return;
+        }
+        if (ref && (!active || ref !== (d.activationRef || ''))) {
+          if (!d.deployDomain) { activatedShowDomain(db, user, botId, d, ref); return; }
+          activatedActivate(db, user, botId, d, ref);
+          return;
+        }
+        activatedShowPayRequired(botId, d);
+      }).catch(function() {
+        activatedBody('<div class="errbox">Connection problem — please reload this page.</div>');
+      });
+    }
+
+    function activatedShowPayRequired(botId, d) {
+      var nm = (d && (d.botName || d.companyName)) || 'your chatbot';
+      activatedBody(
+        '<h2 style="margin-top:0;">💳 Payment required</h2>' +
+        '<div class="warnbox">No successful payment found for <strong>' + activatedEsc(nm) + '</strong> yet. Complete the $10 one-time payment and you\'ll land back here automatically.</div>' +
+        '<p style="margin:16px 0 8px 0;"><a class="btn btn-dark btn-block" href="/studio">Open Studio → pay $10</a></p>' +
+        '<div style="border-top:1px solid var(--line);margin-top:18px;padding-top:14px;">' +
+          '<p class="muted" style="margin:0 0 8px 0;"><strong>Already paid?</strong> If the redirect lost your receipt (closed tab, different device), paste your IntaSend / M-Pesa reference below — we\'ll match it and activate.</p>' +
+          '<div style="display:flex;gap:8px;"><input class="field" id="activated-manual-ref" placeholder="e.g. INV-XXXXXX or M-Pesa code" autocomplete="off">' +
+          '<button class="btn btn-lime" onclick="activatedManualRef()">Activate</button></div>' +
+        '</div>'
+      );
+    }
+    function activatedManualRef() {
+      var v = '';
+      try { v = (document.getElementById('activated-manual-ref').value || '').trim(); } catch (e) {}
+      if (v.length < 6) { alert('That reference looks too short — paste the full IntaSend / M-Pesa reference.'); return; }
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.set('reference', v);
+        window.history.replaceState({}, '', u.toString());
+      } catch (e) {}
+      activatedBoot();
+    }
+
+    function activatedShowDomain(db, user, botId, d, ref) {
+      activatedBody(
+        '<h2 style="margin-top:0;">🔒 One last step — your domain</h2>' +
+        '<p class="muted">Your paid embed only runs on <strong>one domain</strong> (+ subdomains) — copied snippets die anywhere else. Where will you paste it?</p>' +
+        '<div style="display:flex;gap:8px;"><input class="field" id="activated-domain" placeholder="example.com" autocomplete="off" spellcheck="false">' +
+        '<button class="btn btn-lime" id="activated-domain-btn">Continue →</button></div>' +
+        '<p class="muted">Studio previews always work, whatever you enter.</p>'
+      );
+      var go = function() {
+        var v = '';
+        try { v = (document.getElementById('activated-domain').value || '').trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^\/\//, '').split('/')[0].split(':')[0]; } catch (e) {}
+        if (v.slice(0, 4) === 'www.') v = v.slice(4);
+        if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(v)) { alert('Enter a valid domain, e.g. example.com'); return; }
+        var btn = document.getElementById('activated-domain-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        db.collection('botly_bots').doc(activatedBotDocId(user.uid, botId)).set({ deployDomain: v }, { merge: true }).then(function() {
+          d.deployDomain = v;
+          activatedActivate(db, user, botId, d, ref);
+        }).catch(function() { alert('Couldn\'t save the domain — check your connection and retry.'); if (btn) { btn.disabled = false; btn.textContent = 'Continue →'; } });
+      };
+      try { document.getElementById('activated-domain-btn').addEventListener('click', go); } catch (e) {}
+    }
+
+    function activatedActivate(db, user, botId, d, ref) {
+      activatedBody('<div style="text-align:center;padding:30px 0;"><span class="spin"></span><p class="muted">Payment confirmed — activating your chatbot…</p></div>');
+      var ts = window.firebase.firestore.FieldValue.serverTimestamp();
+      var docId = activatedBotDocId(user.uid, botId);
+      var domain = String(d.deployDomain || '').trim().toLowerCase();
+      var refId = activatedSanitize(ref);
+      var batch = db.batch();
+      batch.set(db.collection('botly_bots').doc(docId), {
+        active: true, activationSource: 'intasend_return', activationRef: ref,
+        activatedAt: ts, ownerUid: user.uid, botId: botId
+      }, { merge: true });
+      batch.set(db.collection('botly_licenses').doc(activatedSanitize(botId)), {
+        active: true, botId: botId, ownerUid: user.uid,
+        domains: domain ? [domain] : [], updatedAt: ts
+      }, { merge: true });
+      batch.set(db.collection('botly_refs').doc(refId), {
+        ownerUid: user.uid, botId: botId, createdAt: ts
+      });
+      batch.commit().then(function() {
+        // Paper trail (best-effort): `paid` claim + admin email.
+        try {
+          db.collection('botly_payments').add({
+            ownerUid: user.uid, ownerEmail: user.email || null, botId: botId,
+            companyName: String(d.companyName || '').slice(0, 120),
+            botName: String(d.botName || '').slice(0, 120),
+            provider: 'intasend_link', status: 'paid', activationRef: ref,
+            amountUSD: ACTIVATED_BILLING.usd, amountKES: ACTIVATED_BILLING.kes,
+            createdAt: ts
+          }).catch(function() {});
+        } catch (e) {}
+        try {
+          var mail = activatedBuildClaimMail({
+            botName: d.botName || '', companyName: d.companyName || '', ownerEmail: user.email || '',
+            botId: botId, amountUSD: ACTIVATED_BILLING.usd, amountKES: ACTIVATED_BILLING.kes,
+            ref: ref, domain: domain, filedAt: new Date().toLocaleString()
+          });
+          mail.ownerUid = user.uid;
+          mail.createdAt = ts;
+          db.collection('mail').add(mail).catch(function() {});
+        } catch (e) {}
+        d.active = true; d.activationRef = ref;
+        activatedShowSuccess(db, user, botId, d, true);
+      }).catch(function(err) {
+        var msg = String((err && err.message) || '');
+        if (msg.indexOf('botly_refs') !== -1 || /already exists|ALREADY_EXISTS/i.test(msg)) {
+          activatedBody('<div class="errbox"><strong>This payment reference was already used</strong> for another bot. Each payment activates exactly one bot — if you paid twice, use the other receipt. Need help? <a href="mailto:david@nextaistudios.com">david@nextaistudios.com</a>.</div>');
+        } else {
+          activatedBody('<div class="errbox"><strong>Activation failed.</strong> ' + activatedEsc(msg || 'Please reload and retry.') + ' If you were charged, your money is safe — send your receipt to <a href="mailto:david@nextaistudios.com">david@nextaistudios.com</a>.</div>');
+        }
+      });
+    }
+
+    function activatedShowSuccess(db, user, botId, d, fresh) {
+      var nm = d.botName || 'Your chatbot';
+      activatedBody(
+        '<div class="okbox">🎉 <strong>Payment received — ' + activatedEsc(nm) + ' is live!</strong>' +
+        (d.deployDomain ? ' Licensed to <strong>' + activatedEsc(d.deployDomain) + '</strong> (+ subdomains).' : '') + '</div>' +
+        '<h2 style="margin:18px 0 6px 0;">Copy Embed Code</h2>' +
+        '<p class="muted" style="margin-top:0;">Paste this right before <code>&lt;/body&gt;</code> on your site. Edits you make in the Studio sync to your live bot automatically — no re-copying.</p>' +
+        '<div id="activated-snippet"><span class="spin"></span> <span class="muted">Loading your snippet…</span></div>'
+      );
+      db.collection('botly_configs').doc(activatedSanitize(botId)).get().then(function(snap) {
+        var box = document.getElementById('activated-snippet');
+        if (!box) return;
+        var cfg = (snap && snap.exists && snap.data() && snap.data().config) || null;
+        if (!cfg) {
+          box.innerHTML = '<div class="warnbox"><strong>Almost there!</strong> Your payment went through, but this bot was never <strong>published</strong> from the Studio — so there\'s no live config to ship yet.<br><br><a class="btn btn-dark" href="/studio">Open Studio → Publish, then come back here</a></div>';
+          return;
+        }
+        var code = '';
+        try { code = activatedBuildSnippet(cfg); } catch (e) { code = ''; }
+        if (!code) {
+          box.innerHTML = '<div class="errbox">Couldn\'t build your snippet. Please re-publish in the <a href="/studio">Studio</a> and reload.</div>';
+          return;
+        }
+        box.innerHTML =
+          '<div class="codebox" id="activated-code"></div>' +
+          '<button class="btn btn-lime btn-block" id="activated-copy">📋 Copy Embed Code</button>' +
+          '<p class="muted" style="text-align:center;">Your Studio paywall unlocks automatically too — both pages stay in sync.</p>';
+        try { document.getElementById('activated-code').textContent = code; } catch (e) {}
+        try {
+          document.getElementById('activated-copy').addEventListener('click', function() {
+            var done = function() {
+              var b = document.getElementById('activated-copy');
+              if (b) { b.textContent = '✅ Copied!'; setTimeout(function() { try { b.textContent = '📋 Copy Embed Code'; } catch (e) {} }, 2500); }
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(code).then(done, function() { activatedFallbackCopy(code); done(); });
+            } else { activatedFallbackCopy(code); done(); }
+          });
+        } catch (e) {}
+      }).catch(function() {
+        var box = document.getElementById('activated-snippet');
+        if (box) box.innerHTML = '<div class="errbox">Connection problem — please reload.</div>';
+      });
+    }
+    function activatedFallbackCopy(text) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        if (window.BotlyAuth && typeof BotlyAuth.onAuthStateChanged === 'function') {
+          var started = false;
+          BotlyAuth.onAuthStateChanged(function() { if (!started) { started = true; activatedBoot(); } });
+          setTimeout(function() { if (!started) { started = true; activatedBoot(); } }, 4000);
+        } else { activatedBoot(); }
+      } catch (e) { activatedBoot(); }
+    });
+  </script>
+</body>
+</html>

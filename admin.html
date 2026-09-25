@@ -446,11 +446,11 @@
       var html = '<table class="grid"><thead><tr><th>Bot / owner</th><th>M-Pesa code</th><th>Amount</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>';
       rows.forEach(function(x) {
         var st = x.status || 'pending';
-        var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'revoked' ? '<span class="pill red">revoked</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>'));
+        var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'paid' ? '<span class="pill blue" title="Auto-activated via IntaSend return — confirm in dashboard">paid</span>' : (st === 'revoked' ? '<span class="pill red">revoked</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>')));
         // Fraud watch (pending rows only): nonstandard amount, repeat claims
         // for the same bot, and claims sitting >48h unreviewed.
         var flags = '';
-        if (st === 'pending') {
+        if (st === 'pending' || st === 'paid') {
           if (x.amountUSD !== 10 || x.amountKES !== 1290) flags += ' <span class="pill amber" title="Expected $10 / KES 1290">amount?</span>';
           var dupes = paymentsCache.filter(function(y) { return (y.status || 'pending') === 'pending' && (y.ownerUid || '') === (x.ownerUid || '') && (y.botId || '') === (x.botId || ''); }).length;
           if (dupes > 1) flags += ' <span class="pill amber" title="' + dupes + ' pending claims for this bot">×' + dupes + ' claims</span>';
@@ -460,7 +460,7 @@
         }
         var idArgs = '(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')';
         var decided = '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
-        var actions = (st === 'pending')
+        var actions = (st === 'pending' || st === 'paid')
           ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment' + idArgs + '">✓ Verify</button> ' +
             '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" title="Reject claim and deactivate the bot" onclick="rejectPayment' + idArgs + '">✕</button>'
           : (st === 'approved'
@@ -469,7 +469,7 @@
             : decided + '<br><button class="btn btn-ghost" style="padding:3px 10px;font-size:11.5px;margin-top:4px;" title="Approve this claim after all" onclick="verifyPayment' + idArgs + '">↻ Re-verify</button>');
         html += '<tr>' +
           '<td><strong>' + escapeHtml(x.botName || '—') + '</strong><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.ownerEmail || '') + ' · ' + escapeHtml(x.companyName || '') + '</span></td>' +
-          '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span><br><span style="color:var(--muted);font-size:11px;">via ' + escapeHtml(x.provider || 'intasend_link') + '</span></td>' +
+          '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span><br><span style="color:var(--muted);font-size:11px;">via ' + escapeHtml(x.provider || 'intasend_link') + '</span>' + (x.activationRef ? '<br><span style="font-size:11px;">ref <code class="inline">' + escapeHtml(x.activationRef) + '</code></span>' : '') + '</td>' +
           '<td style="white-space:nowrap;">$' + escapeHtml(x.amountUSD != null ? x.amountUSD : '?') + '<br><span style="color:var(--muted);font-size:11.5px;">KES ' + escapeHtml(x.amountKES != null ? x.amountKES : '?') + '</span></td>' +
           '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(x.createdAt)) + '</td>' +
           '<td>' + pill + flags + '</td>' +

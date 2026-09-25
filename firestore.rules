@@ -35,10 +35,13 @@ service cloud.firestore {
 
     // Studio bot registry (summaries only, no knowledge content).
     // Signed-in owners write their own rows; admins read everything.
-    // VERIFY-ONLY activation: owners may NOT touch `active` at all —
-    // only the admin Verify/Reject buttons flip it (the old
-    // trust-first auto-claim hole is closed). Owner merge-writes that
-    // don't include `active` (e.g. cloud sync) pass through untouched.
+    // Activation is AUDIT-MODEL: owners may flip their own bot `active`
+    // false->true ONLY from the IntaSend return page (/activated), which
+    // stamps activationSource='intasend_return' plus a FRESH
+    // activationRef (the IntaSend reference when the redirect carries
+    // one). Every activation emails the admin and files a `paid` claim,
+    // and the admin revokes bogus ones in one click — direct console
+    // writes without a fresh ref still fail.
     match /botly_bots/{docId} {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
@@ -47,53 +50,117 @@ service cloud.firestore {
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == request.auth.uid
         && (!request.resource.data.keys().hasAny(['active'])
-          || request.resource.data.get('active', false) == resource.data.get('active', false)));
+          || request.resource.data.get('active', false) == resource.data.get('active', false)
+          || (resource.data.get('active', false) == false
+            && request.resource.data.get('active', false) == true
+            && request.resource.data.get('activationSource', '') == 'intasend_return'
+            && request.resource.data.get('activationRef', '') is string
+            && request.resource.data.get('activationRef', '').size() >= 6
+            && request.resource.data.get('activationRef', '') != resource.data.get('activationRef', ''))));
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow delete: if isAdmin();
     }
 
-    // Activation claims. Owners file + read their own claims (filing
-    // does NOT activate — the bot unlocks only when an admin presses
-    // Verify); only admins triage — Verify activates + writes the
-    // public license, while Reject deactivates + revokes the license.
+    // Activation claims. Owners file + read their own claims. `pending`
+    // rows are legacy/manual; `paid` rows are filed by /activated after
+    // an IntaSend return (always with the activationRef). Admins triage:
+    // Verify confirms, Deactivate/Reject revokes the license.
     match /botly_payments/{claimId} {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.status == 'pending';
+        && (request.resource.data.status == 'pending'
+          || (request.resource.data.status == 'paid'
+            && request.resource.data.activationRef is string
+            && request.resource.data.activationRef.size() >= 6));
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
     // PUBLIC license registry — read by every bot embed at load time
-    // to prove activation (see dist P96). Docs are keyed by plain botId
-    // (e.g. botly_licenses/bot_1727...) and written ONLY by the admin
-    // Verify/Reject buttons (Verify writes domains[], Reject sets
-    // active:false). Public read is safe: a license only unlocks the
-    // domains listed in it, and the check key is the botId.
+    // to prove activation (see dist P96). Docs are keyed by plain botId.
+    // Admins write freely; owners may write ONLY their own bot's license
+    // (ownerUid+botId pinned, domains capped) — the /activated return
+    // page uses this path, and every activation is audit-mailed.
     match /botly_licenses/{botId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin() || (request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.botId == botId
+        && request.resource.data.active is bool
+        && (!request.resource.data.keys().hasAny(['domains'])
+          || (request.resource.data.domains is list && request.resource.data.domains.size() <= 5)));
+      allow update: if isAdmin() || (request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.botId == botId
+        && request.resource.data.active is bool
+        && (!request.resource.data.keys().hasAny(['domains'])
+          || (request.resource.data.domains is list && request.resource.data.domains.size() <= 5)));
+      allow delete: if isAdmin();
+    }
+
+    // PUBLISHED live configs — read by every paid embed at load time
+    // (see dist P99: cloud wins when newer, inline snippet is fallback).
+    // Owners publish/overwrite ONLY their own bot's doc. Public read is
+    // safe: the same content already ships inline in the snippet, and
+    // only LICENSED domains can run it.
+    match /botly_configs/{botId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.botId == botId;
+      allow update, delete: if isAdmin() || (request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid);
+    }
+
+    // First-come payment-reference registry: one IntaSend reference can
+    // activate exactly one bot (create-only for owners; the doc id IS
+    // the sanitized reference, so double-spends fail the batch).
+    match /botly_refs/{ref} {
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.botId is string;
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // Admin notification outbox for the "Trigger Email from Firestore"
     // extension (watches `mail`; sends via the Admin SDK, bypassing
-    // rules). Visitors (unauthenticated) and signed-in owners may CREATE
-    // tightly-shaped mails to the fixed admin address only — no arbitrary
-    // recipients, content sizes capped.
-    function validMail() {
+    // security rules). Fires when a Studio owner presses Pay so the
+    // admin gets an instant email to verify in /admin -> Payments.
+    //
+    // Two valid shapes:
+    //   (a) Signed-in owner (Pay button): { to, message, ownerUid, createdAt }
+    //   (b) Anonymous visitor (lead/contact form): { to, message }
+    // Both locked to muindidiego@gmail.com as the only recipient.
+    // Shape (b) writers: contact.html form + dist lead sync (P100).
+    function validMailBase() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['to', 'message'])
-        && d.to == 'muindidiego@gmail.com'
+      return d.to == 'muindidiego@gmail.com'
+        && d.message is map
         && d.message.keys().hasOnly(['subject', 'html'])
         && d.message.subject is string
-        && d.message.subject.size() <= 160
+        && d.message.subject.size() <= 200
         && d.message.html is string
-        && d.message.html.size() <= 8000;
+        && d.message.html.size() <= 10000;
     }
+
     match /mail/{mailId} {
-      allow create: if validMail();
+      // Signed-in owner pressing Pay: must include ownerUid + createdAt
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['to', 'message', 'ownerUid', 'createdAt'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && validMailBase();
+
+      // Anonymous visitor (contact/chatbot lead): to + message only
+      allow create: if request.resource.data.keys().hasOnly(['to', 'message'])
+        && validMailBase();
+
+
       allow read, update, delete: if isAdmin();
     }
 
@@ -119,8 +186,7 @@ service cloud.firestore {
     }
 
     match /botly_ratings/{ratingId} {
-      allow create: if validRating();
-      allow read: if isAdmin() || resource.data.get('approved', false) == true;
+      allow create: if isAdmin() || resource.data.get('approved', false) == true;
       allow update, delete: if isAdmin();
     }
   }

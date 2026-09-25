@@ -2747,6 +2747,32 @@
     } catch(e) {}
     return botlyMemLeadsGet();
   }
+  // ---- P100: admin lead alert (opt-in via config.leadAlerts) ----
+  // Anonymous mail shape {to,message} per firestore.rules (fixed recipient).
+  // Self-contained (own escaper) so it stays unit-testable by extraction.
+  function botlyLeadMailDoc(lead, botName, company, botId, pageUrl) {
+    var esc = function(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+    var clean = function(v, n) { return String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').slice(0, n); };
+    var nm = clean(lead.name, 60) || 'New lead';
+    var bn = clean(botName, 60) || 'Botly bot';
+    var row = function(k, v) { return '<tr><td style="padding:3px 10px 3px 0;color:#64748b;">' + k + '</td><td><strong>' + esc(v) + '</strong></td></tr>'; };
+    var payRow = lead.paymentMethod
+      ? row('Payment', clean(lead.paymentMethod, 40) + (lead.amount ? ' · ' + clean(lead.amount, 20) : '') + (lead.mpesaCode ? ' · code ' + clean(lead.mpesaCode, 20) : ''))
+      : '';
+    return {
+      to: 'muindidiego@gmail.com',
+      message: {
+        subject: 'New lead: ' + nm + ' via ' + bn,
+        html: '<p>New lead captured:</p><table>' +
+          row('Name', clean(lead.name, 120) || '—') + row('Phone', clean(lead.phone, 40) || '—') +
+          row('Email', clean(lead.email, 120) || '—') + row('Need', clean(lead.need, 500) || '—') +
+          row('Bot', bn) + row('Company', clean(company, 120) || '—') +
+          row('Bot ID', clean(botId, 120) || '—') + row('Page', clean(pageUrl, 300) || '—') + payRow +
+          '</table>'
+      }
+    };
+  }
+
   // BOTLY-CLOUD: fire-and-forget lead sync to the Botly Cloud inbox (Firestore).
   // Only runs when the host page loaded Firebase + Firestore (landing/contact
   // pages). Customer embeds without Firebase silently skip. Studio previews
@@ -2791,27 +2817,14 @@
           code: lead.mpesaCode ? String(lead.mpesaCode).slice(0, 40) : null
         };
       }
-      var db = window.firebase.firestore();
-      db.collection('botly_leads').add(payload).then(function() {
-        // Trigger Email from Firestore extension: write to the 'mail' collection
+      window.firebase.firestore().collection('botly_leads').add(payload).catch(function() {});
+      // P100: admin lead alert (all bots unless leadAlerts:false; anonymous mail shape).
+      if (cfg.leadAlerts !== false) {
         try {
-          var adminEmail = (window.BOTLY_ADMIN_EMAILS && window.BOTLY_ADMIN_EMAILS[0]) || 'muindidiego@gmail.com';
-          db.collection('mail').add({
-            to: adminEmail,
-            message: {
-              subject: '🔔 New Botly Inquiry — ' + (payload.name || 'Visitor') + (payload.botName ? ' via ' + payload.botName : ''),
-              html: '<p><strong>Name:</strong> ' + (payload.name || '—') + '</p>' +
-                    '<p><strong>Phone:</strong> ' + (payload.phone || '—') + '</p>' +
-                    '<p><strong>Email:</strong> ' + (payload.email || '—') + '</p>' +
-                    '<p><strong>Request:</strong> ' + (payload.need || '—') + '</p>' +
-                    '<p><strong>Bot:</strong> ' + (payload.botName || '—') + '</p>' +
-                    '<p><strong>Company:</strong> ' + (payload.company || '—') + '</p>' +
-                    '<p><strong>Page:</strong> ' + (payload.pageUrl || '—') + '</p>' +
-                    '<p style="margin-top:16px;"><a href="https://botlypro.online/admin" style="background:#9be553;color:#18221c;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;">View in Admin →</a></p>'
-            }
-          }).catch(function() {});
-        } catch (mailErr) {}
-      }).catch(function() {});
+          window.firebase.firestore().collection('mail').add(botlyLeadMailDoc(lead, payload.botName, payload.company, payload.botId, payload.pageUrl)).catch(function() {});
+        } catch (e2) {}
+      }
+
     } catch (e) {}
   }
 
@@ -2925,6 +2938,8 @@
     var self = this;
     // P96 anti-theft: paid embeds prove activation before rendering.
     if (!this._licenseDone && this._licenseCheckNeeded()) { this._verifyLicense(selector); return; }
+    // P99 live config: published embeds refresh from the cloud before rendering.
+    if (!this._cloudDone && this._cloudFetchNeeded()) { this._fetchCloudConfig(selector); return; }
     this.applyTheme();
 
     if (selector) {
@@ -2938,6 +2953,89 @@
 
     this.renderFloating();
     this.sendGreeting();
+  };
+
+  // ---- P99: live cloud config (publish model) ----
+  // Published embeds (publishedEmbed:true) fetch botly_configs/{botId} and
+  // let the cloud win when newer-or-tie; the inline snippet is the fallback
+  // (fail-open: a config outage must never brick a paid bot).
+  BotlyChatbotController.prototype._cloudFetchNeeded = function() {
+    if (typeof window === 'undefined') return false;
+    var c = this.config || {};
+    return (c.publishedEmbed === true && !!c.botId);
+  };
+  BotlyChatbotController.prototype._fetchCloudConfig = function(selector) {
+    var self = this;
+    var done = function() {
+      self._cloudDone = true;
+      self.init(selector);
+    };
+    var finish = function(cfg) { self._fetchCloudConfigWith(cfg, done); };
+    try {
+      if (typeof this._ratingFirebaseConfig === 'function') {
+        this._ratingFirebaseConfig(function(cfg) { finish(cfg); });
+      } else { finish(null); }
+    } catch (e) { done(); }
+  };
+  BotlyChatbotController.prototype._fetchCloudConfigWith = function(cfg, done) {
+    var self = this;
+    var botId = (this.config && this.config.botId) || '';
+    if (!cfg || !cfg.projectId || !cfg.apiKey || !botId || typeof fetch !== 'function') { done(); return; }
+    var url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(cfg.projectId) +
+      '/databases/(default)/documents/botly_configs/' + encodeURIComponent(String(botId)) +
+      '?key=' + encodeURIComponent(cfg.apiKey);
+    var settled = false;
+    var settle = function(doc) {
+      if (settled) return;
+      settled = true;
+      try { clearTimeout(timer); } catch (e) {}
+      if (doc) {
+        try { self.config = self._mergeCloudConfig(self.config, doc); } catch (e) {}
+      }
+      done();
+    };
+    var timer = setTimeout(function() { settle(null); }, 12000);
+    fetch(url).then(function(r) {
+      if (!r || !r.ok) { settle(null); return null; }
+      return r.json();
+    }).then(function(doc) { if (doc) settle(doc); }).catch(function() { settle(null); });
+  };
+  BotlyChatbotController.prototype._firestoreUnwrap = function(v) {
+    var self = this;
+    if (v == null || typeof v !== 'object') return v;
+    if ('stringValue' in v) return v.stringValue;
+    if ('booleanValue' in v) return v.booleanValue;
+    if ('integerValue' in v) return Number(v.integerValue);
+    if ('doubleValue' in v) return Number(v.doubleValue);
+    if ('nullValue' in v) return null;
+    if ('timestampValue' in v) return v.timestampValue;
+    if (v.arrayValue && v.arrayValue.values) return v.arrayValue.values.map(function(x) { return self._firestoreUnwrap(x); });
+    if (v.arrayValue) return [];
+    if (v.mapValue && v.mapValue.fields) {
+      var o = {};
+      var f = v.mapValue.fields;
+      for (var k in f) { if (Object.prototype.hasOwnProperty.call(f, k)) o[k] = self._firestoreUnwrap(f[k]); }
+      return o;
+    }
+    if (v.mapValue) return {};
+    return v;
+  };
+  BotlyChatbotController.prototype._mergeCloudConfig = function(inline, doc) {
+    try {
+      var f = (doc && doc.fields) || {};
+      if (!f.config || !f.config.mapValue) return inline;
+      var cloud = this._firestoreUnwrap(f.config);
+      if (!cloud || typeof cloud !== 'object') return inline;
+      if (String(cloud.botId || '') !== String((inline && inline.botId) || '')) return inline;
+      var ct = Number(cloud.configUpdatedAt || 0);
+      var it = Number((inline && inline.configUpdatedAt) || 0);
+      if (!(ct >= it)) return inline; // cloud newer-or-tie wins; NaN-safe
+      var merged = {};
+      var k;
+      for (k in inline) { if (Object.prototype.hasOwnProperty.call(inline, k)) merged[k] = inline[k]; }
+      for (k in cloud) { if (Object.prototype.hasOwnProperty.call(cloud, k)) merged[k] = cloud[k]; }
+      return merged;
+    } catch (e) { return inline; }
   };
 
   // ---- P97: runtime license check (anti-theft) ----
