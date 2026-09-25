@@ -1130,3 +1130,20 @@
   color: #4f46e5;
   border-bottom-color: #4f46e5;
 }
+
+/* P84-P87: post-chat rating card (paid bots) */
+.ins-rating-row .ins-msg-bubble { min-width: 230px; }
+.ins-rating-q { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+.ins-rating-btns { display: flex; gap: 10px; }
+.ins-thumb-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #334155; border-radius: 10px; padding: 9px 4px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ins-thumb-btn:hover { border-color: #16a34a; color: #15803d; background: #f0fdf4; }
+.ins-thumb-btn.down:hover { border-color: #dc2626; color: #b91c1c; background: #fef2f2; }
+.ins-rating-thanks { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.ins-rating-badge { display: inline-flex; width: 44px; height: 44px; border-radius: 50%; background: #2e7d46; color: #fff; align-items: center; justify-content: center; margin: 0 auto 2px; }
+.ins-rating-comment, .ins-rating-name { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 9px 10px; font-size: 13px; font-family: inherit; box-sizing: border-box; }
+.ins-rating-comment { resize: vertical; }
+.ins-rating-comment:focus, .ins-rating-name:focus { outline: none; border-color: #16a34a; }
+.ins-rating-send { background: #16a34a; color: #fff; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+.ins-rating-send:disabled { opacity: .6; cursor: default; }
+.ins-rating-note { font-size: 11px; color: #94a3b8; text-align: center; }
+.ins-rating-done { font-size: 13.5px; font-weight: 600; text-align: center; padding: 6px 0; }

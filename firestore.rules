@@ -65,5 +65,32 @@ service cloud.firestore {
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
+
+    // Post-chat ratings from paid-bot embeds. Visitors are anonymous, so
+    // anyone may CREATE a rating (field-validated, forced unapproved);
+    // only APPROVED ratings are publicly readable (landing-page
+    // testimonials); only admins triage.
+    function validRating() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+        'botId', 'botName', 'company', 'rating', 'comment', 'name',
+        'pageUrl', 'approved', 'createdAt'
+      ])
+        && d.botId is string && d.botId.size() <= 120
+        && d.botName is string && d.botName.size() <= 120
+        && d.company is string && d.company.size() <= 120
+        && d.rating in ['up', 'down']
+        && d.comment is string && d.comment.size() <= 600
+        && d.name is string && d.name.size() <= 80
+        && d.pageUrl is string && d.pageUrl.size() <= 300
+        && d.approved == false
+        && d.createdAt is timestamp;
+    }
+
+    match /botly_ratings/{ratingId} {
+      allow create: if validRating();
+      allow read: if isAdmin() || resource.data.get('approved', false) == true;
+      allow update, delete: if isAdmin();
+    }
   }
 }

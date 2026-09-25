@@ -2355,7 +2355,8 @@
   BotlyChatbot.init({
     company: { name: "Your Company", supportPhone: "+254 700 000 000" },
     bot: { name: "Botly Pro", title: "AI Assistant" },
-    goal: "lead_generation"
+    goal: "lead_generation",
+    ratings: { enabled: true }
   });
 &lt;/script&gt;</pre>
             </div>
@@ -5431,6 +5432,7 @@ window.addEventListener('botly:payment', async (event) => {
 '    mode: "saas",\n' +
 '    botId: ' + JSON.stringify(embedBotId) + ', // keeps this bot\'s leads & contacts separate\n' +
 '    disableQuickReplies: true, // free-text mode: no suggestion chips\n' +
+'    ratings: { enabled: true }, // post-chat rating card (paid bots)\n' +
 '    goals: ' + JSON.stringify(wizardState.purposes) + ',\n' +
 '    company: {\n' +
 companyLines + '\n' +

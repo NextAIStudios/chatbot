@@ -50,6 +50,9 @@ Upgrades:
     P80 Support-acceptance lead-intro likewise drops fallback contacts.
     P81-P83 Widget init defaults + support follow-up carry no fallback contacts.
     (P2i/P9b retargeted onto the P79/P80-era text they were superseded by.)
+    P84-P86 Post-chat rating card: thumbs up/down after the 3rd bot reply,
+    thank-you + optional comment/name, lazy-Firebase submit to botly_ratings.
+    Paid-only via the Studio publish gate; only approved ratings are public.
 
 Usage: python3 tools/upgrade-dist-conversational.py [--check]
   --check: exit 0 if all patches applied, 1 if not (no writes).
@@ -1049,6 +1052,229 @@ PATCHES = [
             text: '💬 Our team is available at **' + emailAddr + '** — want an advisor to reach out to you directly?'
           });
         }""",
+        1,
+    ),
+    (
+        "P84 rating state in constructor",
+        """    this.container = null;
+    this.launcher = null;
+  }""",
+        """    this.container = null;
+    this.launcher = null;
+    this._ratingShown = false;
+    this._botMsgCount = 0;
+  }""",
+        1,
+    ),
+    (
+        "P85 rating hook after bot replies",
+        """      this.messagesList.appendChild(qrBox);
+    }
+
+    this.scrollDown();
+  };
+
+  BotlyChatbotController.prototype.showTyping = function() {""",
+        """      this.messagesList.appendChild(qrBox);
+    }
+
+    this._ratingAfterReply();
+    this.scrollDown();
+  };
+
+  BotlyChatbotController.prototype.showTyping = function() {""",
+        1,
+    ),
+    (
+        "P86 post-chat rating card + Firestore submit",
+        """  // Public Singleton Instance
+  var instance = null;""",
+        """  // ---- P84-P87: post-chat rating card ----
+  // Paid-only by construction: Studio only issues embed snippets to activated
+  // bots (publish gate in customizer.html), and only admin-APPROVED ratings
+  // are publicly readable (see firestore.rules -> botly_ratings).
+  BotlyChatbotController.prototype._ratingsEnabled = function() {
+    var r = this.config && this.config.ratings;
+    if (!r) return true;
+    return r.enabled !== false;
+  };
+
+  BotlyChatbotController.prototype._ratingStoreKey = function() {
+    var id = (this.config && (this.config.botId || (this.config.company && this.config.company.name))) || 'default';
+    return 'botly_rated__' + String(id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  };
+
+  BotlyChatbotController.prototype._ratingAfterReply = function() {
+    if (!this._ratingsEnabled() || this._ratingShown) return;
+    this._botMsgCount = (this._botMsgCount || 0) + 1;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && localStorage.getItem(this._ratingStoreKey())) return;
+    } catch (e) {}
+    if (this._botMsgCount >= 3 && this.messagesList && !this.messagesList.querySelector('.ins-rating-card')) {
+      this._ratingShown = true;
+      try { this.renderRatingCard(); } catch (e) {}
+    }
+  };
+
+  BotlyChatbotController.prototype.renderRatingCard = function() {
+    var self = this;
+    var card = document.createElement('div');
+    card.className = 'ins-msg-row bot ins-rating-row';
+    card.innerHTML = '<div class="ins-msg-bubble ins-rating-card">' +
+      '<div class="ins-rating-q">How was your chat experience?</div>' +
+      '<div class="ins-rating-btns">' +
+      '<button type="button" class="ins-thumb-btn" data-vote="up" aria-label="Good chat">' +
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2 21h4V9H2v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>' +
+      '<span>Good</span></button>' +
+      '<button type="button" class="ins-thumb-btn down" data-vote="down" aria-label="Bad chat">' +
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M22 3h-4v12h4V3zM1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5c0-1.1-.9-2-2-2H6c-.83 0-1.54.5-1.84 1.22L1.14 11.27c-.09.23-.14.47-.14.73v2z"/></svg>' +
+      '<span>Bad</span></button>' +
+      '</div></div>';
+    this.messagesList.appendChild(card);
+    this.scrollDown();
+    var btns = card.querySelectorAll('.ins-thumb-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function() {
+        self._ratingVote(card, this.getAttribute('data-vote'));
+      });
+    }
+  };
+
+  BotlyChatbotController.prototype._ratingVote = function(card, vote) {
+    var self = this;
+    var bubble = card.querySelector('.ins-rating-card');
+    if (!bubble) return;
+    var prompt = (vote === 'down')
+      ? 'Sorry to hear that — what went wrong? (optional)'
+      : 'What went well? (optional)';
+    bubble.innerHTML = '<div class="ins-rating-thanks">' +
+      '<span class="ins-rating-badge"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M2 21h4V9H2v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg></span>' +
+      '<div class="ins-rating-q">Thank you for the rating! You can also leave a comment:</div>' +
+      '<textarea class="ins-rating-comment" rows="2" maxlength="600" placeholder="' + prompt + '"></textarea>' +
+      '<input class="ins-rating-name" type="text" maxlength="80" placeholder="Your name (optional)">' +
+      '<button type="button" class="ins-rating-send">Send feedback</button>' +
+      '<div class="ins-rating-note">The best chats may be featured on our website.</div>' +
+      '</div>';
+    self.scrollDown();
+    var send = bubble.querySelector('.ins-rating-send');
+    send.addEventListener('click', function() {
+      send.disabled = true;
+      send.textContent = 'Sending...';
+      var comment = bubble.querySelector('.ins-rating-comment').value || '';
+      var name = bubble.querySelector('.ins-rating-name').value || '';
+      self._submitRating(vote, comment, name, function(ok) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem(self._ratingStoreKey(), ok ? 'sent' : 'skipped');
+          }
+        } catch (e) {}
+        bubble.innerHTML = '<div class="ins-rating-done">' +
+          (ok ? 'Thanks! Your feedback was sent.' : 'Thanks! (Offline — your rating was noted on this device.)') + '</div>';
+        self.scrollDown();
+        try {
+          if (typeof window !== 'undefined' && window.CustomEvent) {
+            window.dispatchEvent(new CustomEvent('botly:rating', { detail: { vote: vote, sent: !!ok } }));
+          }
+        } catch (e) {}
+      });
+    });
+  };
+
+  BotlyChatbotController.prototype._ratingFirebaseConfig = function(cb) {
+    var self = this;
+    var done = function(cfg) { try { cb(cfg); } catch (e) {} };
+    try {
+      var override = self.config && self.config.ratings && self.config.ratings.firebaseConfig;
+      if (override && override.apiKey && override.projectId) { done(override); return; }
+      var w = (typeof window !== 'undefined') ? window.BOTLY_FIREBASE_CONFIG : null;
+      if (w && w.apiKey && String(w.apiKey).indexOf('YOUR_') === -1 && w.projectId) { done(w); return; }
+    } catch (e) {}
+    // Customer embeds carry no Firebase config: fetch Botly's public web config
+    // (CORS-open *.js on botlypro.online). Security is enforced by Firestore rules.
+    var url = (self.config && self.config.ratings && self.config.ratings.configUrl) ||
+      'https://www.botlypro.online/demo/firebase-config.js';
+    function grab(t, k) {
+      var i = t.indexOf(k);
+      if (i === -1) return '';
+      var q1 = t.indexOf('"', i);
+      if (q1 === -1) return '';
+      var q2 = t.indexOf('"', q1 + 1);
+      return q2 === -1 ? '' : t.slice(q1 + 1, q2);
+    }
+    if (typeof fetch === 'undefined') { done(null); return; }
+    fetch(url, { mode: 'cors' }).then(function(r) { return r.text(); }).then(function(t) {
+      var cfg = {
+        apiKey: grab(t, 'apiKey'),
+        authDomain: grab(t, 'authDomain'),
+        projectId: grab(t, 'projectId'),
+        storageBucket: grab(t, 'storageBucket'),
+        messagingSenderId: grab(t, 'messagingSenderId'),
+        appId: grab(t, 'appId')
+      };
+      done((cfg.apiKey && cfg.apiKey.indexOf('YOUR_') === -1 && cfg.projectId) ? cfg : null);
+    }).catch(function() { done(null); });
+  };
+
+  BotlyChatbotController.prototype._ratingEnsureDb = function(cb) {
+    var self = this;
+    function ready() {
+      try {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+          self._ratingFirebaseConfig(function(cfg) {
+            if (!cfg) { cb(null); return; }
+            try {
+              if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(cfg);
+              cb(firebase.firestore());
+            } catch (e) {
+              try { cb(firebase.firestore()); } catch (e2) { cb(null); }
+            }
+          });
+        } else { cb(null); }
+      } catch (e) { cb(null); }
+    }
+    if (typeof firebase !== 'undefined' && firebase.firestore) { ready(); return; }
+    function load(src, next) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = next;
+      s.onerror = function() { cb(null); };
+      document.head.appendChild(s);
+    }
+    var appSrc = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js';
+    var fsSrc = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js';
+    if (typeof firebase === 'undefined') {
+      load(appSrc, function() { load(fsSrc, ready); });
+    } else {
+      load(fsSrc, ready);
+    }
+  };
+
+  BotlyChatbotController.prototype._submitRating = function(vote, comment, name, done) {
+    var self = this;
+    var bot = (self.config && self.config.bot) || {};
+    var company = (self.config && self.config.company) || {};
+    self._ratingEnsureDb(function(db) {
+      if (!db) { done(false); return; }
+      var payload = {
+        botId: String((self.config && self.config.botId) || 'bot_default').slice(0, 120),
+        botName: String(bot.name || company.name || 'Chatbot').slice(0, 120),
+        company: String(company.name || '').slice(0, 120),
+        rating: vote,
+        comment: String(comment || '').slice(0, 600),
+        name: String(name || '').slice(0, 80),
+        pageUrl: (typeof location !== 'undefined' ? String(location.href).slice(0, 300) : ''),
+        approved: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      try {
+        db.collection('botly_ratings').add(payload).then(function() { done(true); }).catch(function() { done(false); });
+      } catch (e) { done(false); }
+    });
+  };
+
+  // Public Singleton Instance
+  var instance = null;""",
         1,
     ),
 ]

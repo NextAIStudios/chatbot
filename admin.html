@@ -93,6 +93,7 @@
         <button class="tab active" id="tab-btn-leads" onclick="switchAdminTab('leads')">💬 Inquiries <span class="count" id="leads-count">0</span></button>
         <button class="tab" id="tab-btn-payments" onclick="switchAdminTab('payments')">💳 Payments <span class="count" id="payments-count">0</span></button>
         <button class="tab" id="tab-btn-bots" onclick="switchAdminTab('bots')">🤖 Chatbots <span class="count" id="bots-count">0</span></button>
+        <button class="tab" id="tab-btn-ratings" onclick="switchAdminTab('ratings')">⭐ Ratings <span class="count" id="ratings-count">0</span></button>
         <button class="tab" id="tab-btn-setup" onclick="switchAdminTab('setup')">⚙️ Setup</button>
       </div>
 
@@ -123,6 +124,15 @@
         <div class="card" style="padding: 8px 10px;"><div id="bots-list"><div class="empty">Loading…</div></div></div>
       </div>
 
+      <div id="tab-ratings" style="display:none;">
+        <div class="toolbar">
+          <input type="search" id="ratings-search" placeholder="Search comment, name, company…" oninput="renderRatings()">
+          <button class="btn btn-ghost" onclick="loadRatings(true)">↻ Refresh</button>
+          <span class="hint" id="ratings-hint">Approve to feature on the landing page wall of love</span>
+        </div>
+        <div class="card" style="padding: 8px 10px;"><div id="ratings-list"><div class="empty">Loading…</div></div></div>
+      </div>
+
       <div id="tab-setup" style="display:none;">
         <div class="card"><div id="setup-list"></div></div>
       </div>
@@ -138,6 +148,7 @@
     var adminDb = null;
     var adminUser = null;
     var leadsCache = [];
+    var ratingsCache = [];
     var botsCache = [];
     var paymentsCache = [];
     var activeTab = 'leads';
@@ -188,13 +199,14 @@
 
     function switchAdminTab(name) {
       activeTab = name;
-      ['leads', 'payments', 'bots', 'setup'].forEach(function(t) {
+      ['leads', 'payments', 'bots', 'ratings', 'setup'].forEach(function(t) {
         document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
         document.getElementById('tab-btn-' + t).classList.toggle('active', t === name);
       });
       if (name === 'leads') loadLeads(false);
       if (name === 'payments') loadPayments(false);
       if (name === 'bots') loadBots(false);
+      if (name === 'ratings') loadRatings(false);
       if (name === 'setup') renderSetup(null);
     }
 
@@ -276,6 +288,80 @@
         leadsCache = leadsCache.filter(function(l) { return l._id !== id; });
         document.getElementById('leads-count').textContent = leadsCache.length;
         renderLeads();
+      }).catch(function(err) { alert('Delete failed: ' + (err && err.message ? err.message : err)); });
+    }
+
+    function loadRatings(manual) {
+      if (!adminDb) return;
+      if (manual) document.getElementById('ratings-list').innerHTML = '<div class="empty">Loading…</div>';
+      adminDb.collection('botly_ratings').orderBy('createdAt', 'desc').limit(150).get()
+        .then(function(snap) {
+          ratingsCache = [];
+          snap.forEach(function(doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            ratingsCache.push(d);
+          });
+          var pending = ratingsCache.filter(function(r) { return !r.approved; }).length;
+          document.getElementById('ratings-count').textContent = ratingsCache.length + (pending ? ' (' + pending + ' new)' : '');
+          document.getElementById('ratings-hint').textContent = 'Updated ' + new Date().toLocaleTimeString() + ' · auto-refresh 30s';
+          renderRatings();
+        })
+        .catch(function(err) {
+          var msg = (err && err.code === 'permission-denied')
+            ? 'Permission denied — deploy firestore.rules with your admin email (see Setup tab).'
+            : 'Could not load ratings: ' + (err && err.message ? err.message : err);
+          document.getElementById('ratings-list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>';
+        });
+    }
+
+    function renderRatings() {
+      var q = (document.getElementById('ratings-search').value || '').toLowerCase();
+      var rows = ratingsCache.filter(function(r) {
+        if (!q) return true;
+        return ((r.comment || '') + ' ' + (r.name || '') + ' ' + (r.company || '') + ' ' + (r.botName || '')).toLowerCase().indexOf(q) !== -1;
+      });
+      if (!rows.length) {
+        document.getElementById('ratings-list').innerHTML = '<div class="empty">' + (ratingsCache.length ? 'No ratings match your search.' : 'No ratings yet. They appear here after visitors rate a chat on a paid bot.') + '</div>';
+        return;
+      }
+      var html = '<table class="grid"><thead><tr><th>Vote</th><th>Feedback</th><th>From</th><th>Bot</th><th>When</th><th>Showcase</th><th></th></tr></thead><tbody>';
+      rows.forEach(function(r) {
+        var vote = r.rating === 'up'
+          ? '<span class="pill green">Good</span>'
+          : '<span class="pill grey">Bad</span>';
+        var toggle = r.approved
+          ? '<span class="pill green">Live</span><br><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;margin-top:6px;" onclick="setRatingApproved(\'' + r._id + '\', false)">Unfeature</button>'
+          : '<button class="btn" style="padding:5px 12px;font-size:12px;" onclick="setRatingApproved(\'' + r._id + '\', true)">Approve</button>';
+        html += '<tr>' +
+          '<td>' + vote + '</td>' +
+          '<td>' + escapeHtml(r.comment || '—') + '</td>' +
+          '<td><strong>' + escapeHtml(r.name || '—') + '</strong></td>' +
+          '<td>' + escapeHtml(r.botName || r.company || '—') + '</td>' +
+          '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(r.createdAt)) + '</td>' +
+          '<td>' + toggle + '</td>' +
+          '<td><button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="deleteRating(\'' + r._id + '\')">✕</button></td>' +
+        '</tr>';
+      });
+      document.getElementById('ratings-list').innerHTML = html + '</tbody></table>';
+    }
+
+    function setRatingApproved(id, val) {
+      if (!adminDb) return;
+      adminDb.collection('botly_ratings').doc(id).update({ approved: val }).then(function() {
+        ratingsCache.forEach(function(r) { if (r._id === id) r.approved = val; });
+        var pending = ratingsCache.filter(function(r) { return !r.approved; }).length;
+        document.getElementById('ratings-count').textContent = ratingsCache.length + (pending ? ' (' + pending + ' new)' : '');
+        renderRatings();
+      }).catch(function(err) { alert('Update failed: ' + (err && err.message ? err.message : err)); });
+    }
+    function deleteRating(id) {
+      if (!adminDb || !confirm('Delete this rating permanently?')) return;
+      adminDb.collection('botly_ratings').doc(id).delete().then(function() {
+        ratingsCache = ratingsCache.filter(function(r) { return r._id !== id; });
+        var pending = ratingsCache.filter(function(r) { return !r.approved; }).length;
+        document.getElementById('ratings-count').textContent = ratingsCache.length + (pending ? ' (' + pending + ' new)' : '');
+        renderRatings();
       }).catch(function(err) { alert('Delete failed: ' + (err && err.message ? err.message : err)); });
     }
 
@@ -493,12 +579,14 @@
         loadLeads(false);
         loadPayments(false);
         loadBots(false);
+        loadRatings(false);
       });
       setInterval(function() {
         if (!adminUser || !adminDb) return;
         if (activeTab === 'leads') loadLeads(false);
         if (activeTab === 'payments') loadPayments(false);
         if (activeTab === 'bots') loadBots(false);
+        if (activeTab === 'ratings') loadRatings(false);
       }, 30000);
     })();
   </script>
