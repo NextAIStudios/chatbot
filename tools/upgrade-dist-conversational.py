@@ -903,6 +903,7 @@ PATCHES = [
     // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
     var allFaqsRaw = isSaasMode""",
         1,
+        ["// V3: short follow-ups"],
     ),
     (
         "P72 catalog fallback keeps conversation going",
@@ -1065,6 +1066,7 @@ PATCHES = [
     this._botMsgCount = 0;
   }""",
         1,
+        ["    this._ratingShown = false;\n    this._botMsgCount = 0;"],
     ),
     (
         "P85 rating hook after bot replies",
@@ -1276,6 +1278,7 @@ PATCHES = [
   // Public Singleton Instance
   var instance = null;""",
         1,
+        ["// ---- P84-P87: post-chat rating card ----"],
     ),
     (
         "P87 honor followUpDynamics.enabled=false",
@@ -1383,6 +1386,7 @@ PATCHES = [
 
     // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)""",
         1,
+        ["// P90: buy/order intent for a specific item"],
     ),
     (
         "P91 orderState in constructor",
@@ -1545,6 +1549,7 @@ PATCHES = [
   // Public Singleton Instance
   var instance = null;""",
         1,
+        ["// ---- P90-P95: guided item-order flow"],
     ),
     (
         "P95 cache resolved Firebase config for cloud sync",
@@ -1557,6 +1562,181 @@ PATCHES = [
             } catch (_e) {}""",
         1,
     ),
+    (
+        "P96 gate widget init on runtime license check",
+        """  BotlyChatbotController.prototype.init = function(selector) {
+    var self = this;
+    this.applyTheme();""",
+        """  BotlyChatbotController.prototype.init = function(selector) {
+    var self = this;
+    // P96 anti-theft: paid embeds prove activation before rendering.
+    if (!this._licenseDone && this._licenseCheckNeeded()) { this._verifyLicense(selector); return; }
+    this.applyTheme();""",
+        1,
+        ["// P96 anti-theft: paid embeds prove activation before rendering."],
+    ),
+    (
+        "P97 license verify + locked shell methods",
+        """  BotlyChatbotController.prototype.applyTheme = function() {""",
+        """  // ---- P97: runtime license check (anti-theft) ----
+  // First-party hosts never need a license: Studio previews, botlypro.online
+  // demos, and local dev servers. Everywhere else the embed must prove
+  // activation (botly_licenses/{botId}) before it renders anything.
+  BotlyChatbotController.prototype._botlyFirstPartyHost = function() {
+    var h = '';
+    try { h = String(window.location.hostname || '').toLowerCase(); } catch (e) { return true; }
+    if (!h) return true; // file:// / sandboxed frames: local testing only
+    if (h === 'localhost' || h === '127.0.0.1') return true;
+    return (h === 'botlypro.online' || h.slice(-16) === '.botlypro.online');
+  };
+
+  BotlyChatbotController.prototype._licenseCheckNeeded = function() {
+    if (typeof window === 'undefined') return false;
+    return !this._botlyFirstPartyHost();
+  };
+
+  BotlyChatbotController.prototype._licenseCacheKey = function() {
+    var id = (this.config && this.config.botId) || 'bot_default';
+    return 'botly_license__' + String(id).replace(/[^a-zA-Z0-9_-]/g, '_');
+  };
+
+  BotlyChatbotController.prototype._licenseCacheRead = function() {
+    try {
+      var raw = localStorage.getItem(this._licenseCacheKey());
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      if (!o || o.ok !== 1 || !o.ts) return false;
+      if ((Date.now() - Number(o.ts)) > 7 * 24 * 3600 * 1000) return false;
+      return true;
+    } catch (e) { return false; }
+  };
+
+  BotlyChatbotController.prototype._licenseCacheWrite = function() {
+    try {
+      localStorage.setItem(this._licenseCacheKey(), JSON.stringify({ ok: 1, ts: Date.now() }));
+    } catch (e) {}
+  };
+
+  BotlyChatbotController.prototype._verifyLicense = function(selector) {
+    var self = this;
+    this._licenseSelector = selector;
+    var done = function(ok, reason) {
+      if (ok) {
+        self._licenseDone = true;
+        try { self._licenseCacheWrite(); } catch (e) {}
+        self.init(selector);
+      } else {
+        self._renderLocked(reason);
+      }
+    };
+    try {
+      if (this._licenseCacheRead()) { done(true, 'cache'); return; }
+    } catch (e) {}
+    if (typeof this._ratingFirebaseConfig === 'function') {
+      this._ratingFirebaseConfig(function(cfg) { self._verifyLicenseFetch(cfg, done); });
+    } else {
+      this._verifyLicenseFetch(null, done);
+    }
+  };
+
+  BotlyChatbotController.prototype._verifyLicenseFetch = function(cfg, done) {
+    var self = this;
+    var botId = (this.config && this.config.botId) || 'bot_default';
+    var settled = false;
+    var settle = function(ok, reason) {
+      if (settled) return;
+      settled = true;
+      try { clearTimeout(timer); } catch (e) {}
+      done(ok, reason);
+    };
+    if (!cfg || !cfg.projectId || !cfg.apiKey || typeof fetch !== 'function') {
+      done(false, 'offline');
+      return;
+    }
+    var url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(cfg.projectId) +
+      '/databases/(default)/documents/botly_licenses/' + encodeURIComponent(String(botId)) +
+      '?key=' + encodeURIComponent(cfg.apiKey);
+    var timer = setTimeout(function() { settle(false, 'offline'); }, 12000);
+    fetch(url).then(function(r) {
+      if (!r || r.status === 404) { settle(false, 'inactive'); return null; }
+      if (!r.ok) { settle(false, 'offline'); return null; }
+      return r.json();
+    }).then(function(doc) {
+      if (!doc) return;
+      var ok = self._licenseDocAllows(doc);
+      settle(ok, ok ? 'cloud' : 'inactive');
+    }).catch(function() { settle(false, 'offline'); });
+  };
+
+  BotlyChatbotController.prototype._licenseDocAllows = function(doc) {
+    try {
+      var f = (doc && doc.fields) || {};
+      if (!f.active || f.active.booleanValue !== true) return false;
+      var vals = (f.domains && f.domains.arrayValue && f.domains.arrayValue.values) || [];
+      if (!vals.length) return true; // legacy license without domain binding
+      var host = '';
+      try { host = String(window.location.hostname || '').toLowerCase(); } catch (e) { host = ''; }
+      for (var i = 0; i < vals.length; i++) {
+        var d = String((vals[i] && vals[i].stringValue) || '').toLowerCase();
+        if (d && (host === d || host.slice(-d.length - 1) === '.' + d)) return true;
+      }
+      return false;
+    } catch (e) { return false; }
+  };
+
+  // Locked shell: launcher + "not activated" panel. Reuses the widget's own
+  // classes so it looks native; panel copy uses inline styles (no CSS edit).
+  BotlyChatbotController.prototype._renderLocked = function(reason) {
+    var self = this;
+    this.applyTheme();
+    var bot = (this.config && this.config.bot) || {};
+    var company = (this.config && this.config.company) || {};
+    var title = bot.name || company.name || 'Botly Pro';
+    var launcher = document.createElement('button');
+    launcher.className = 'ins-chatbot-launcher';
+    launcher.id = 'ins-widget-launcher';
+    launcher.setAttribute('aria-label', 'Open chat');
+    launcher.innerHTML = '<div class="ins-launcher-icon" style="font-size:30px;line-height:1;">&#128274;</div>';
+    var container = document.createElement('div');
+    container.className = 'ins-chatbot-container';
+    container.id = 'ins-widget-window';
+    container.style.display = 'none';
+    var retry = (reason === 'offline')
+      ? '<div><button id="ins-locked-retry" style="margin-top:12px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:800;color:#334155;cursor:pointer;">&#8635; Retry</button></div>'
+      : '';
+    container.innerHTML =
+      '<div class="ins-header"><div class="ins-header-profile">' +
+      '<div class="ins-profile-info"><span class="ins-bot-name">' + this.escape(title) + '</span>' +
+      '<span class="ins-bot-role">Activation required</span></div></div></div>' +
+      '<div style="padding:28px 22px;text-align:center;">' +
+      '<div style="font-size:40px;line-height:1;">&#128274;</div>' +
+      '<div style="font-weight:800;font-size:15px;margin:10px 0 6px;color:#0f172a;">Chatbot not activated</div>' +
+      '<div style="font-size:13px;color:#64748b;line-height:1.6;">The owner of this site needs to activate Botly&nbsp;Pro ($10 one-time) to enable chat.</div>' +
+      '<div><a href="https://botlypro.online/studio" target="_blank" rel="noopener" style="display:inline-block;margin-top:14px;background:#16a34a;color:#fff;font-weight:800;font-size:13.5px;padding:10px 18px;border-radius:10px;text-decoration:none;">Activate at botlypro.online</a></div>' +
+      retry + '</div>';
+    document.body.appendChild(launcher);
+    document.body.appendChild(container);
+    launcher.addEventListener('click', function() {
+      container.style.display = (container.style.display === 'none') ? 'block' : 'none';
+    });
+    if (reason === 'offline') {
+      var rb = document.getElementById('ins-locked-retry');
+      if (rb) rb.addEventListener('click', function() {
+        try {
+          launcher.parentNode.removeChild(launcher);
+          container.parentNode.removeChild(container);
+        } catch (e) {}
+        self._licenseDone = false;
+        self._verifyLicense(self._licenseSelector);
+      });
+    }
+  };
+
+  BotlyChatbotController.prototype.applyTheme = function() {""",
+        1,
+        ["// ---- P97: runtime license check (anti-theft) ----"],
+    ),
+
 ]
 
 
@@ -1570,8 +1750,14 @@ def main() -> int:
         return 0
 
     applied, skipped, failures = [], [], []
-    for name, old, new, expected in PATCHES:
-        if new in src:
+    for patch in PATCHES:
+        name, old, new, expected = patch[:4]
+        # Optional 5th element: extra "already applied" markers. Needed when
+        # a LATER patch absorbed an earlier patch's context lines, so neither
+        # `old` nor `new` matches verbatim on re-runs (e.g. P91's ctor line
+        # landed inside P84's block). From-scratch builds still apply `old`.
+        skip_markers = patch[4] if len(patch) > 4 else []
+        if new in src or any(m in src for m in skip_markers):
             skipped.append(name)
             continue
         found = src.count(old)

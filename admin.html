@@ -110,7 +110,7 @@
         <div class="toolbar">
           <input type="search" id="payments-search" placeholder="Search owner, bot, M-Pesa code…" oninput="renderPayments()">
           <button class="btn btn-ghost" onclick="loadPayments(true)">↻ Refresh</button>
-          <span class="hint" id="payments-hint">Bots auto-activate on payment — Verify to approve, ✕ to reject &amp; deactivate</span>
+          <span class="hint" id="payments-hint">Verify-only: claims NEVER auto-activate — ✓ Verify activates + writes the license, ✕ rejects + revokes it</span>
         </div>
         <div class="card" style="padding: 8px 10px;"><div id="payments-list"><div class="empty">Loading…</div></div></div>
       </div>
@@ -380,7 +380,7 @@
           });
           var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
           document.getElementById('payments-count').textContent = pending;
-          document.getElementById('payments-hint').textContent = 'Updated ' + new Date().toLocaleTimeString() + ' · auto-refresh 30s';
+          document.getElementById('payments-hint').textContent = 'Verify-only · Updated ' + new Date().toLocaleTimeString() + ' · auto-refresh 30s';
           renderPayments();
         })
         .catch(function(err) {
@@ -402,23 +402,34 @@
         return ap - bp;
       });
       if (!rows.length) {
-        document.getElementById('payments-list').innerHTML = '<div class="empty">' + (paymentsCache.length ? 'No payments match your search.' : 'No payment claims yet. They appear here when Studio users submit M-Pesa codes.') + '</div>';
+        document.getElementById('payments-list').innerHTML = '<div class="empty">' + (paymentsCache.length ? 'No payments match your search.' : 'No payment claims yet. They appear here when a Studio user opens the IntaSend pay link.') + '</div>';
         return;
       }
       var html = '<table class="grid"><thead><tr><th>Bot / owner</th><th>M-Pesa code</th><th>Amount</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>';
       rows.forEach(function(x) {
         var st = x.status || 'pending';
         var pill = st === 'approved' ? '<span class="pill green">approved</span>' : (st === 'rejected' ? '<span class="pill red">rejected</span>' : '<span class="pill amber">pending</span>');
+        // Fraud watch (pending rows only): nonstandard amount, repeat claims
+        // for the same bot, and claims sitting >48h unreviewed.
+        var flags = '';
+        if (st === 'pending') {
+          if (x.amountUSD !== 10 || x.amountKES !== 1290) flags += ' <span class="pill amber" title="Expected $10 / KES 1290">amount?</span>';
+          var dupes = paymentsCache.filter(function(y) { return (y.status || 'pending') === 'pending' && (y.ownerUid || '') === (x.ownerUid || '') && (y.botId || '') === (x.botId || ''); }).length;
+          if (dupes > 1) flags += ' <span class="pill amber" title="' + dupes + ' pending claims for this bot">×' + dupes + ' claims</span>';
+          var created = 0;
+          try { created = (x.createdAt && x.createdAt.toDate) ? x.createdAt.toDate().getTime() : new Date(x.createdAt).getTime(); } catch (e) {}
+          if (created && (Date.now() - created) > 48 * 3600 * 1000) flags += ' <span class="pill red" title="Unreviewed for over 48h">stale</span>';
+        }
         var actions = (st === 'pending')
           ? '<button class="btn btn-lime" style="padding:5px 12px;font-size:12px;" onclick="verifyPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✓ Verify</button> ' +
             '<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" title="Reject claim and deactivate the bot" onclick="rejectPayment(\'' + x._id + '\',\'' + escapeHtml(x.ownerUid || '') + '\',\'' + escapeHtml(x.botId || '') + '\')">✕</button>'
           : '<span style="color:var(--muted);font-size:12px;">' + escapeHtml(fmtTs(x.decidedAt)) + '</span>';
         html += '<tr>' +
           '<td><strong>' + escapeHtml(x.botName || '—') + '</strong><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.ownerEmail || '') + ' · ' + escapeHtml(x.companyName || '') + '</span></td>' +
-          '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span></td>' +
+          '<td><code class="inline">' + escapeHtml(x.mpesaCode || '—') + '</code><br><span style="color:var(--muted);font-size:11.5px;">' + escapeHtml(x.phone || '') + '</span><br><span style="color:var(--muted);font-size:11px;">via ' + escapeHtml(x.provider || 'intasend_link') + '</span></td>' +
           '<td style="white-space:nowrap;">$' + escapeHtml(x.amountUSD != null ? x.amountUSD : '?') + '<br><span style="color:var(--muted);font-size:11.5px;">KES ' + escapeHtml(x.amountKES != null ? x.amountKES : '?') + '</span></td>' +
           '<td style="white-space:nowrap;">' + escapeHtml(fmtTs(x.createdAt)) + '</td>' +
-          '<td>' + pill + '</td>' +
+          '<td>' + pill + flags + '</td>' +
           '<td style="white-space:nowrap;">' + actions + '</td>' +
         '</tr>';
       });
@@ -426,12 +437,29 @@
     }
 
     function verifyPayment(id, ownerUid, botId) {
-      if (!adminDb || !confirm('Approve this payment? (The bot usually auto-activated already.)')) return;
+      if (!adminDb || !confirm('Approve this payment? This ACTIVATES the bot and writes its public license.')) return;
       var ts = firebase.firestore.FieldValue.serverTimestamp();
+      var botDocId = botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId);
+      // Read the bot row first so the license carries its deploy domain.
+      adminDb.collection('botly_bots').doc(botDocId).get().then(function(snap) {
+        var domains = [];
+        try {
+          var dd = (snap && snap.exists && snap.data()) ? String(snap.data().deployDomain || '').trim().toLowerCase() : '';
+          if (dd) domains = [dd];
+        } catch (e) {}
+        doVerifyCommit(id, ownerUid, botId, botDocId, domains, ts);
+      }).catch(function() { doVerifyCommit(id, ownerUid, botId, botDocId, [], ts); });
+    }
+    function doVerifyCommit(id, ownerUid, botId, botDocId, domains, ts) {
       var batch = adminDb.batch();
       batch.update(adminDb.collection('botly_payments').doc(id), { status: 'approved', decidedAt: ts });
-      batch.set(adminDb.collection('botly_bots').doc(botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId)),
-        { active: true, activatedAt: ts, ownerUid: ownerUid, botId: botId }, { merge: true });
+      batch.set(adminDb.collection('botly_bots').doc(botDocId),
+        { active: true, activatedAt: ts, activationSource: 'admin_verify', ownerUid: ownerUid, botId: botId }, { merge: true });
+      // Public license: the ONLY thing that unlocks the paid embed (P96).
+      if (botId) {
+        batch.set(adminDb.collection('botly_licenses').doc(botlySanitizeId(botId)),
+          { active: true, botId: botId, ownerUid: ownerUid || null, domains: domains, updatedAt: ts }, { merge: true });
+      }
       batch.commit().then(function() {
         paymentsCache.forEach(function(x) { if (x._id === id) { x.status = 'approved'; x.decidedAt = new Date(); } });
         var pending = paymentsCache.filter(function(x) { return (x.status || 'pending') === 'pending'; }).length;
@@ -445,10 +473,12 @@
       var ts = firebase.firestore.FieldValue.serverTimestamp();
       var batch = adminDb.batch();
       batch.update(adminDb.collection('botly_payments').doc(id), { status: 'rejected', decidedAt: ts });
-      // Bots auto-activate on payment: a rejection must also pull the plug.
+      // Verify-only: a rejection must also revoke the public license (if any).
       if (ownerUid && botId) {
         batch.set(adminDb.collection('botly_bots').doc(botlySanitizeId(ownerUid) + '__' + botlySanitizeId(botId)),
           { active: false, deactivatedAt: ts, deactivationReason: 'payment_rejected', ownerUid: ownerUid, botId: botId }, { merge: true });
+        batch.set(adminDb.collection('botly_licenses').doc(botlySanitizeId(botId)),
+          { active: false, botId: botId, revokedAt: ts }, { merge: true });
       }
       batch.commit()
         .then(function() {

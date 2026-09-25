@@ -2112,6 +2112,15 @@
             Checking activation…
           </div>
 
+          <!-- License domain lock: the paid embed only runs on this domain -->
+          <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
+            <label for="wiz-deploy-domain" style="font-size: 12.5px; font-weight: 800; color: #92400e;">🔒 License domain <span style="font-weight: 400; color: #b45309;">(where will you paste the snippet?)</span></label>
+            <input type="text" id="wiz-deploy-domain" placeholder="example.com" autocomplete="off" spellcheck="false"
+              onchange="botlyDeployDomainChanged(this)"
+              style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13.5px; font-family: inherit;">
+            <div style="font-size: 11.5px; color: #b45309; line-height: 1.5;">Your paid embed only loads on this domain <em>(+ subdomains)</em> — copied snippets die anywhere else. Studio previews always work.</div>
+          </div>
+
           <!-- Big Prominent Copy Button -->
           <button type="button" id="btn-main-copy-embed" onclick="copyFinalEmbed()" style="width: 100%; padding: 14px; background: #16a34a; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.28); transition: all 0.18s;">
             <span>Copy Embed Code</span>
@@ -3042,6 +3051,7 @@ window.addEventListener('botly:payment', async (event) => {
       documentChunks: [], // Chunks from company data / documents
       websiteChunks: [],  // Chunks from website link sync
       websiteUrl: 'https://kenyanextgen.co.ke',
+      deployDomain: '',
       indexedWebsitePages: [], // All discovered & indexed website pages
       activeWebCategoryFilter: 'all',
       apiConfig: {
@@ -3161,7 +3171,7 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (n === 5) { buildDeployCode(); renderActivationBanner(null); }
+      if (n === 5) { renderDeployPreview(); renderActivationBanner(null); }
 
       var activePill = document.getElementById('wstep-' + n);
       if (activePill && activePill.scrollIntoView) {
@@ -5353,6 +5363,65 @@ window.addEventListener('botly:payment', async (event) => {
     // ==================================================
     // STEP 5: DEPLOY CODE BUILDER
     // ==================================================
+    // Ship-step preview gate: the <pre> only ever holds the real snippet
+    // for activated bots — everyone else sees the locked placeholder, so
+    // there is nothing to select+copy before payment.
+    function renderDeployPreview() {
+      botlyPrefillDeployDomain();
+      var el = document.getElementById('deploy-code-preview');
+      if (!el) return;
+      var botId = null;
+      try { botId = botlyActiveBotId(); } catch (e) {}
+      el.textContent = '<!-- Checking activation... -->';
+      botlyCheckActivation(botId, function(res) {
+        var box = document.getElementById('deploy-code-preview');
+        if (!box) return;
+        if (res && res.active) { buildDeployCode(); }
+        else {
+          box.textContent = '🔒 Your embed code is locked.\n\nActivate this bot ($10 one-time) to reveal the snippet.\nPress "Copy Embed Code" above to pay & unlock.';
+        }
+      });
+    }
+
+    // License domain: hostname-only, lowercased, no protocol/path/port/www.
+    function botlyNormalizeDomain(v) {
+      var s = String(v || '').trim().toLowerCase();
+      s = s.replace(/^[a-z]+:\/\//, '').replace(/^\/\//, '');
+      s = s.split('/')[0].split('?')[0].split('#')[0];
+      s = s.split(':')[0];
+      if (s.slice(0, 4) === 'www.') s = s.slice(4);
+      s = s.replace(/\.$/, '');
+      return (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(s)) ? s : '';
+    }
+
+    // Prefill the Ship-step domain input from the saved value, else from
+    // the knowledge-source website URL (usually the same site).
+    function botlyPrefillDeployDomain() {
+      try {
+        var input = document.getElementById('wiz-deploy-domain');
+        if (!input) return;
+        var bid = '';
+        try { bid = botlyActiveBotId(); } catch (e) {}
+        if (input.dataset.botlyBot !== bid) { input.value = ''; input.dataset.botlyBot = bid; }
+        if (input.value.trim()) return;
+        var d = wizardState.deployDomain || '';
+        if (!d) {
+          var w = wizardState.websiteUrl || '';
+          if (w.indexOf('mycompany.com') === -1 && w.indexOf('acme.com') === -1) d = botlyNormalizeDomain(w);
+        }
+        if (d) { input.value = d; wizardState.deployDomain = d; }
+      } catch (e) {}
+    }
+
+    function botlyDeployDomainChanged(input) {
+      try {
+        var d = botlyNormalizeDomain(input.value);
+        wizardState.deployDomain = d;
+        input.value = d || input.value.trim();
+        syncActiveBotFromUI();
+      } catch (e) {}
+    }
+
     function buildDeployCode() {
       // NOTE: retired sample placeholders are excluded so shipped bots never answer from sample text.
       var faqsForBot = getEffectiveFaqs();
@@ -5581,6 +5650,7 @@ companyLines + '\n' +
         '</div>' +
         '<button type="button" onclick="closePaywallModal(); doCopyEmbed();" style="width:100%;margin-top:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;">Copy Embed Code</button>';
       renderActivationBanner({ active: true, source: 'cloud' });
+      try { renderDeployPreview(); } catch (e) {}
       if (botlyPendingCopyAfterActivation) {
         botlyPendingCopyAfterActivation = false;
         closePaywallModal();
@@ -5666,21 +5736,10 @@ companyLines + '\n' +
         }).then(function() {
           try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
           paywallNoteClaim();
-          // Trust-first auto-activation: unlock the bot the moment the payer
-          // opens the payment link. The claim stays `pending` for admin review —
-          // rejecting it in Admin also deactivates the bot.
-          try {
-            var docId = botlyBillingDocId(botId);
-            if (docId) {
-              db.collection('botly_bots').doc(docId).set({
-                active: true,
-                activatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-                activationSource: 'auto_link_claim',
-                ownerUid: user.uid,
-                botId: botId
-              }, { merge: true }).catch(function() {});
-            }
-          } catch (e) {}
+          // VERIFY-ONLY: opening the pay link only FILES the claim above —
+          // nothing here may activate the bot. It unlocks solely when an
+          // admin presses Verify in admin.html (the paywall polls
+          // botlyCheckActivation and this window unlocks automatically).
         }).catch(function() {});
       } catch (e) {}
     }
@@ -5696,6 +5755,7 @@ companyLines + '\n' +
 
     // Publish gate: copying requires an activated (paid) bot.
     function executeCopyFinalEmbed() {
+      try { syncActiveBotFromUI(); } catch (e) {}
       botlyCheckActivation(botlyActiveBotId(), function(res) {
         if (res.active) { doCopyEmbed(); }
         else { openPaywallModal({ pendingCopy: true }); }
@@ -5745,6 +5805,16 @@ companyLines + '\n' +
     }
 
     function executeDownloadConfigJson() {
+      try { syncActiveBotFromUI(); } catch (e) {}
+      // Export gate: the config JSON holds the full knowledge base, so it
+      // unlocks only for activated (paid) bots — same as the embed copy.
+      botlyCheckActivation(botlyActiveBotId(), function(res) {
+        if (res.active) { executeDownloadConfigJsonGated(); }
+        else { openPaywallModal({ pendingCopy: false }); }
+      });
+    }
+
+    function executeDownloadConfigJsonGated() {
       var data = {
         name: wizardState.companyName,
         bot: {
@@ -6034,6 +6104,7 @@ companyLines + '\n' +
           documentChunks: [],
           websiteChunks: [],
           websiteUrl: 'https://mycompany.com',
+          deployDomain: '',
           indexedWebsitePages: [],
           activeWebProfile: null,
           sourceToggles: { faq: true, docs: true, web: true },
@@ -6159,6 +6230,7 @@ companyLines + '\n' +
               webCount: (b.websiteChunks || []).length,
               apiEnabled: !!(b.apiConfig && b.apiConfig.enabled),
               websiteUrl: b.websiteUrl || null,
+              deployDomain: b.deployDomain || null,
               clientUpdatedAt: b.updatedAt || null,
               updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -6171,6 +6243,7 @@ companyLines + '\n' +
                 supportEmail: b.supportEmail || '', supportPhone: b.supportPhone || '',
                 logoUrl: b.logoUrl || '', primaryColor: b.primaryColor || '', accentColor: b.accentColor || '',
                 backgroundColor: b.backgroundColor || '', websiteUrl: b.websiteUrl || '',
+                deployDomain: b.deployDomain || '',
                 catalogStoreUrl: b.catalogStoreUrl || '', faqs: b.faqs || [],
                 checkoutConfig: b.checkoutConfig || {}, apiConfig: b.apiConfig || {},
                 sourceToggles: b.sourceToggles || {}
@@ -6231,6 +6304,8 @@ companyLines + '\n' +
         if (phoneEl && phoneEl.value.trim()) wizardState.supportPhone = phoneEl.value.trim();
         var wUrlEl = document.getElementById('wiz-website-url');
         if (wUrlEl && wUrlEl.value.trim()) wizardState.websiteUrl = wUrlEl.value.trim();
+        var depDomEl = document.getElementById('wiz-deploy-domain');
+        if (depDomEl) wizardState.deployDomain = botlyNormalizeDomain(depDomEl.value);
 
         var chkItemEl = document.getElementById('wiz-checkout-item');
         var chkAmtEl = document.getElementById('wiz-checkout-amount');
@@ -6264,6 +6339,7 @@ companyLines + '\n' +
         bot.indexedWebsitePages = wizardState.indexedWebsitePages ? JSON.parse(JSON.stringify(wizardState.indexedWebsitePages)) : [];
         bot.kbVersion = KB_SCHEMA_VERSION;
         bot.websiteUrl = wizardState.websiteUrl || 'https://mycompany.com';
+        bot.deployDomain = wizardState.deployDomain || '';
         bot.catalogStoreUrl = wizardState.catalogStoreUrl || '';
         bot.activeWebProfile = wizardState.activeWebProfile ? JSON.parse(JSON.stringify(wizardState.activeWebProfile)) : null;
         bot.checkoutConfig = wizardState.checkoutConfig ? JSON.parse(JSON.stringify(wizardState.checkoutConfig)) : {};
@@ -6384,6 +6460,7 @@ companyLines + '\n' +
         wizardState.websiteChunks = bot.websiteChunks ? JSON.parse(JSON.stringify(bot.websiteChunks)) : [];
         wizardState.indexedWebsitePages = bot.indexedWebsitePages ? JSON.parse(JSON.stringify(bot.indexedWebsitePages)) : [];
         wizardState.websiteUrl = bot.websiteUrl || 'https://mycompany.com';
+        wizardState.deployDomain = bot.deployDomain || '';
         wizardState.catalogStoreUrl = bot.catalogStoreUrl || '';
         wizardState.activeWebProfile = bot.activeWebProfile || null;
         wizardState.faqs = bot.faqs ? JSON.parse(JSON.stringify(bot.faqs)) : [];
@@ -7655,6 +7732,78 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       });
 
       // Reactive auth listener: ensures sign-in persists whenever user is unauthenticated
+      if (window.BotlyAuth) {
+        window.BotlyAuth.onAuthStateChanged(function(user) {
+          updateSandboxAuthGate(user);
+        });
+      }
+
+      // Auto-save active bot configuration and training memory when window unloads
+      window.addEventListener('beforeunload', function() {
+        if (window.BotlyChatbotManager && typeof BotlyChatbotManager.syncActiveBotFromUI === 'function') {
+          BotlyChatbotManager.syncActiveBotFromUI();
+        }
+      });
+
+      // Check URL query parameters or hash for direct Webhooks access or New Chatbot initialization
+      try {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('new')) {
+          // Immediately strip ?new so that refreshing does NOT create another new bot and erase user data!
+          try {
+            var cleanUrl = window.location.pathname + (window.location.hash || '');
+            window.history.replaceState({}, document.title, cleanUrl);
+          } catch(e) {}
+          setTimeout(function() {
+            handleCreateNewCompanyBot();
+          }, 150);
+        }
+        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
+          setTimeout(function() {
+            openWebhooksModal();
+          }, 200);
+        }
+      } catch(e) {}
+    });
+  </script>
+</body>
+</html>
+.title, cleanUrl);
+          } catch(e) {}
+          setTimeout(function() {
+            handleCreateNewCompanyBot();
+          }, 150);
+        }
+        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
+          setTimeout(function() {
+            openWebhooksModal();
+          }, 200);
+        }
+      } catch(e) {}
+    });
+  </script>
+</body>
+</html>
+g does NOT create another new bot and erase user data!
+          try {
+            var cleanUrl = window.location.pathname + (window.location.hash || '');
+            window.history.replaceState({}, document.title, cleanUrl);
+          } catch(e) {}
+          setTimeout(function() {
+            handleCreateNewCompanyBot();
+          }, 150);
+        }
+        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
+          setTimeout(function() {
+            openWebhooksModal();
+          }, 200);
+        }
+      } catch(e) {}
+    });
+  </script>
+</body>
+</html>
+: ensures sign-in persists whenever user is unauthenticated
       if (window.BotlyAuth) {
         window.BotlyAuth.onAuthStateChanged(function(user) {
           updateSandboxAuthGate(user);

@@ -1,20 +1,59 @@
 User-agent: *
 Allow: /
 
-# AI search & assistant crawlers are welcome (content + llms.txt).
+# AI search & assistant crawlers are welcome on marketing content + llms.txt,
+# but kept off the product code (Studio app, widget bundle, demos, admin).
+# Note: robots.txt is advisory only — the real anti-theft enforcement is the
+# runtime license check (dist P96: paid embeds verify botly_licenses/{botId}
+# + domain binding before rendering anything).
 User-agent: GPTBot
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: PerplexityBot
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: anthropic-ai
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: ClaudeBot
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: Google-Extended
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 User-agent: Applebot-Extended
 Allow: /
+Disallow: /dist/
+Disallow: /demo/
+Disallow: /studio
+Disallow: /example
+Disallow: /admin
 
 Sitemap: https://www.botlypro.online/sitemap.xml

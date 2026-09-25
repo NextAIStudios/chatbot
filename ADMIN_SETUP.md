@@ -70,22 +70,30 @@ Building and previewing are free. Copying the embed code requires an
    **Using IntaSend?** Create a Payment Link in your IntaSend dashboard
    (fixed amount = the KES price), paste the link into
    `intasendPaymentUrl`, and payers get a **Pay securely** button
-   (M-Pesa + cards) with the manual Till kept as fallback. After paying,
-   they paste the M-Pesa code or IntaSend reference — you verify it in
-   the IntaSend dashboard before approving. (Full API automation —
-   STK push + auto-activation — needs the secret key on a backend, so it
-   stays a manual-verify step while the Studio is statically hosted.)
-2. **Re-publish the rules.** `firestore.rules` covers the
-   `botly_payments` collection and the `active` flag: owners may flip
-   their own bot `active` false→true only (paywall auto-claim), and only
-   admins can flip it back off. Paste the file into Firestore → Rules →
-   Publish again after every rules change.
-3. **Flow (auto-activation).** The user clicks the IntaSend pay link → a
-   pending claim is filed in `/admin` → **Payments** and the bot
-   **activates instantly** — the user's Copy button unlocks within
-   seconds. Review pending claims against your IntaSend dashboard:
-   **Verify** approves, while **✕** rejects *and deactivates* the bot.
-   You can also toggle Active manually in the **Chatbots** tab.
+   (M-Pesa + cards) with the manual Till kept as fallback. Opening the
+   link files a pending claim automatically (one per bot per day) — the
+   bot itself stays LOCKED until you press Verify. Match each claim
+   against your IntaSend dashboard before approving. (Full API
+   automation — STK push + instant approval — needs the secret key on a
+   backend, so approval stays a manual-verify step while the Studio is
+   statically hosted.)
+2. **Re-publish the rules.** `firestore.rules` enforces VERIFY-ONLY
+   activation: owners may never touch their bot's `active` flag (neither
+   on create nor update — not even via the Firebase console), and only
+   admins can flip it. It also publishes the `botly_licenses`
+   collection (public read so embeds can verify; admin-only write).
+   Paste the file into Firestore → Rules → Publish again after every
+   rules change — **the license check does nothing until this ships.**
+3. **Flow (verify-only).** The user clicks the IntaSend pay link → a
+   pending claim lands in `/admin` → **Payments** (watch the
+   `amount?`, `×N claims` and `stale` fraud flags) → you match it
+   against your IntaSend dashboard → **Verify** activates the bot,
+   writes its public license (carrying the Studio-captured domain
+   binding), and the user's paywall unlocks automatically within
+   seconds. **✕** rejects *and revokes* the license. You can also
+   toggle Active manually in the **Chatbots** tab (edit the matching
+   `botly_licenses/{botId}` row too — the embed reads the license,
+   not the bot row).
 
 ## Notes
 

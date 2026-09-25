@@ -35,28 +35,28 @@ service cloud.firestore {
 
     // Studio bot registry (summaries only, no knowledge content).
     // Signed-in owners write their own rows; admins read everything.
-    // Trust-first activation: owners may flip their own bot `active`
-    // false->true (paywall auto-claim on payment); only admins can flip
-    // it back off. Owner merge-writes that don't touch `active` pass.
+    // VERIFY-ONLY activation: owners may NOT touch `active` at all —
+    // only the admin Verify/Reject buttons flip it (the old
+    // trust-first auto-claim hole is closed). Owner merge-writes that
+    // don't include `active` (e.g. cloud sync) pass through untouched.
     match /botly_bots/{docId} {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
-        && (request.resource.data.get('active', false) == false
-          || request.resource.data.get('activationSource', '') == 'auto_link_claim');
+        && request.resource.data.get('active', false) == false;
       allow update: if isAdmin() || (request.auth != null
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == request.auth.uid
-        && (request.resource.data.get('active', false) == resource.data.get('active', false)
-          || (resource.data.get('active', false) == false
-            && request.resource.data.get('active', false) == true)));
+        && (!request.resource.data.keys().hasAny(['active'])
+          || request.resource.data.get('active', false) == resource.data.get('active', false)));
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow delete: if isAdmin();
     }
 
     // Activation claims. Owners file + read their own claims (filing
-    // auto-activates the bot); only admins triage — Verify approves,
-    // while Reject also deactivates the bot.
+    // does NOT activate — the bot unlocks only when an admin presses
+    // Verify); only admins triage — Verify activates + writes the
+    // public license, while Reject deactivates + revokes the license.
     match /botly_payments/{claimId} {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
@@ -64,6 +64,17 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
       allow update, delete: if isAdmin();
+    }
+
+    // PUBLIC license registry — read by every bot embed at load time
+    // to prove activation (see dist P96). Docs are keyed by plain botId
+    // (e.g. botly_licenses/bot_1727...) and written ONLY by the admin
+    // Verify/Reject buttons (Verify writes domains[], Reject sets
+    // active:false). Public read is safe: a license only unlocks the
+    // domains listed in it, and the check key is the botId.
+    match /botly_licenses/{botId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Post-chat ratings from paid-bot embeds. Visitors are anonymous, so
