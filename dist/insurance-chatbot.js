@@ -1679,6 +1679,56 @@
       }
     }
 
+    // P90: buy/order intent for a specific item ("I want to buy the tote bag").
+    // Gated by config.orderFlow.enabled (product bots like the /demo shop).
+    // Eligible FAQs are item cards only: question starts with "tell me
+    // about/show me" AND the answer carries a price — so M-Pesa, delivery
+    // and policy FAQs can never be "ordered".
+    if (config && config.orderFlow && config.orderFlow.enabled) {
+      var _buyVerbs = { buy:1, buying:1, purchase:1, purchasing:1, order:1, ordering:1, pay:1, paying:1, paid:1, take:1, taking:1, want:1, wants:1, wanna:1, get:1, getting:1, checkout:1 };
+      var _buyStop = { i:1, me:1, my:1, we:1, us:1, our:1, you:1, your:1, the:1, a:1, an:1, and:1, or:1, of:1, for:1, in:1, on:1, to:1, is:1, are:1, do:1, does:1, it:1, this:1, that:1, them:1, those:1, please:1, just:1, now:1, here:1, some:1, one:1, with:1, would:1, like:1, will:1, can:1, could:1, how:1, what:1, ll:1, ve:1, re:1, don:1 };
+      var _buyQ = tokenize(raw);
+      var _hasBuy = false;
+      var _buyContent = [];
+      for (var _bi = 0; _bi < _buyQ.length; _bi++) {
+        var _bw = _buyQ[_bi];
+        if (_buyVerbs[_bw]) { _hasBuy = true; continue; }
+        if (!_buyStop[_bw] && _bw.length >= 2) _buyContent.push(_bw);
+      }
+      if (_hasBuy && _buyContent.length === 0 && memory && memory.lastProductQuery) {
+        var _lpq = tokenize(memory.lastProductQuery);
+        for (var _li = 0; _li < _lpq.length; _li++) {
+          if (!_buyStop[_lpq[_li]] && !_buyVerbs[_lpq[_li]] && _lpq[_li].length >= 2) _buyContent.push(_lpq[_li]);
+        }
+      }
+      if (_hasBuy && _buyContent.length > 0) {
+        var _buyFaqs = (customKnowledge || []).concat(customFaqs || []);
+        var _buyBest = null;
+        var _buyBestHits = 0;
+        for (var _bfi = 0; _bfi < _buyFaqs.length; _bfi++) {
+          var _bf = _buyFaqs[_bfi];
+          if (!_bf || !/^(tell\s*me\s*about|show\s*me)\s+/i.test(_bf.question || '')) continue;
+          if (!/KSh\s*[\d,]+|\$\s*[\d,]+/i.test(_bf.answer || '')) continue;
+          var _bt = tokenize(_bf.question || '').concat(tokenize((_bf.keywords || []).join(' ')));
+          var _bh = 0;
+          for (var _bci = 0; _bci < _buyContent.length; _bci++) {
+            for (var _bti = 0; _bti < _bt.length; _bti++) {
+              if (wordsMatch(_buyContent[_bci], _bt[_bti])) { _bh++; break; }
+            }
+          }
+          if (_bh > _buyBestHits) { _buyBestHits = _bh; _buyBest = _bf; }
+        }
+        if (_buyBest && _buyBestHits > 0) {
+          var _bq = _buyBest.question || '';
+          var _itemLabel = _bq.replace(/^(tell\s*me\s*about|show\s*me)\s+/i, '').replace(/^(the|a|an)\s+/i, '').trim() || 'this item';
+          var _pall = (_buyBest.answer || '').match(/KSh\s*[\d,]+/gi) || [];
+          var _pd = (_buyBest.answer || '').match(/\$\s*[\d,]+/) || [];
+          var _orderPrice = _pall.length ? _pall[_pall.length - 1] : (_pd.length ? _pd[0] : '');
+          return { intent: 'order_item', action: 'START_ORDER_FLOW', orderItem: _itemLabel, orderPrice: _orderPrice };
+        }
+      }
+    }
+
     // 5. Knowledge Base Search (In SaaS mode, ONLY search custom FAQs and custom knowledge)
     var allFaqsRaw = isSaasMode
       ? (customKnowledge || []).concat(customFaqs || [])
@@ -2848,6 +2898,7 @@
     this.launcher = null;
     this._ratingShown = false;
     this._botMsgCount = 0;
+    this.orderState = { active: false, step: '', item: '', price: '', name: '', contact: '', code: '' };
   }
 
   BotlyChatbotController.prototype.init = function(selector) {
@@ -3190,6 +3241,15 @@
 
     var done = function() { clearTimeout(safetyTimer); };
 
+    // P92: an active item-order flow owns every reply (checked BEFORE the
+    // M-Pesa code detector, so the shop Till confirmation code stays inside
+    // the order conversation instead of triggering Botly activation logic).
+    if (self.orderState && self.orderState.active) {
+      done();
+      setTimeout(function() { self.processOrderStep(text); }, 400);
+      return;
+    }
+
     // Check if input contains an M-Pesa confirmation code (e.g. UIC8E69GLQ)
     var detectedMpesa = extractMpesaCode(text);
     if (detectedMpesa) {
@@ -3321,6 +3381,10 @@
 
     if (res.action === 'LEAD_CAPTURE') {
       this.startLeadCapture(res.inquiredNeed || text, res.leadIntro);
+      return;
+    }
+    if (res.action === 'START_ORDER_FLOW') {
+      this.startOrderFlow(res.orderItem, res.orderPrice);
       return;
     }
     if (res.action === 'OPEN_QUOTE_WIZARD') {
@@ -4667,6 +4731,9 @@
           self._ratingFirebaseConfig(function(cfg) {
             if (!cfg) { cb(null); return; }
             try {
+              if (typeof window !== 'undefined' && (!window.BOTLY_FIREBASE_CONFIG || !window.BOTLY_FIREBASE_CONFIG.apiKey || String(window.BOTLY_FIREBASE_CONFIG.apiKey).indexOf('YOUR_') !== -1)) window.BOTLY_FIREBASE_CONFIG = cfg;
+            } catch (_e) {}
+            try {
               if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(cfg);
               cb(firebase.firestore());
             } catch (e) {
@@ -4715,6 +4782,116 @@
         db.collection('botly_ratings').add(payload).then(function() { done(true); }).catch(function() { done(false); });
       } catch (e) { done(false); }
     });
+  };
+
+  // ---- P90-P95: guided item-order flow (orderFlow.enabled bots) ----
+  // Name -> phone/email -> M-Pesa Till instructions -> confirmation code ->
+  // personalized thank-you. Order persisted locally + synced to the admin
+  // inbox (botly_leads with payment detail) + botly:order event for pages.
+  BotlyChatbotController.prototype.startOrderFlow = function(item, price) {
+    this.orderState = { active: true, step: 'name', item: item || 'this item', price: price || '', name: '', contact: '', code: '' };
+    try { this._ratingEnsureDb(function() {}); } catch (e) {}
+    var what = this.orderState.price
+      ? 'the **' + this.escape(this.orderState.item) + '** at **' + this.escape(this.orderState.price) + '**'
+      : 'the **' + this.escape(this.orderState.item) + '**';
+    this.appendBot('Great choice — ' + what + '! Let\'s place your order.\n\nWhat is your **full name**?');
+  };
+
+  BotlyChatbotController.prototype.findOrderPayInfo = function() {
+    var faqs = [];
+    try { faqs = (this.config.customKnowledge || []).concat(this.config.customFaqs || []); } catch (e) {}
+    for (var i = 0; i < faqs.length; i++) {
+      var f = faqs[i] || {};
+      var hay = (f.question || '') + ' ' + (f.keywords || []).join(' ');
+      if (/mpesa|m-pesa|till/i.test(hay)) {
+        var dm = (f.answer || '').match(/(\d{5,})/);
+        return { till: dm ? dm[1] : '' };
+      }
+    }
+    return { till: '' };
+  };
+
+  BotlyChatbotController.prototype.processOrderStep = function(text) {
+    var st = this.orderState;
+    if (!st || !st.active) return;
+    var msg = (text || '').trim();
+    if (/^(cancel|stop|never\s*mind|no\s*thanks|forget\s*it|abort|quit)\b/i.test(msg)) {
+      st.active = false;
+      st.step = '';
+      this.appendBot('No problem — I have cancelled this order. Anything else I can help with?');
+      return;
+    }
+    if (st.step === 'name') {
+      if (msg.length < 2 || msg.length > 80) {
+        this.appendBot('Please tell me the **name** to put on this order (for example: David Otieno).');
+        return;
+      }
+      st.name = msg;
+      st.step = 'contact';
+      this.appendBot('Thanks, **' + this.escape(st.name) + '**! What is your **phone number or email** so we can confirm your order?');
+      return;
+    }
+    if (st.step === 'contact') {
+      var emailM = msg.match(/\S+@\S+\.\S+/);
+      var digits = msg.replace(/\D/g, '');
+      if (emailM) {
+        st.contact = emailM[0].slice(0, 80);
+      } else if (digits.length >= 9 && digits.length <= 13 && msg.length <= 40) {
+        st.contact = msg.slice(0, 40);
+      } else {
+        this.appendBot('I need a valid phone number (e.g. 0712 345 678) or email address to confirm your order. What should I use?');
+        return;
+      }
+      st.step = 'code';
+      var pay = this.findOrderPayInfo();
+      var amount = st.price || 'the amount shown';
+      var steps = 'Paying is easy!\n\n1. Go to **M-Pesa** → **Lipa na M-Pesa** → **Buy Goods**.\n';
+      steps += pay.till ? '2. Enter Till number **' + pay.till + '**.\n' : '';
+      steps += '3. Enter **' + this.escape(amount) + '** and your M-Pesa PIN.\n\nOnce you have paid, send me your **M-Pesa confirmation code** here.';
+      this.appendBot(steps);
+      return;
+    }
+    if (st.step === 'code') {
+      var code = null;
+      try { code = extractMpesaCode(msg); } catch (e) { code = null; }
+      if (!code) {
+        this.appendBot('That does not look like an M-Pesa confirmation code — they are usually 10 characters mixing letters and numbers (e.g. QHX7K9ABCD). Please check your M-Pesa SMS and send the code again.');
+        return;
+      }
+      st.code = code;
+      st.active = false;
+      st.step = '';
+      var firstName = (st.name.split(/\s+/)[0] || st.name).slice(0, 40);
+      this.appendBot('\u{1F389} **Thank you, ' + this.escape(firstName) + '!** Your order for the **' + this.escape(st.item) + ' (' + this.escape(st.price) + ')** is confirmed. We will reach out shortly on **' + this.escape(st.contact) + '** to arrange delivery. Karibu tena!');
+      var isEmail = st.contact.indexOf('@') !== -1;
+      var orderLead = {
+        id: 'ORDER-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900),
+        name: st.name,
+        phone: isEmail ? '' : st.contact,
+        email: isEmail ? st.contact : '',
+        need: 'Order: ' + st.item + ' ' + st.price + ' — M-Pesa ' + code,
+        goal: 'order',
+        timestamp: new Date().toISOString(),
+        createdAtFormatted: new Date().toLocaleString(),
+        status: 'New',
+        company: (this.config.company && this.config.company.name) || 'Botly AI',
+        paymentMethod: 'M-Pesa',
+        amount: st.price,
+        mpesaCode: code
+      };
+      try { saveStoredLead(orderLead); } catch (e) {}
+      try { botlyCloudSyncLead(orderLead, { config: this.config, memory: this.conversationMemory }); } catch (e) {}
+      try {
+        if (this.config.webhooks && typeof this.config.webhooks.onLeadCaptured === 'function') this.config.webhooks.onLeadCaptured(orderLead);
+      } catch (e) {}
+      try {
+        if (typeof window !== 'undefined' && window.dispatchEvent && window.CustomEvent) {
+          window.dispatchEvent(new CustomEvent('botly:order', { detail: orderLead }));
+        }
+      } catch (e) {}
+      return;
+    }
+    st.active = false;
   };
 
   // Public Singleton Instance
