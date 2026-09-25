@@ -2791,7 +2791,27 @@
           code: lead.mpesaCode ? String(lead.mpesaCode).slice(0, 40) : null
         };
       }
-      window.firebase.firestore().collection('botly_leads').add(payload).catch(function() {});
+      var db = window.firebase.firestore();
+      db.collection('botly_leads').add(payload).then(function() {
+        // Trigger Email from Firestore extension: write to the 'mail' collection
+        try {
+          var adminEmail = (window.BOTLY_ADMIN_EMAILS && window.BOTLY_ADMIN_EMAILS[0]) || 'muindidiego@gmail.com';
+          db.collection('mail').add({
+            to: adminEmail,
+            message: {
+              subject: '🔔 New Botly Inquiry — ' + (payload.name || 'Visitor') + (payload.botName ? ' via ' + payload.botName : ''),
+              html: '<p><strong>Name:</strong> ' + (payload.name || '—') + '</p>' +
+                    '<p><strong>Phone:</strong> ' + (payload.phone || '—') + '</p>' +
+                    '<p><strong>Email:</strong> ' + (payload.email || '—') + '</p>' +
+                    '<p><strong>Request:</strong> ' + (payload.need || '—') + '</p>' +
+                    '<p><strong>Bot:</strong> ' + (payload.botName || '—') + '</p>' +
+                    '<p><strong>Company:</strong> ' + (payload.company || '—') + '</p>' +
+                    '<p><strong>Page:</strong> ' + (payload.pageUrl || '—') + '</p>' +
+                    '<p style="margin-top:16px;"><a href="https://botlypro.online/admin" style="background:#9be553;color:#18221c;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;">View in Admin →</a></p>'
+            }
+          }).catch(function() {});
+        } catch (mailErr) {}
+      }).catch(function() {});
     } catch (e) {}
   }
 

@@ -77,20 +77,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Admin claim-mail outbox for the "Trigger Email from Firestore"
+    // Admin notification outbox for the "Trigger Email from Firestore"
     // extension (watches `mail`; sends via the Admin SDK, bypassing
-    // rules). Owners may only CREATE tightly-shaped mails to the fixed
-    // admin address — no arbitrary recipients, sizes capped.
+    // rules). Visitors (unauthenticated) and signed-in owners may CREATE
+    // tightly-shaped mails to the fixed admin address only — no arbitrary
+    // recipients, content sizes capped.
+    function validMail() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['to', 'message'])
+        && d.to == 'muindidiego@gmail.com'
+        && d.message.keys().hasOnly(['subject', 'html'])
+        && d.message.subject is string
+        && d.message.subject.size() <= 160
+        && d.message.html is string
+        && d.message.html.size() <= 8000;
+    }
     match /mail/{mailId} {
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['to', 'message', 'ownerUid', 'createdAt'])
-        && request.resource.data.to == 'muindidiego@gmail.com'
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.message.keys().hasOnly(['subject', 'html'])
-        && request.resource.data.message.subject is string
-        && request.resource.data.message.subject.size() <= 160
-        && request.resource.data.message.html is string
-        && request.resource.data.message.html.size() <= 6000;
+      allow create: if validMail();
       allow read, update, delete: if isAdmin();
     }
 

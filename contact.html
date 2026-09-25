@@ -579,6 +579,24 @@
             transcript: [{ role: 'user', text: String(message).slice(0, 600) }],
             pageUrl: (window.location && window.location.href ? String(window.location.href) : '').slice(0, 300),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(function() {
+            // Trigger Email from Firestore extension: write to the 'mail' collection
+            try {
+              var adminEmail = (window.BOTLY_ADMIN_EMAILS && window.BOTLY_ADMIN_EMAILS[0]) || 'muindidiego@gmail.com';
+              firebase.firestore().collection('mail').add({
+                to: adminEmail,
+                message: {
+                  subject: '🔔 New Contact Inquiry — ' + String(name).slice(0, 80),
+                  html: '<p><strong>Name:</strong> ' + String(name) + '</p>' +
+                        '<p><strong>Phone:</strong> ' + String(phone) + '</p>' +
+                        '<p><strong>Email:</strong> ' + String(email) + '</p>' +
+                        '<p><strong>Company:</strong> ' + String(company) + '</p>' +
+                        '<p><strong>Goal:</strong> ' + String(goalLabel) + '</p>' +
+                        '<p><strong>Message:</strong><br>' + String(message).replace(/\n/g, '<br>') + '</p>' +
+                        '<p style="margin-top:16px;"><a href="https://botlypro.online/admin" style="background:#9be553;color:#18221c;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;">View in Admin →</a></p>'
+                }
+              }).catch(function() {});
+            } catch (mailErr) {}
           }).catch(function(err) { console.warn('Contact cloud save notice:', err); });
         }
       } catch (err) {
