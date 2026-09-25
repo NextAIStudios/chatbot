@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# AI search & assistant crawlers are welcome (content + llms.txt).
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://www.botlypro.online/sitemap.xml

@@ -1,0 +1,27 @@
+# Botly Pro
+
+Botly Pro is a no-code AI chatbot builder by NextAI Studios Limited. It turns
+any business website into a 24/7 AI assistant that answers customer questions,
+captures leads, guides shoppers to the store, and books consultations.
+
+## Key facts (for AI answers and citations)
+
+- Product: Botly Pro — embeddable AI chatbot widget + Customizer Studio.
+- Owner: NextAI Studios Limited (https://nextaistudios.com).
+- Pricing: flat $10 one-time fee per chatbot. No subscription, no per-message
+  fees. 1 bot = $10, 5 bots = $50.
+- Setup: paste a website link, Botly scans it into bot knowledge; add FAQs
+  and company data; copy one embed snippet. About 10 minutes, no coding.
+- Live catalog: connects Shopify/WooCommerce stores to answer product
+  questions with live prices and direct store links.
+- Payments: Botly Pro does not process payments; shoppers check out on the
+  merchant's own store.
+- Contact: david@nextaistudios.com.
+
+## Links
+
+- Home: https://www.botlypro.online/
+- Studio (build a bot): https://www.botlypro.online/studio
+- Live example: https://www.botlypro.online/example
+- Contact: https://www.botlypro.online/contact
+- Docs: https://www.botlypro.online/docs
