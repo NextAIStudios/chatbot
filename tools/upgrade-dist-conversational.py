@@ -1294,6 +1294,40 @@ PATCHES = [
         var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);""",
         1,
     ),
+    (
+        "P89 whole-question overlap safety net for content-less queries",
+        """      var score = computeScore(queryTokens, (item.question || '') + ' ' + (item.answer || ''), item.keywords || []);""",
+        """      // P89 safety net: queries with no matchable content words ("what do you
+      // sell?") can never score keyword hits — fall back to whole-question
+      // word overlap so the closest custom FAQ still wins over lead capture.
+      // Requires either a shared content word or a content-less query, so
+      // "tell me about the shop" can't boost unrelated item FAQs.
+      if (keyMatches === 0) {
+        var _p89Stop = { a:1, an:1, the:1, and:1, or:1, of:1, for:1, in:1, on:1, to:1, is:1, are:1, was:1, were:1, be:1, do:1, does:1, did:1, can:1, could:1, should:1, would:1, will:1, shall:1, may:1, it:1, its:1, this:1, that:1, these:1, those:1, there:1, here:1, i:1, me:1, my:1, we:1, us:1, our:1, you:1, your:1, they:1, them:1, their:1, he:1, she:1, him:1, her:1, what:1, which:1, who:1, whom:1, how:1, when:1, where:1, why:1, much:1, many:1, with:1, by:1, from:1, about:1, as:1, at:1, tell:1, show:1, give:1, get:1, want:1, need:1, sell:1, buy:1, purchase:1, order:1, shop:1, please:1, very:1, just:1, so:1, if:1 };
+        var _p89Q = tokenize(raw);
+        var _p89T = tokenize(item.question || '');
+        if (_p89Q.length >= 3 && _p89T.length > 0) {
+          var _p89Hit = 0, _p89ContentHit = 0, _p89ContentTotal = 0;
+          for (var _p89i = 0; _p89i < _p89Q.length; _p89i++) {
+            var _p89w = _p89Q[_p89i];
+            var _p89IsContent = !_p89Stop[_p89w] && _p89w.length >= 2;
+            if (_p89IsContent) _p89ContentTotal++;
+            for (var _p89j = 0; _p89j < _p89T.length; _p89j++) {
+              if (wordsMatch(_p89w, _p89T[_p89j])) {
+                _p89Hit++;
+                if (_p89IsContent) _p89ContentHit++;
+                break;
+              }
+            }
+          }
+          if (_p89Hit / _p89Q.length >= 0.75 && (_p89ContentTotal === 0 || _p89ContentHit > 0)) {
+            keyMatches += 3.0;
+          }
+        }
+      }
+      var score = computeScore(queryTokens, (item.question || '') + ' ' + (item.answer || ''), item.keywords || []);""",
+        1,
+    ),
 ]
 
 

@@ -148,6 +148,7 @@
       mode: 'saas',
       ratings: { enabled: true },
       followUpDynamics: { enabled: false },
+      checkout: { enabled: false },
       disableFaqQuickReplies: true,
       goal: 'lead_generation',
       company: {
@@ -193,8 +194,38 @@
         },
         {
           question: 'What products do you sell and how much do they cost?',
-          keywords: ['product', 'sell', 'price', 'cost', 'how much', 'dress', 'ankara', 'kitenge', 'tote', 'bag', 'necklace', 'bead', 'shirt', 'linen', 'sandal', 'shoe', 'headwrap', 'clothes', 'range', '5000', 'under'],
+          keywords: ['product', 'products', 'sell', 'price', 'prices', 'cost', 'costs', 'how much', 'collection', 'catalogue', 'catalog', 'everything', 'all', 'range', '5000', 'under', 'cheap', 'affordable', 'clothes', 'shop', 'stock', 'list'],
           answer: "Here's a taste of this week's collection:\n\nAnkara Midi Dress — **KSh 4,500**\nKitenge Tote Bag — **KSh 1,800**\nMaasai Bead Necklace — **KSh 2,200**\nMen's Linen Shirt — **KSh 3,200**\nLeather Maasai Sandals — **KSh 2,800**\nHeadwrap Set (3 pcs) — **KSh 950**\n\nEverything is **under KSh 5,000**! Ask me about any item — sizes, colours, availability — I know them all."
+        },
+        {
+          question: 'Tell me about the Ankara Midi Dress',
+          keywords: ['ankara', 'midi', 'dress', 'dresses', 'gown', 'wax print', 'sizes'],
+          answer: "The **Ankara Midi Dress (KSh 4,500)** is our signature piece.\n\n100% cotton wax print with a fitted bodice, flared midi skirt and side zip. Sizes **XS-XXL** (model wears S). Current prints: Sunset Orange, Ocean Teal, Midnight Gold.\n\nIn stock online and at the shop. Want help picking a size or print?"
+        },
+        {
+          question: 'Tell me about the Kitenge Tote Bag',
+          keywords: ['kitenge', 'tote', 'bag', 'bags', 'handbag', 'laptop bag', 'carry'],
+          answer: "The **Kitenge Tote Bag** is **KSh 1,800** — and **10% off this week (KSh 1,620)**.\n\nSturdy canvas with a colourful Kitenge panel, zip top and inner pocket. Fits a 13-inch laptop. Available in 4 prints.\n\nWant me to reserve one for delivery or pickup?"
+        },
+        {
+          question: 'Tell me about the Maasai Bead Necklace',
+          keywords: ['maasai', 'bead', 'beads', 'beaded', 'necklace', 'necklaces', 'jewelry', 'jewellery', 'collar'],
+          answer: "The **Maasai Bead Necklace (KSh 2,200)** is handmade by Maasai artisans.\n\nGlass beadwork on an adjustable cord (one size fits all) in classic red, blue and white — a green variant is also available. Arrives in a gift box.\n\nIt pairs beautifully with the Ankara dress. Shall I set one aside for you?"
+        },
+        {
+          question: "Tell me about the Men's Linen Shirt",
+          keywords: ['linen', 'shirt', 'shirts', "men's", 'mens', 'men', 'flax', 'sizes'],
+          answer: "The **Men's Linen Shirt (KSh 3,200)** is 100% European flax linen — cool and breathable.\n\nButton-down front, sizes **S-XXL**. Colours: Natural Beige, White, Navy. Machine washable, and it softens with every wash.\n\nTell me your usual size and I'll confirm availability."
+        },
+        {
+          question: 'Tell me about the Leather Maasai Sandals',
+          keywords: ['leather', 'sandal', 'sandals', 'shoe', 'shoes', 'footwear', 'slippers', 'sizes'],
+          answer: "The **Leather Maasai Sandals (KSh 2,800)** are handmade with a genuine leather sole and beaded straps.\n\nSizes **36-45** in Tan and Dark Brown. They run true to size, so order your normal shoe size.\n\nVery comfortable for all-day wear. Want a pair reserved?"
+        },
+        {
+          question: 'Tell me about the Headwrap Set',
+          keywords: ['headwrap', 'headwraps', 'head wrap', 'headtie', 'gele', 'turban', 'scarf', 'scarves', 'wrap'],
+          answer: "The **Headwrap Set (KSh 950 for 3)** is our best seller.\n\nThree long Ankara cotton wraps (about 180 cm each) in assorted prints, plus a style-guide card. One size fits all.\n\nAt that price they move fast — want me to hold a set for you?"
         },
         {
           question: 'Do you have any offers or new arrivals?',
