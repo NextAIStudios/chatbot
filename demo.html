@@ -41,7 +41,7 @@
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media (max-width: 420px) { .grid { grid-template-columns: 1fr 1fr; } }
     .card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(91,35,51,.08); }
-    .card .visual { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 44px; }
+    .card img { width: 100%; height: 150px; object-fit: cover; display: block; }
     .card .body { padding: 12px 12px 14px; }
     .card .name { font-size: 14px; font-weight: 700; }
     .card .price { font-size: 15px; font-weight: 800; color: #7c2d4e; margin: 2px 0 8px; }
@@ -61,7 +61,7 @@
 <body>
 
   <div class="demo-banner">
-    👀 <strong>LIVE DEMO</strong> — This is a fictional shop showing what a Botly chatbot does.
+    <strong>LIVE DEMO</strong> — This is a fictional shop showing what a Botly chatbot does.
     <a href="/#pricing">Get one for your site — $10 once →</a>
   </div>
 
@@ -72,9 +72,9 @@
   </header>
 
   <section class="hero">
-    <h1>Karibu! Ask our assistant anything 👇</h1>
+    <h1>Karibu! Ask our assistant anything below</h1>
     <p>This little chat bubble (bottom-right) answers questions, gives prices and explains delivery &amp; M-Pesa payment — <strong>24/7, even at 2am</strong>. Go ahead, try it. It's free to chat.</p>
-    <button class="btn-chat" onclick="openChatWithPrompt('Hi! What can you help me with?')">💬 Chat with us now</button>
+    <button class="btn-chat" onclick="openChatWithPrompt('Hi! What can you help me with?')">Chat with us now</button>
     <div class="try-label">Or try one of these:</div>
     <div class="chips">
       <button class="chip" onclick="openChatWithPrompt('Do you deliver to Westlands?')">Do you deliver to Westlands?</button>
@@ -85,57 +85,57 @@
   </section>
 
   <section class="section" id="shop">
-    <h2>This week's picks ✨</h2>
+    <h2>This week's picks</h2>
     <div class="sub">Tap "Ask the bot" on anything — it knows every product.</div>
     <div class="grid">
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#e8935a,#c4506b)">👗</div>
+        <img src="/demo/img/ankara-dress.jpg" alt="Ankara Midi Dress" loading="lazy">
         <div class="body"><div class="name">Ankara Midi Dress</div><div class="price">KSh 4,500</div>
-        <button onclick="openChatWithPrompt('Tell me about the Ankara Midi Dress')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the Ankara Midi Dress')">Ask the bot</button></div>
       </div>
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#e8b84b,#e8935a)">👜</div>
+        <img src="/demo/img/kitenge-tote.jpg" alt="Kitenge Tote Bag" loading="lazy">
         <div class="body"><div class="name">Kitenge Tote Bag</div><div class="price">KSh 1,800</div>
-        <button onclick="openChatWithPrompt('Tell me about the Kitenge Tote Bag')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the Kitenge Tote Bag')">Ask the bot</button></div>
       </div>
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#c4506b,#7c2d4e)">📿</div>
+        <img src="/demo/img/maasai-necklace.jpg" alt="Maasai Bead Necklace" loading="lazy">
         <div class="body"><div class="name">Maasai Bead Necklace</div><div class="price">KSh 2,200</div>
-        <button onclick="openChatWithPrompt('Tell me about the Maasai Bead Necklace')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the Maasai Bead Necklace')">Ask the bot</button></div>
       </div>
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#9db89a,#5b7a68)">👔</div>
+        <img src="/demo/img/linen-shirt.jpg" alt="Men's Linen Shirt" loading="lazy">
         <div class="body"><div class="name">Men's Linen Shirt</div><div class="price">KSh 3,200</div>
-        <button onclick="openChatWithPrompt('Tell me about the linen shirt')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the linen shirt')">Ask the bot</button></div>
       </div>
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#8a6b4f,#5b4a33)">👡</div>
+        <img src="/demo/img/leather-sandals.jpg" alt="Leather Maasai Sandals" loading="lazy">
         <div class="body"><div class="name">Leather Maasai Sandals</div><div class="price">KSh 2,800</div>
-        <button onclick="openChatWithPrompt('Tell me about the leather sandals')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the leather sandals')">Ask the bot</button></div>
       </div>
       <div class="card">
-        <div class="visual" style="background:linear-gradient(135deg,#7c9db8,#4e5b7c)">🧕</div>
+        <img src="/demo/img/headwrap-set.jpg" alt="Headwrap Set" loading="lazy">
         <div class="body"><div class="name">Headwrap Set (3 pcs)</div><div class="price">KSh 950</div>
-        <button onclick="openChatWithPrompt('Tell me about the headwrap set')">Ask the bot 🤖</button></div>
+        <button onclick="openChatWithPrompt('Tell me about the headwrap set')">Ask the bot</button></div>
       </div>
     </div>
   </section>
 
   <section class="section" id="visit">
-    <h2>Visit or order from home 🏬</h2>
+    <h2>Visit us or order from home</h2>
     <div class="sub">Everything below is also known by the chatbot — quiz it.</div>
     <div class="info">
-      <div class="tile"><b>📍 Location</b>Kimathi Street, Nairobi CBD — opposite the Hilton arcade entrance.</div>
-      <div class="tile"><b>🕘 Hours</b>Mon–Sat: 9:00am – 6:30pm.<br>Sundays: closed.</div>
-      <div class="tile"><b>🛵 Delivery</b>Nairobi same-day (order before 2pm). Countrywide 1–3 days. Fee KSh 200–350.</div>
-      <div class="tile"><b>📱 Payment</b>M-Pesa Till <b>555777</b>, cards &amp; cash in store. Pay on delivery in Nairobi.</div>
+      <div class="tile"><b>Location</b>Kimathi Street, Nairobi CBD — opposite the Hilton arcade entrance.</div>
+      <div class="tile"><b>Hours</b>Mon–Sat: 9:00am – 6:30pm.<br>Sundays: closed.</div>
+      <div class="tile"><b>Delivery</b>Nairobi same-day (order before 2pm). Countrywide 1–3 days. Fee KSh 200–350.</div>
+      <div class="tile"><b>Payment</b>M-Pesa Till <b>555777</b>, cards &amp; cash in store. Pay on delivery in Nairobi.</div>
     </div>
   </section>
 
   <footer>Zawadi Collection is a fictional demo shop.<br>Chatbot powered by <strong>Botly Pro</strong> · botlypro.online</footer>
 
   <div class="sticky-cta">
-    <div class="text">🤖 This chatbot could be on <strong>YOUR</strong> website — <strong>$10 one-time</strong>, no monthly fee.</div>
+    <div class="text">This chatbot could be on <strong>YOUR</strong> website — <strong>$10 one-time</strong>, no monthly fee.</div>
     <a href="/#pricing">Get Botly Pro →</a>
   </div>
 
@@ -155,7 +155,7 @@
         name: 'Zawadi Assistant',
         title: 'Online now · replies instantly',
         avatar: '/demo/botly-icon.svg',
-        greeting: "Hi, welcome to Zawadi Collection! 💛 I can help with sizes, prices, delivery and M-Pesa payment. What are you shopping for today?",
+        greeting: "Hi, welcome to Zawadi Collection! I can help with sizes, prices, delivery and M-Pesa payment. What are you shopping for today?",
         initialQuickReplies: [
           { label: 'Delivery info', payload: 'Do you deliver? How long does it take?' },
           { label: 'Opening hours', payload: 'What are your opening hours and where are you located?' },
@@ -175,42 +175,42 @@
         {
           question: 'Do you deliver? How long does delivery take?',
           keywords: ['deliver', 'delivery', 'shipping', 'ship', 'send', 'nairobi', 'westlands', 'countrywide', 'how long', 'parcel', 'courier', 'dispatch'],
-          answer: "Yes, we deliver everywhere! 🛵\n\n**Nairobi:** same-day delivery if you order before 2pm.\n**Countrywide:** 1–3 days via trusted couriers.\n**Fee:** KSh 200–350 depending on location.\n\nWant to place an order? Just tell me what you like and I'll sort you out — or pay easily with M-Pesa (ask me how!)."
+          answer: "Yes, we deliver everywhere!\n\n**Nairobi:** same-day delivery if you order before 2pm.\n**Countrywide:** 1–3 days via trusted couriers.\n**Fee:** KSh 200–350 depending on location.\n\nWant to place an order? Just tell me what you like and I'll sort you out — or pay easily with M-Pesa (ask me how!)."
         },
         {
           question: 'What are your opening hours and location?',
           keywords: ['open', 'opening', 'hours', 'close', 'closing', 'time', 'today', 'location', 'where', 'address', 'visit', 'shop', 'store', 'kimathi', 'cbd', 'sunday', 'saturday'],
-          answer: "You're welcome anytime during opening hours! 🏬\n\n**Location:** Kimathi Street, Nairobi CBD (opposite the Hilton arcade entrance).\n**Hours:** Monday–Saturday, 9:00am–6:30pm.\n**Sundays:** we're closed — but I'm here 24/7, so shop online whenever you like! 💛"
+          answer: "You're welcome anytime during opening hours!\n\n**Location:** Kimathi Street, Nairobi CBD (opposite the Hilton arcade entrance).\n**Hours:** Monday–Saturday, 9:00am–6:30pm.\n**Sundays:** we're closed — but I'm here 24/7, so shop online whenever you like!"
         },
         {
           question: 'How do I pay with M-Pesa?',
           keywords: ['pay', 'payment', 'mpesa', 'm-pesa', 'm pesa', 'till', 'lipam-pesa', 'lipa', 'card', 'cash', 'buy', 'checkout', 'paybill'],
-          answer: "Paying is easy! 📱\n\n1. Go to **M-Pesa → Lipa na M-Pesa → Buy Goods**.\n2. Enter Till number **555777**.\n3. Enter the amount and your PIN — done!\n\nWe also accept cards and cash in store, plus **pay on delivery** within Nairobi. What would you like to order?"
+          answer: "Paying is easy!\n\n1. Go to **M-Pesa → Lipa na M-Pesa → Buy Goods**.\n2. Enter Till number **555777**.\n3. Enter the amount and your PIN — done!\n\nWe also accept cards and cash in store, plus **pay on delivery** within Nairobi. What would you like to order?"
         },
         {
           question: 'What products do you sell and how much do they cost?',
           keywords: ['product', 'sell', 'price', 'cost', 'how much', 'dress', 'ankara', 'kitenge', 'tote', 'bag', 'necklace', 'bead', 'shirt', 'linen', 'sandal', 'shoe', 'headwrap', 'clothes', 'range', '5000', 'under'],
-          answer: "Here's a taste of this week's collection ✨\n\n👗 Ankara Midi Dress — **KSh 4,500**\n👜 Kitenge Tote Bag — **KSh 1,800**\n📿 Maasai Bead Necklace — **KSh 2,200**\n👔 Men's Linen Shirt — **KSh 3,200**\n👡 Leather Maasai Sandals — **KSh 2,800**\n🧕 Headwrap Set (3 pcs) — **KSh 950**\n\nEverything is **under KSh 5,000**! Ask me about any item — sizes, colours, availability — I know them all. 😊"
+          answer: "Here's a taste of this week's collection:\n\nAnkara Midi Dress — **KSh 4,500**\nKitenge Tote Bag — **KSh 1,800**\nMaasai Bead Necklace — **KSh 2,200**\nMen's Linen Shirt — **KSh 3,200**\nLeather Maasai Sandals — **KSh 2,800**\nHeadwrap Set (3 pcs) — **KSh 950**\n\nEverything is **under KSh 5,000**! Ask me about any item — sizes, colours, availability — I know them all."
         },
         {
           question: 'Do you have any offers or new arrivals?',
           keywords: ['offer', 'discount', 'sale', 'new', 'arrival', 'promotion', 'promo', 'deal', 'cheap', 'bargain'],
-          answer: "Yes! 🎉 This week only:\n\n🧕 **Headwrap sets at KSh 950** (our best seller!)\n👜 **10% off all Kitenge tote bags**\n👗 **New Ankara prints** just landed — they sell out fast!\n\nWhich one catches your eye? I can check sizes and colours for you."
+          answer: "Yes! This week only:\n\n**Headwrap sets at KSh 950** (our best seller!)\n**10% off all Kitenge tote bags**\n**New Ankara prints** just landed — they sell out fast!\n\nWhich one catches your eye? I can check sizes and colours for you."
         },
         {
           question: 'What is your return or exchange policy?',
           keywords: ['return', 'exchange', 'refund', 'wrong size', 'fit', 'fitting', 'size', 'small', 'big', 'large'],
-          answer: "No stress! 💛\n\nWe offer a **7-day exchange** on all unworn items with tags on — just bring your receipt (or M-Pesa message) to the shop.\n\nNot sure about sizing? Tell me the item and your usual size and I'll advise before you buy."
+          answer: "No stress!\n\nWe offer a **7-day exchange** on all unworn items with tags on — just bring your receipt (or M-Pesa message) to the shop.\n\nNot sure about sizing? Tell me the item and your usual size and I'll advise before you buy."
         },
         {
           question: 'Can I talk to a human?',
           keywords: ['human', 'person', 'agent', 'real', 'call', 'phone', 'whatsapp', 'number', 'contact', 'talk', 'someone', 'staff', 'attendant'],
-          answer: "Of course! 📞 You can WhatsApp or call us on **0712 000 000** (Mon–Sat, 9am–6:30pm).\n\nBut honestly — try me first! I answer instantly, even at midnight, and I know all our prices, sizes and delivery details. What do you need?"
+          answer: "Of course! You can WhatsApp or call us on **0712 000 000** (Mon–Sat, 9am–6:30pm).\n\nBut honestly — try me first! I answer instantly, even at midnight, and I know all our prices, sizes and delivery details. What do you need?"
         },
         {
           question: 'Is this a real shop? What is Botly?',
           keywords: ['botly', 'bot', 'demo', 'fake', 'fictional', 'real shop', 'who made', 'chatbot', 'ai', 'your website', 'get this', 'how much is the bot'],
-          answer: "Great question! 🤖 Zawadi Collection is a **fictional demo shop** — but I'm a very real AI chatbot, powered by **Botly Pro**.\n\nRight now you're seeing exactly what Botly does for a business: answering questions, giving prices, explaining delivery and payment — 24/7, with zero staff effort.\n\nWant one like me on YOUR website? It's just **$10 one-time** (no monthly fees) at **botlypro.online**. Takes about 10 minutes to set up!"
+          answer: "Great question! Zawadi Collection is a **fictional demo shop** — but I'm a very real AI chatbot, powered by **Botly Pro**.\n\nRight now you're seeing exactly what Botly does for a business: answering questions, giving prices, explaining delivery and payment — 24/7, with zero staff effort.\n\nWant one like me on YOUR website? It's just **$10 one-time** (no monthly fees) at **botlypro.online**. Takes about 10 minutes to set up!"
         }
       ]
     });
