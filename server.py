@@ -85,6 +85,7 @@ class ChatbotServerHandler(SimpleHTTPRequestHandler):
             "/example": "demo/embed-example.html",
             "/contact": "contact.html",
             "/admin": "admin.html",
+            "/demo": "demo.html",
         }
         lookup = path if path == "/" else path.rstrip("/")
         if lookup in clean_pages:
