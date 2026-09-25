@@ -32,13 +32,14 @@
     .gate { max-width: 440px; margin: 40px auto; text-align: center; }
     .gate input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 14px; margin-bottom: 10px; }
     .err { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 9px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; text-align: left; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .tab { padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; flex-wrap: nowrap; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
     .tab .count { background: var(--lime); color: var(--ink); border-radius: 999px; padding: 1px 8px; font-size: 11.5px; margin-left: 6px; }
     .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
-    .toolbar input[type="search"] { flex: 1; min-width: 200px; padding: 10px 13px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 13.5px; }
-    .toolbar .hint { font-size: 12px; color: var(--muted); }
+    .toolbar input[type="search"] { flex: 1; min-width: 0; padding: 10px 13px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 13.5px; }
+    .toolbar .hint { font-size: 12px; color: var(--muted); flex-basis: 100%; }
     table.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.grid th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
     table.grid td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
@@ -62,7 +63,44 @@
     .dot.ok { background: #dcfce7; color: #15803d; }
     .dot.no { background: #fee2e2; color: #b91c1c; }
     code.inline { background: #f1f5f9; padding: 1px 6px; border-radius: 6px; font-size: 12.5px; }
-    @media (max-width: 640px) { table.grid th:nth-child(n+5), table.grid td:nth-child(n+5) { display: none; } }
+    /* ── Mobile: ≤ 640px ──────────────────────────────────────── */
+    @media (max-width: 640px) {
+      /* Topbar: truncate email so sign-out button stays visible */
+      .topbar { padding: 10px 14px; gap: 8px; }
+      .topbar .who { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+
+      /* Table wrapper: horizontal scroll inside card */
+      .card > div { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      /* Leads table: hide Bot + When columns */
+      #leads-list table.grid th:nth-child(4),
+      #leads-list table.grid td:nth-child(4),
+      #leads-list table.grid th:nth-child(5),
+      #leads-list table.grid td:nth-child(5) { display: none; }
+
+      /* Payments table: hide When column (keep Bot/Owner, M-Pesa, Amount, Status, Actions) */
+      #payments-list table.grid th:nth-child(4),
+      #payments-list table.grid td:nth-child(4) { display: none; }
+
+      /* Bots table: hide Company, Knowledge, API, Updated */
+      #bots-list table.grid th:nth-child(3),
+      #bots-list table.grid td:nth-child(3),
+      #bots-list table.grid th:nth-child(5),
+      #bots-list table.grid td:nth-child(5),
+      #bots-list table.grid th:nth-child(6),
+      #bots-list table.grid td:nth-child(6),
+      #bots-list table.grid th:nth-child(8),
+      #bots-list table.grid td:nth-child(8) { display: none; }
+
+      /* Ratings table: hide Bot + When */
+      #ratings-list table.grid th:nth-child(4),
+      #ratings-list table.grid td:nth-child(4),
+      #ratings-list table.grid th:nth-child(5),
+      #ratings-list table.grid td:nth-child(5) { display: none; }
+
+      /* Tighten cell padding on mobile */
+      table.grid th, table.grid td { padding: 8px 7px; }
+    }
   </style>
 </head>
 <body>
