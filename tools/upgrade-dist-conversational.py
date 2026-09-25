@@ -253,7 +253,7 @@ PATCHES = [
         }
       }
 
-      if (isSaasMode) {""",
+      if (isSaasMode && !(config && config.disableFaqQuickReplies)) {""",
         """            footerText + '\\n\\nYou can order directly below:';
         }
       }
@@ -283,7 +283,7 @@ PATCHES = [
         }
       }
 
-      if (isSaasMode) {""",
+      if (isSaasMode && !(config && config.disableFaqQuickReplies)) {""",
         1,
     ),
     (
@@ -1275,6 +1275,23 @@ PATCHES = [
 
   // Public Singleton Instance
   var instance = null;""",
+        1,
+    ),
+    (
+        "P87 honor followUpDynamics.enabled=false",
+        """    function generateFollowUpQuestion(item, mem, cfg, saasMode) {
+      cfg = cfg || config || {};""",
+        """    function generateFollowUpQuestion(item, mem, cfg, saasMode) {
+      cfg = cfg || config || {};
+      if (cfg.followUpDynamics && cfg.followUpDynamics.enabled === false) return null;""",
+        1,
+    ),
+    (
+        "P88 honor disableFaqQuickReplies to skip per-answer chips",
+        """      if (isSaasMode) {
+        var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);""",
+        """      if (isSaasMode && !(config && config.disableFaqQuickReplies)) {
+        var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);""",
         1,
     ),
 ]

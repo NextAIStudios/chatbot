@@ -1882,6 +1882,7 @@
 
     function generateFollowUpQuestion(item, mem, cfg, saasMode) {
       cfg = cfg || config || {};
+      if (cfg.followUpDynamics && cfg.followUpDynamics.enabled === false) return null;
       mem = mem || memory || { turns: 0, history: [], visitedTopics: [], askedFollowUps: [], lastFollowUp: null, goalStage: 0, lastTopic: '' };
       if (typeof mem.goalStage !== 'number') mem.goalStage = 0;
       if (!Array.isArray(mem.askedFollowUps)) mem.askedFollowUps = [];
@@ -2382,7 +2383,7 @@
         }
       }
 
-      if (isSaasMode) {
+      if (isSaasMode && !(config && config.disableFaqQuickReplies)) {
         var activeGoals = config.goals || (config.goal ? [config.goal] : ['lead_generation']);
 
         if (detectedProducts.length > 0) {
