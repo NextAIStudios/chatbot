@@ -3243,9 +3243,9 @@
     '<div class="ins-messages-body" id="ins-messages-list"></div>' +
     '<div class="ins-footer">' +
       '<form class="ins-input-wrapper" id="ins-chat-form">' +
-        '<button type="button" class="ins-btn-mic" id="ins-mic-btn">🎙️</button>' +
+        '<button type="button" class="ins-btn-mic" id="ins-mic-btn" aria-label="Voice input">🎙️</button>' +
         '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="Ask me anything..." autocomplete="off">' +
-        '<button type="submit" class="ins-btn-send" id="ins-send-btn">' +
+        '<button type="submit" class="ins-btn-send" id="ins-send-btn" aria-label="Send message">' +
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
         '</button>' +
       '</form>' +
@@ -3320,9 +3320,9 @@
       '<div class="ins-messages-body" id="ins-messages-list"></div>' +
       '<div class="ins-footer">' +
         '<form class="ins-input-wrapper" id="ins-chat-form">' +
-          '<button type="button" class="ins-btn-mic" id="ins-mic-btn">🎙️</button>' +
+          '<button type="button" class="ins-btn-mic" id="ins-mic-btn" aria-label="Voice input">🎙️</button>' +
           '<input type="text" class="ins-input-text" id="ins-user-input" placeholder="' + this.escape(placeholderText) + '" autocomplete="off">' +
-          '<button type="submit" class="ins-btn-send" id="ins-send-btn">' +
+          '<button type="submit" class="ins-btn-send" id="ins-send-btn" aria-label="Send message">' +
             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
           '</button>' +
         '</form>' +

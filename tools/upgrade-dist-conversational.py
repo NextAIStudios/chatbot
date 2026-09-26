@@ -1897,6 +1897,21 @@ PATCHES = [
         1,
         ["// ---- P100: admin lead alert (all bots unless leadAlerts:false) ----"],
     ),
+    (
+        "P101 send-button accessible name",
+        ''''<button type="submit" class="ins-btn-send" id="ins-send-btn">' +''',
+        ''''<button type="submit" class="ins-btn-send" id="ins-send-btn" aria-label="Send message">' +''',
+        2,
+        ['id="ins-send-btn" aria-label="Send message"'],
+    ),
+    (
+        "P101 mic-button accessible name",
+        ''''<button type="button" class="ins-btn-mic" id="ins-mic-btn">🎙️</button>' +''',
+        ''''<button type="button" class="ins-btn-mic" id="ins-mic-btn" aria-label="Voice input">🎙️</button>' +''',
+        2,
+        ['id="ins-mic-btn" aria-label="Voice input"'],
+    ),
+
 ]
 
 
