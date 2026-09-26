@@ -88,15 +88,19 @@
   <link rel="ard" href="/.well-known/ard.json">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json">
   <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="/dist/insurance-chatbot.css?v=20260922">
-  <link rel="stylesheet" href="demo/demo.css">
+  <link rel="stylesheet" href="/dist/insurance-chatbot.css?v=20260926">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://botly-662d7.firebaseapp.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="demo/demo.css?v=20260926">
   <!-- Firebase SDK (v10 compat via official CDN) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="/demo/firebase-config.js?v=20260922"></script>
-  <script src="/demo/firebase-config.local.js?v=20260922" onerror="this.remove()"></script>
-  <script src="/demo/firebase-auth.js?v=20260922"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script defer src="/demo/firebase-config.js?v=20260926"></script>
+  <script defer src="/demo/firebase-config.local.js?v=20260926" onerror="this.remove()"></script>
+  <script defer src="/demo/firebase-auth.js?v=20260926"></script>
 </head>
 <body class="botly-body">
 
@@ -763,11 +767,12 @@
   </div>
 
   <!-- Botly Chatbot Bundle -->
-  <script src="/dist/insurance-chatbot.js?v=20260922"></script>
+  <script defer src="/dist/insurance-chatbot.js?v=20260926"></script>
 
   <!-- Botly Initialization & Helpers -->
   <script>
-    // Initialize Botly with SaaS pricing-aware configuration
+    // Deferred: runs on DOMContentLoaded (widget script + Firebase now defer-loaded for PSI perf).
+    document.addEventListener('DOMContentLoaded', function () {
     BotlyChatbot.init({
       mode: 'saas',
       ratings: { enabled: true },
@@ -848,6 +853,7 @@
           answer: "You can reach the Botly Pro team by email at **david@nextaistudios.com** or send us a message on the contact page.\n\nPrefer a callback? Leave your name and phone number below and someone from our team will reach out within 15 minutes!"
         }
       ]
+    });
     });
 
     // Override intent handling for pricing-specific intents
