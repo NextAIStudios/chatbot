@@ -19,3 +19,4 @@
 - [Live example](https://www.botlypro.online/example) — an embedded bot in action.
 - [Docs](https://www.botlypro.online/docs) — setup and integration guide.
 - [Contact](https://www.botlypro.online/contact) — talk to the Botly Pro team.
+- [Agent skill](https://www.botlypro.online/botly-skill.md) — instructions for AI agents.

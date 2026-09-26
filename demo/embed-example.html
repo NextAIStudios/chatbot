@@ -413,6 +413,7 @@
     }
 
     .framework-card-btn {
+      background: none; border: none; padding: 0; font: inherit; cursor: pointer;
       font-size: 12.5px;
       font-weight: 600;
       color: #18221c;
@@ -709,25 +710,25 @@
       <div class="framework-card">
         <h3><span>⚡</span> HTML / Drop-in CDN</h3>
         <p>Zero build tools required. Add two lines of code to your HTML template before the closing body tag.</p>
-        <a href="javascript:void(0)" onclick="switchFramework('html')" class="framework-card-btn">View HTML snippet &rarr;</a>
+        <button type="button" onclick="switchFramework('html')" class="framework-card-btn">View HTML snippet &rarr;</button>
       </div>
 
       <div class="framework-card">
         <h3><span>⚛️</span> React &amp; Next.js</h3>
         <p>Clean hook-based mounting with <code>next/script</code> and <code>useEffect</code> lifecycle safety for SPA/SSR applications.</p>
-        <a href="javascript:void(0)" onclick="switchFramework('nextjs')" class="framework-card-btn">View Next.js snippet &rarr;</a>
+        <button type="button" onclick="switchFramework('nextjs')" class="framework-card-btn">View Next.js snippet &rarr;</button>
       </div>
 
       <div class="framework-card">
         <h3><span>🛒</span> Shopify &amp; WooCommerce</h3>
         <p>Collect cart abandoned orders, answer product inquiries, and initiate instant checkout with seamless mobile optimization.</p>
-        <a href="javascript:void(0)" onclick="switchFramework('shopify')" class="framework-card-btn">View Shopify snippet &rarr;</a>
+        <button type="button" onclick="switchFramework('shopify')" class="framework-card-btn">View Shopify snippet &rarr;</button>
       </div>
 
       <div class="framework-card">
         <h3><span>🐍</span> Python &amp; Node.js</h3>
         <p>Serve Botly Pro directly from FastAPI, Flask, Django, or Express with optional secure backend webhook lead forwarding.</p>
-        <a href="javascript:void(0)" onclick="switchFramework('python')" class="framework-card-btn">View Python snippet &rarr;</a>
+        <button type="button" onclick="switchFramework('python')" class="framework-card-btn">View Python snippet &rarr;</button>
       </div>
 
     </section>
@@ -844,10 +845,10 @@
       <div>
         <h4 style="color: #ffffff; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">Goals</h4>
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
-          <li><a href="javascript:void(0)" onclick="switchGoal('lead_generation')" style="color: #94a3b8; text-decoration: none;">Lead Capture</a></li>
-          <li><a href="javascript:void(0)" onclick="switchGoal('payment_checkout')" style="color: #94a3b8; text-decoration: none;">In-Chat Payment</a></li>
-          <li><a href="javascript:void(0)" onclick="switchGoal('customer_support')" style="color: #94a3b8; text-decoration: none;">Support &amp; Triage</a></li>
-          <li><a href="javascript:void(0)" onclick="switchGoal('consultation_booking')" style="color: #94a3b8; text-decoration: none;">Consultations</a></li>
+          <li><button type="button" onclick="switchGoal('lead_generation')" style="background: none; border: none; padding: 0; font: inherit; cursor: pointer; color: #94a3b8; text-decoration: none;">Lead Capture</button></li>
+          <li><button type="button" onclick="switchGoal('payment_checkout')" style="background: none; border: none; padding: 0; font: inherit; cursor: pointer; color: #94a3b8; text-decoration: none;">In-Chat Payment</button></li>
+          <li><button type="button" onclick="switchGoal('customer_support')" style="background: none; border: none; padding: 0; font: inherit; cursor: pointer; color: #94a3b8; text-decoration: none;">Support &amp; Triage</button></li>
+          <li><button type="button" onclick="switchGoal('consultation_booking')" style="background: none; border: none; padding: 0; font: inherit; cursor: pointer; color: #94a3b8; text-decoration: none;">Consultations</button></li>
         </ul>
       </div>
 

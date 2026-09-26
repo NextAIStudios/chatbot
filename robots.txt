@@ -58,5 +58,6 @@ Disallow: /admin
 
 Sitemap: https://www.botlypro.online/sitemap.xml
 
-# Agentic Resource Discovery: machine-readable catalog of Botly resources.
-Agentmap: https://www.botlypro.online/.well-known/ard.json
+# Note: the ARD manifest is published at /.well-known/ard.json and
+# /.well-known/ai-catalog.json and linked from page <head> elements.
+# (No robots directive for it: Lighthouse SEO flags Agentmap as unknown.)

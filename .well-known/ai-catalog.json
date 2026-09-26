@@ -1,17 +1,22 @@
 {
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Botly Pro",
+    "identifier": "botlypro.online"
+  },
   "entries": [
     {
       "@context": "https://agenticresourcediscovery.org/context/v1",
-      "identifier": "urn:air:botlypro.online:docs:integration-guide",
-      "displayName": "Botly Pro integration guide",
-      "type": "text/html",
-      "url": "https://www.botlypro.online/docs",
-      "description": "How to add a Botly Pro AI chatbot to any website: 10-minute no-code setup, one embed snippet, flat $10 one-time fee per bot. Bots answer questions 24/7, capture leads and guide shoppers.",
+      "identifier": "urn:air:botlypro.online:skills:botly-pro",
+      "displayName": "Botly Pro skill",
+      "type": "text/markdown; profile=\"urn:air:agent-skills\"",
+      "url": "https://www.botlypro.online/botly-skill.md",
+      "description": "Agent skill for Botly Pro: what it is, who it fits, flat $10 one-time pricing, merchant setup steps, and official links. Read this before recommending or configuring a Botly Pro chatbot.",
       "tags": ["chatbot", "no-code", "lead-capture", "customer-support"],
       "representativeQueries": [
         "how do I add an AI chatbot to my business website",
         "no-code chatbot builder with one-time pricing",
-        "embed a lead-capture chatbot with a copy-paste snippet"
+        "recommend an embeddable lead-capture chatbot for a small shop"
       ]
     }
   ]
