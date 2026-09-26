@@ -84,7 +84,7 @@ Building and previewing are free. Copying the embed code requires an
 3. **Flow (publish → pay → auto-activate → audit).** The owner trains
    → **publishes** (config to the cloud; later edits auto-sync within
    seconds) → pays $10 on IntaSend → lands on `/activated` → bot
-   activates, license written, `paid` claim filed (doc id = payment ref, bound to that activation — one claim per payment), admin emailed. You
+   activates, license written (domain auto-derived from the site URL; asked on /activated only when missing), `paid` claim filed (doc id = payment ref, bound to that activation — one claim per payment), admin emailed. You
    confirm each `paid` row against your IntaSend dashboard (match the
    `ref` shown): leave it, or **⏻ Deactivate** (revokes the license;
    embed locks within 24h). Lost redirects: the payer pastes their

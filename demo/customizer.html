@@ -2107,12 +2107,7 @@
             <p class="panel-subtitle">Publish your training, pay $10 once, paste the snippet — later edits sync live by themselves.</p>
           </div>
 
-          <!-- Activation banner (paywall status; rendered by renderActivationBanner) -->
-          <div id="ship-activation-banner" style="border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.55; margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569;">
-            Checking activation…
-          </div>
-
-          <!-- Publish to live: pushes training to the cloud; edits auto-sync after -->
+                    <!-- Publish to live: pushes training to the cloud; edits auto-sync after -->
           <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
             <div style="font-size: 12.5px; font-weight: 800; color: #0f172a;">🚀 Publish your bot</div>
             <div id="ship-publish-status" style="font-size: 12.5px; color: #475569; line-height: 1.55;">Checking publish status…</div>
@@ -2120,16 +2115,7 @@
             <div style="font-size: 11.5px; color: #64748b; line-height: 1.5;">Publishing pushes your training to the cloud — afterwards every edit syncs to your live bot automatically. No re-copying.</div>
           </div>
 
-          <!-- License domain lock: the paid embed only runs on this domain -->
-          <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-            <label for="wiz-deploy-domain" style="font-size: 12.5px; font-weight: 800; color: #92400e;">🔒 License domain <span style="font-weight: 400; color: #b45309;">(where will you paste the snippet?)</span></label>
-            <input type="text" id="wiz-deploy-domain" placeholder="example.com" autocomplete="off" spellcheck="false"
-              onchange="botlyDeployDomainChanged(this)"
-              style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13.5px; font-family: inherit;">
-            <div style="font-size: 11.5px; color: #b45309; line-height: 1.5;">Your paid embed only loads on this domain <em>(+ subdomains)</em> — copied snippets die anywhere else. Studio previews always work.</div>
-          </div>
-
-          <!-- Big Prominent Copy Button -->
+                    <!-- Big Prominent Copy Button -->
           <button type="button" id="btn-main-copy-embed" onclick="copyFinalEmbed()" style="width: 100%; padding: 14px; background: #16a34a; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.28); transition: all 0.18s;">
             <span>Copy Embed Code</span>
           </button>
@@ -3179,7 +3165,7 @@ window.addEventListener('botly:payment', async (event) => {
         }
       }
 
-      if (n === 5) { renderDeployPreview(); renderActivationBanner(null); botlyRenderPublishStatus(); }
+      if (n === 5) { renderDeployPreview(); botlyRenderPublishStatus(); }
 
       var activePill = document.getElementById('wstep-' + n);
       if (activePill && activePill.scrollIntoView) {
@@ -5402,23 +5388,25 @@ window.addEventListener('botly:payment', async (event) => {
       return (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(s)) ? s : '';
     }
 
+    // License domain, automatic: hostname of the site being trained
+    // (placeholder defaults skipped; a previously saved domain wins).
+    function botlyAutoDeployDomain() {
+      try {
+        var w = String((typeof wizardState !== 'undefined' && wizardState.websiteUrl) || '');
+        if (w && w.indexOf('mycompany.com') === -1 && w.indexOf('acme.com') === -1 && w.indexOf('kenyanextgen.co.ke') === -1) {
+          var d = botlyNormalizeDomain(w);
+          if (d) return d;
+        }
+      } catch (e) {}
+      try { return wizardState.deployDomain || ''; } catch (e2) { return ''; }
+    }
+
     // Prefill the Ship-step domain input from the saved value, else from
     // the knowledge-source website URL (usually the same site).
+    // License domain now flows automatically (site hostname); kept as a
+    // named step so ship-render + publish keep working unchanged.
     function botlyPrefillDeployDomain() {
-      try {
-        var input = document.getElementById('wiz-deploy-domain');
-        if (!input) return;
-        var bid = '';
-        try { bid = botlyActiveBotId(); } catch (e) {}
-        if (input.dataset.botlyBot !== bid) { input.value = ''; input.dataset.botlyBot = bid; }
-        if (input.value.trim()) return;
-        var d = wizardState.deployDomain || '';
-        if (!d) {
-          var w = wizardState.websiteUrl || '';
-          if (w.indexOf('mycompany.com') === -1 && w.indexOf('acme.com') === -1) d = botlyNormalizeDomain(w);
-        }
-        if (d) { input.value = d; wizardState.deployDomain = d; }
-      } catch (e) {}
+      try { wizardState.deployDomain = botlyAutoDeployDomain(); } catch (e) {}
     }
 
     function botlyDeployDomainChanged(input) {
@@ -5602,6 +5590,7 @@ companyLines + '\n' +
     var botlyPublishTimer = null;
     function botlySanitizeId(s) { return String(s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120); }
     function botlyPublishConfig(opts) {
+      try { wizardState.deployDomain = botlyAutoDeployDomain(); } catch (pdErr) {}
       opts = opts || {};
       try {
         var user = (window.BotlyAuth && typeof BotlyAuth.getUser === 'function') ? BotlyAuth.getUser() : null;
@@ -6429,8 +6418,7 @@ companyLines + '\n' +
         if (phoneEl && phoneEl.value.trim()) wizardState.supportPhone = phoneEl.value.trim();
         var wUrlEl = document.getElementById('wiz-website-url');
         if (wUrlEl && wUrlEl.value.trim()) wizardState.websiteUrl = wUrlEl.value.trim();
-        var depDomEl = document.getElementById('wiz-deploy-domain');
-        if (depDomEl) wizardState.deployDomain = botlyNormalizeDomain(depDomEl.value);
+        wizardState.deployDomain = botlyAutoDeployDomain(); // input removed: license follows the site URL
 
         var chkItemEl = document.getElementById('wiz-checkout-item');
         var chkAmtEl = document.getElementById('wiz-checkout-amount');
@@ -7858,78 +7846,6 @@ HTTPServer(('', PORT), ApiHandler).serve_forever()`;
       });
 
       // Reactive auth listener: ensures sign-in persists whenever user is unauthenticated
-      if (window.BotlyAuth) {
-        window.BotlyAuth.onAuthStateChanged(function(user) {
-          updateSandboxAuthGate(user);
-        });
-      }
-
-      // Auto-save active bot configuration and training memory when window unloads
-      window.addEventListener('beforeunload', function() {
-        if (window.BotlyChatbotManager && typeof BotlyChatbotManager.syncActiveBotFromUI === 'function') {
-          BotlyChatbotManager.syncActiveBotFromUI();
-        }
-      });
-
-      // Check URL query parameters or hash for direct Webhooks access or New Chatbot initialization
-      try {
-        var urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('new')) {
-          // Immediately strip ?new so that refreshing does NOT create another new bot and erase user data!
-          try {
-            var cleanUrl = window.location.pathname + (window.location.hash || '');
-            window.history.replaceState({}, document.title, cleanUrl);
-          } catch(e) {}
-          setTimeout(function() {
-            handleCreateNewCompanyBot();
-          }, 150);
-        }
-        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
-          setTimeout(function() {
-            openWebhooksModal();
-          }, 200);
-        }
-      } catch(e) {}
-    });
-  </script>
-</body>
-</html>
-.title, cleanUrl);
-          } catch(e) {}
-          setTimeout(function() {
-            handleCreateNewCompanyBot();
-          }, 150);
-        }
-        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
-          setTimeout(function() {
-            openWebhooksModal();
-          }, 200);
-        }
-      } catch(e) {}
-    });
-  </script>
-</body>
-</html>
-g does NOT create another new bot and erase user data!
-          try {
-            var cleanUrl = window.location.pathname + (window.location.hash || '');
-            window.history.replaceState({}, document.title, cleanUrl);
-          } catch(e) {}
-          setTimeout(function() {
-            handleCreateNewCompanyBot();
-          }, 150);
-        }
-        if (urlParams.get('view') === 'webhooks' || window.location.hash === '#webhooks') {
-          setTimeout(function() {
-            openWebhooksModal();
-          }, 200);
-        }
-      } catch(e) {}
-    });
-  </script>
-</body>
-</html>
-: ensures sign-in persists whenever user is unauthenticated
       if (window.BotlyAuth) {
         window.BotlyAuth.onAuthStateChanged(function(user) {
           updateSandboxAuthGate(user);
